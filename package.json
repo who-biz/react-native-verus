@@ -78,7 +78,7 @@
     "rollup-plugin-flow-entry": "^0.3.4",
     "rollup-plugin-node-resolve": "^5.2.0",
     "sucrase": "^3.15.0",
-    "typescript": "^3.9.3"
+    "typescript": "5.0.4"
   },
   "peerDependencies": {
     "react-native": "0.68.5"
