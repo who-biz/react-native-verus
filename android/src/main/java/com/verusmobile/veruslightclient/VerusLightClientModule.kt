@@ -1,4 +1,4 @@
-package app.edge.rnzcash
+package com.verusmobile.veruslightclient
 
 import cash.z.ecc.android.sdk.SdkSynchronizer
 import cash.z.ecc.android.sdk.Synchronizer
@@ -21,7 +21,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class RNZcashModule(private val reactContext: ReactApplicationContext) :
+class VerusLightClientModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
     /**
      * Scope for anything that out-lives the synchronizer, meaning anything that can be used before
@@ -33,7 +33,7 @@ class RNZcashModule(private val reactContext: ReactApplicationContext) :
 
     private val networks = mapOf("mainnet" to ZcashNetwork.Mainnet, "testnet" to ZcashNetwork.Testnet)
 
-    override fun getName() = "RNZcash"
+    override fun getName() = "VerusLightClient"
 
     @ReactMethod
     fun initialize(

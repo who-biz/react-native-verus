@@ -1,7 +1,7 @@
 {
-  "name": "react-native-zcash",
+  "name": "react-native-verus",
   "version": "0.6.10",
-  "description": "Zcash library for React Native",
+  "description": "Verus library for React Native",
   "homepage": "https://github.com/EdgeApp/react-native-zcash",
   "repository": {
     "type": "git",
@@ -81,6 +81,6 @@
     "typescript": "^3.9.3"
   },
   "peerDependencies": {
-    "react-native": ">=0.47.0 <1.0.0"
+    "react-native": "0.68.5"
   }
 }

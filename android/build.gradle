@@ -30,7 +30,7 @@ android {
   lintOptions {
     abortOnError false
   }
-  namespace 'app.edge.rnzcash'
+  namespace 'com.verusmobile.veruslightclient'
 }
 
 repositories {
