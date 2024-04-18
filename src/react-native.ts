@@ -19,7 +19,7 @@ import {
 } from './types'
 export * from './types'
 
-const { RNZcash } = NativeModules
+const { VerusLightClient } = NativeModules
 
 type Callback = (...args: any[]) => any
 
@@ -28,18 +28,18 @@ export const Tools = {
     seedBytesHex: string,
     network: Network
   ): Promise<UnifiedViewingKey> => {
-    const result = await RNZcash.deriveViewingKey(seedBytesHex, network)
+    const result = await VerusLightClient.deriveViewingKey(seedBytesHex, network)
     return result
   },
   getBirthdayHeight: async (host: string, port: number): Promise<number> => {
-    const result = await RNZcash.getBirthdayHeight(host, port)
+    const result = await VerusLightClient.getBirthdayHeight(host, port)
     return result
   },
   isValidAddress: async (
     address: string,
     network: Network = 'mainnet'
   ): Promise<boolean> => {
-    const result = await RNZcash.isValidAddress(address, network)
+    const result = await VerusLightClient.isValidAddress(address, network)
     return result
   }
 }
@@ -51,7 +51,7 @@ export class Synchronizer {
   network: Network
 
   constructor(alias: string, network: Network) {
-    this.eventEmitter = new NativeEventEmitter(RNZcash)
+    this.eventEmitter = new NativeEventEmitter(VerusLightClient)
     this.subscriptions = []
     this.alias = alias
     this.network = network
@@ -59,12 +59,12 @@ export class Synchronizer {
 
   async stop(): Promise<string> {
     this.unsubscribe()
-    const result = await RNZcash.stop(this.alias)
+    const result = await VerusLightClient.stop(this.alias)
     return result
   }
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
-    await RNZcash.initialize(
+    await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
       initializerConfig.birthdayHeight,
       initializerConfig.alias,
@@ -76,23 +76,23 @@ export class Synchronizer {
   }
 
   async deriveUnifiedAddress(): Promise<Addresses> {
-    const result = await RNZcash.deriveUnifiedAddress(this.alias)
+    const result = await VerusLightClient.deriveUnifiedAddress(this.alias)
     return result
   }
 
   async getLatestNetworkHeight(alias: string): Promise<number> {
-    const result = await RNZcash.getLatestNetworkHeight(alias)
+    const result = await VerusLightClient.getLatestNetworkHeight(alias)
     return result
   }
 
   async rescan(): Promise<void> {
-    await RNZcash.rescan(this.alias)
+    await VerusLightClient.rescan(this.alias)
   }
 
   async sendToAddress(
     spendInfo: SpendInfo
   ): Promise<SpendSuccess | SpendFailure> {
-    const result = await RNZcash.sendToAddress(
+    const result = await VerusLightClient.sendToAddress(
       this.alias,
       spendInfo.zatoshi,
       spendInfo.toAddress,
@@ -103,7 +103,7 @@ export class Synchronizer {
   }
 
   async shieldFunds(shieldFundsInfo: ShieldFundsInfo): Promise<Transaction> {
-    const result = await RNZcash.shieldFunds(
+    const result = await VerusLightClient.shieldFunds(
       this.alias,
       shieldFundsInfo.seed,
       shieldFundsInfo.memo,

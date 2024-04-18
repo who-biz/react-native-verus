@@ -15,7 +15,7 @@
     "Matthew Piché <matthew@edge.app>",
     "Kevin Gorham <kevin.gorham@z.cash>"
   ],
-  "main": "lib/rnzcash.rn.js",
+  "main": "lib/veruslightclient.rn.js",
   "types": "lib/src/react-native.d.ts",
   "files": [
     "/android/build.gradle",
