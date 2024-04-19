@@ -21,7 +21,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class VerusLightClientModule(private val reactContext: ReactApplicationContext) :
+class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
     /**
      * Scope for anything that out-lives the synchronizer, meaning anything that can be used before
