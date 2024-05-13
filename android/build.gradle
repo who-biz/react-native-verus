@@ -39,6 +39,7 @@ repositories {
   }
   google()
   mavenCentral()
+  maven { url "https://jitpack.io" }
 }
 
 dependencies {
@@ -49,8 +50,7 @@ dependencies {
 
   implementation 'androidx.appcompat:appcompat:1.4.1'
   implementation 'androidx.paging:paging-runtime-ktx:2.1.2'
-  implementation 'cash.z.ecc.android:zcash-android-sdk:2.1.1'
-  implementation 'cash.z.ecc.android:zcash-android-sdk-incubator:2.1.1'
+  implementation 'com.github.who-biz:verus-android-wallet-sdk:539f3d3'
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
 }
