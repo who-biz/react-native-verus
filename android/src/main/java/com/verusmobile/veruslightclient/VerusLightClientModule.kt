@@ -109,17 +109,17 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             combine(
                 wallet.transparentBalance,
                 wallet.saplingBalances,
-                wallet.orchardBalances,
-            ) { transparentBalance: Zatoshi?, saplingBalances: WalletBalance?, orchardBalances: WalletBalance? ->
+                /*wallet.orchardBalances,*/
+            ) { transparentBalance: Zatoshi?, saplingBalances: WalletBalance? /*, orchardBalances: WalletBalance?*/ ->
                 return@combine Balances(
                     transparentBalance = transparentBalance,
                     saplingBalances = saplingBalances,
-                    orchardBalances = orchardBalances,
+                    /*orchardBalances = orchardBalances,*/
                 )
             }.collectWith(scope) { map ->
                 val transparentBalance = map.transparentBalance
                 val saplingBalances = map.saplingBalances
-                val orchardBalances = map.orchardBalances
+                /*val orchardBalances = map.orchardBalances*/
 
                 val transparentAvailableZatoshi = transparentBalance ?: Zatoshi(0L)
                 val transparentTotalZatoshi = transparentBalance ?: Zatoshi(0L)
@@ -127,8 +127,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 val saplingAvailableZatoshi = saplingBalances?.available ?: Zatoshi(0L)
                 val saplingTotalZatoshi = saplingBalances?.total ?: Zatoshi(0L)
 
-                val orchardAvailableZatoshi = orchardBalances?.available ?: Zatoshi(0L)
-                val orchardTotalZatoshi = orchardBalances?.total ?: Zatoshi(0L)
+                /*val orchardAvailableZatoshi = orchardBalances?.available ?: Zatoshi(0L)
+                val orchardTotalZatoshi = orchardBalances?.total ?: Zatoshi(0L)*/
 
                 sendEvent("BalanceEvent") { args ->
                     args.putString("alias", alias)
@@ -136,8 +136,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     args.putString("transparentTotalZatoshi", transparentTotalZatoshi.value.toString())
                     args.putString("saplingAvailableZatoshi", saplingAvailableZatoshi.value.toString())
                     args.putString("saplingTotalZatoshi", saplingTotalZatoshi.value.toString())
+                    /*
                     args.putString("orchardAvailableZatoshi", orchardAvailableZatoshi.value.toString())
                     args.putString("orchardTotalZatoshi", orchardTotalZatoshi.value.toString())
+                    */
                 }
             }
             return@wrap null
@@ -451,6 +453,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     data class Balances(
         val transparentBalance: Zatoshi?,
         val saplingBalances: WalletBalance?,
-        val orchardBalances: WalletBalance?,
+        /*val orchardBalances: WalletBalance?,*/
     )
 }
