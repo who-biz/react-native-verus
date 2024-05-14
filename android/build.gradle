@@ -51,8 +51,8 @@ dependencies {
 
   implementation 'androidx.appcompat:appcompat:1.4.1'
   implementation 'androidx.paging:paging-runtime-ktx:2.1.2'
-  implementation 'com.github.who-biz:verus-android-sdk:main-SNAPSHOT'
-  implementation 'com.github.who-biz:verus-android-sdk-incubator:main-SNAPSHOT'
+  implementation 'com.github.who-biz:verus-android-wallet-sdk:verus-android-sdk:main-SNAPSHOT'
+  implementation 'com.github.who-biz:verus-android-wallet-sdk:verus-android-sdk-incubator:main-SNAPSHOT'
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
 }
