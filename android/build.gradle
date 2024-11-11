@@ -55,9 +55,11 @@ dependencies {
 
   // you must clone github.com/who-biz/verus-android-wallet-sdk,
   // and run: './gradlew publishToMavenLocal' from repo root,
-  // for gradle to find the two dependencies below
-  implementation 'com.github.who-biz:verus-android-sdk:2.1.2'
-  implementation 'com.github.who-biz:verus-android-sdk-incubator:2.1.2'
+  // for gradle to find the next two dependencies below
+  implementation 'com.github.who-biz:verus-android-sdk-mainnet:1.2.1'
+
+  //commented, needs included for newer, non-legacy SDK that is modular
+//  implementation 'com.github.who-biz:verus-android-sdk-incubator:2.1.2'
 
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
