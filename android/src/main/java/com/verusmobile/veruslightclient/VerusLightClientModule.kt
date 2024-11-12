@@ -2,17 +2,11 @@ package com.verusmobile.veruslightclient
 
 import cash.z.ecc.android.sdk.SdkSynchronizer
 import cash.z.ecc.android.sdk.Synchronizer
-import cash.z.ecc.android.sdk.WalletInitMode
 import cash.z.ecc.android.sdk.exception.LightWalletException
 import cash.z.ecc.android.sdk.ext.*
-import cash.z.ecc.android.sdk.internal.*
-import cash.z.ecc.android.sdk.model.*
 import cash.z.ecc.android.sdk.tool.DerivationTool
-import cash.z.ecc.android.sdk.type.*
-import co.electriccoin.lightwallet.client.LightWalletClient
-import co.electriccoin.lightwallet.client.model.LightWalletEndpoint
-import co.electriccoin.lightwallet.client.model.Response
-import co.electriccoin.lightwallet.client.new
+import cash.z.ecc.android.sdk.service.LightWalletGrpcService
+import cash.z.ecc.android.sdk.service.LightWalletService
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
 import kotlinx.coroutines.CoroutineScope
@@ -31,23 +25,56 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     private var moduleScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
     private var synchronizerMap = mutableMapOf<String, SdkSynchronizer>()
 
-    private val networks = mapOf("mainnet" to ZcashNetwork.Mainnet, "testnet" to ZcashNetwork.Testnet)
+    //private val networks = mapOf("mainnet" to ZcashNetwork.Mainnet, "testnet" to ZcashNetwork.Testnet)
 
     override fun getName() = "VerusLightClient"
 
+    fun chainNetworkId(networkName: String) -> UShort {
+        var networkId;
+        when networkName {
+            "VRSC" -> (networkId = 1)
+            "ZEC" -> (networkId = 2)
+            else -> (networkId = 0)
+        }
+        return networkId
+    }
+
+    @ReactMethod
+    fun initialize(
+        vk: String,
+        birthdayHeight: Int,
+        networkName: String = "VRSC",
+        defaultHost: String = "lwdlegacy.blur.cash",
+        defaultPort: String =
+        alias: String, promise: Promise) =
+        promise.wrap {
+            Twig.plant(TroubleshootingTwig())
+            if (!isInitialized) {
+                val initializer = Initializer(reactApplicationContext) { config ->
+                    config.import(vk, birthdayHeight)
+                    config.server("lightwalletd.electriccoin.co", 9067)
+                    config.alias = alias
+                }
+                synchronizer = Synchronizer(
+                    initializer
+                ) as SdkSynchronizer
+                isInitialized = true
+            }
+            synchronizer.hashCode().toString()
+        }
     @ReactMethod
     fun initialize(
         seed: String,
         birthdayHeight: Int,
         alias: String,
-        networkName: String = "mainnet",
-        defaultHost: String = "mainnet.lightwalletd.com",
-        defaultPort: Int = 9067,
+        networkName: String = "VRSC",
+        defaultHost: String = "lwdlegacy.blur.cash",
+        defaultPort: Int = 443,
         newWallet: Boolean,
         promise: Promise,
     ) = moduleScope.launch {
         promise.wrap {
-            val network = networks.getOrDefault(networkName, ZcashNetwork.Mainnet)
+            val network = chainNetworkId(networkName)
             val endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
             val seedPhrase = SeedPhrase.new(seed)
             val initMode = if (newWallet) WalletInitMode.NewWallet else WalletInitMode.ExistingWallet
