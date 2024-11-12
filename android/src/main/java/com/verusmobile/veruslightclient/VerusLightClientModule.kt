@@ -19,6 +19,8 @@ import kotlinx.coroutines.launch
 import java.nio.charset.StandardCharsets
 import kotlin.coroutines.EmptyCoroutineContext
 
+
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class, kotlinx.coroutines.FlowPreview::class)
 class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
 
@@ -37,15 +39,15 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     override fun getName() = "VerusLightClient"
 
-    fun chainNetworkId(networkName: String) -> UShort {
-        var networkId;
+    /*abstract fun chainNetworkId(networkName: String) -> UShort {
+        var networkId = 0
         when networkName {
             "VRSC" -> (networkId = 1)
             "ZEC" -> (networkId = 2)
             else -> (networkId = 0)
         }
         return networkId
-    }
+    }*/
 
     @ReactMethod
     fun initialize(vk: String, birthdayHeight: Int, alias: String, promise: Promise) =
@@ -53,8 +55,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             Twig.plant(TroubleshootingTwig())
             if (!isInitialized) {
                 val initializer = Initializer(reactApplicationContext) { config ->
-                    config.import(vk, birthdayHeight)
-                    config.server("lightwalletd.electriccoin.co", 9067)
+                    //config.import(vk, birthdayHeight)
+                    config.setViewingKeys(vk)
+                    config.setBirthdayHeight(birthdayHeight)
+                    config.server("lwdlegacy.blur.cash", 443)
                     config.alias = alias
                 }
                 synchronizer = Synchronizer(
