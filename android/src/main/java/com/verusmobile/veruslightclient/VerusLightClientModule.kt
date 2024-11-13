@@ -36,15 +36,18 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     lateinit var synchronizer: SdkSynchronizer
     var isInitialized = false
     var isStarted = false
+    var chainNetwork = "VRSC" // could lateinit this for ZEC, etc
 
     override fun getName() = "VerusLightClient"
 
-    /*abstract fun chainNetworkId(networkName: String) -> UShort {
+    /*fun getChainNetworkId(networkName: String): Int {
         var networkId = 0
-        when networkName {
-            "VRSC" -> (networkId = 1)
-            "ZEC" -> (networkId = 2)
-            else -> (networkId = 0)
+        if (networkName == "VRSC") {
+            networkId = 1
+        } else if (networkName == "ZEC") {
+            networkId = 2
+        } else {
+            networkId = 0 // unnecessary, but leaving for clarity
         }
         return networkId
     }*/
@@ -60,6 +63,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     config.setBirthdayHeight(birthdayHeight)
                     config.server("lwdlegacy.blur.cash", 443)
                     config.alias = alias
+                    config.network = chainNetwork
                 }
                 synchronizer = Synchronizer(
                     initializer
@@ -209,7 +213,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     fun isValidShieldedAddress(address: String, promise: Promise) {
         try {
             moduleScope.launch {
-                promise.resolve(synchronizer.isValidShieldedAddr(address))
+                promise.resolve(synchronizer.isValidShieldedAddr(address, chainNetwork))
             }
         } catch (t: Throwable) {
             promise.reject("Err", t)
@@ -220,7 +224,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     fun isValidTransparentAddress(address: String, promise: Promise) {
         try {
             moduleScope.launch {
-                promise.resolve(synchronizer.isValidTransparentAddr(address))
+                promise.resolve(synchronizer.isValidTransparentAddr(address, chainNetwork))
             }
         } catch (t: Throwable) {
             promise.reject("Err", t)
