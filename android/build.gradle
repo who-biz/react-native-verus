@@ -4,8 +4,8 @@ buildscript {
     : '1.8.22'
 
   repositories {
-    mavenCentral()
     mavenLocal()
+    mavenCentral()
     google()
   }
   dependencies {
@@ -35,14 +35,12 @@ android {
 }
 
 repositories {
+  mavenLocal()
   maven {
     url('../node_modules/react-native/android')
   }
   google()
   mavenCentral()
-  mavenLocal()
-//  maven { url "https://jitpack.io" }
-
 }
 
 kotlin {
