@@ -27,6 +27,7 @@ android {
   defaultConfig {
     minSdkVersion safeExtGet('minSdkVersion', 27)
     targetSdkVersion safeExtGet('targetSdkVersion', 32)
+    multiDexEnabled true
   }
   lintOptions {
     abortOnError false
@@ -35,6 +36,7 @@ android {
 }
 
 repositories {
+  mavenLocal()
   maven {
     url('../node_modules/react-native/android')
   }
@@ -58,6 +60,8 @@ dependencies {
   // for gradle to find the two dependencies below
   implementation 'com.github.who-biz:verus-android-sdk:2.1.2'
   implementation 'com.github.who-biz:verus-android-sdk-incubator:2.1.2'
+  //implementation 'com.github.who-biz:verus-android-backend:2.1.2'
+  //implementation 'com.github.who-biz:lightwallet-client:2.1.2'
 
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
