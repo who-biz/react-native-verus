@@ -35,6 +35,10 @@ android {
   namespace 'com.verusmobile.veruslightclient'
 }
 
+kotlin {
+  jvmToolchain(8)
+}
+
 repositories {
   mavenLocal()
   maven {
