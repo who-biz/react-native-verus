@@ -53,8 +53,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             val seedPhrase = SeedPhrase.new(seed)
             val transparentKey: ByteArray
             if (!wif.isNullOrEmpty()) {
-                val decodedWif = wif.decodeBase58WithChecksum()
-                transparentKey = decodedWif!!.copyOfRange(1, decodedWif.size)
+                val decodedWif = wif!!.decodeBase58WithChecksum()
+                transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
             } else {
                 transparentKey = byteArrayOf()
             }
@@ -223,7 +223,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun deriveViewingKey(
         seed: String,
-        network: String = "mainnet",
+        network: String = "VRSC",
         promise: Promise,
     ) {
         moduleScope.launch {
@@ -314,14 +314,22 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         zatoshi: String,
         toAddress: String,
         memo: String = "",
+        wif: String,
         seed: String,
         promise: Promise,
     ) {
         val wallet = getWallet(alias)
         wallet.coroutineScope.launch {
             try {
+                val transparentKey: ByteArray
+                if (!wif.isNullOrEmpty()) {
+                    val decodedWif = wif!!.decodeBase58WithChecksum()
+                    transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
+                } else {
+                    transparentKey = byteArrayOf()
+                }
                 val seedPhrase = SeedPhrase.new(seed)
-                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
+                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
                 val internalId =
                     wallet.sendToAddress(
                         usk,
@@ -344,6 +352,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     fun shieldFunds(
         alias: String,
         seed: String,
+        wif: String,
         memo: String,
         threshold: String,
         promise: Promise,
@@ -351,8 +360,15 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         val wallet = getWallet(alias)
         wallet.coroutineScope.launch {
             try {
+                val transparentKey: ByteArray
+                if (!wif.isNullOrEmpty()) {
+                    val decodedWif = wif!!.decodeBase58WithChecksum()
+                    transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
+                } else {
+                    transparentKey = byteArrayOf()
+                }
                 val seedPhrase = SeedPhrase.new(seed)
-                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
+                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
                 val internalId =
                     wallet.shieldFunds(
                         usk,
