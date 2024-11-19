@@ -53,7 +53,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             val seedPhrase = SeedPhrase.new(seed)
             val transparentKey: ByteArray
             if (!wif.isNullOrEmpty()) {
-                val decodedWif = wif!!.decodeBase58WithChecksum()
+                val decodedWif = wif.decodeBase58WithChecksum()
                 transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
             } else {
                 transparentKey = byteArrayOf()
@@ -323,7 +323,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             try {
                 val transparentKey: ByteArray
                 if (!wif.isNullOrEmpty()) {
-                    val decodedWif = wif!!.decodeBase58WithChecksum()
+                    val decodedWif = wif.decodeBase58WithChecksum()
                     transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
                 } else {
                     transparentKey = byteArrayOf()
@@ -362,7 +362,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             try {
                 val transparentKey: ByteArray
                 if (!wif.isNullOrEmpty()) {
-                    val decodedWif = wif!!.decodeBase58WithChecksum()
+                    val decodedWif = wif.decodeBase58WithChecksum()
                     transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
                 } else {
                     transparentKey = byteArrayOf()
