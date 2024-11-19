@@ -38,11 +38,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun initialize(
         seed: String,
+        wif: String,
         birthdayHeight: Int,
         alias: String,
-        networkName: String = "mainnet",
-        defaultHost: String = "mainnet.lightwalletd.com",
-        defaultPort: Int = 9067,
+        networkName: String = "VRSC",
+        defaultHost: String = "lwdlegacy.blur.cash",
+        defaultPort: Int = 443,
         newWallet: Boolean,
         promise: Promise,
     ) = moduleScope.launch {
@@ -50,6 +51,13 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             val network = networks.getOrDefault(networkName, ZcashNetwork.Mainnet)
             val endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
             val seedPhrase = SeedPhrase.new(seed)
+            val transparentKey: ByteArray
+            if (!wif.isNullOrEmpty()) {
+                val decodedWif = wif.decodeBase58WithChecksum()
+                transparentKey = decodedWif!!.copyOfRange(1, decodedWif.size)
+            } else {
+                transparentKey = byteArrayOf()
+            }
             val initMode = if (newWallet) WalletInitMode.NewWallet else WalletInitMode.ExistingWallet
             if (!synchronizerMap.containsKey(alias)) {
                 synchronizerMap[alias] =
@@ -61,6 +69,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         seedPhrase.toByteArray(),
                         BlockHeight.new(network, birthdayHeight.toLong()),
                         initMode,
+                        transparentKey,
                     ) as SdkSynchronizer
             }
             val wallet = getWallet(alias)
