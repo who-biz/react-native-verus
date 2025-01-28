@@ -229,13 +229,43 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         moduleScope.launch {
             promise.wrap {
                 val seedPhrase = SeedPhrase.new(seed)
-                val keys =
-                    DerivationTool.getInstance().deriveUnifiedFullViewingKeys(
+                val spendingKey =
+                    DerivationTool.getInstance().deriveUnifiedSpendingKey(
+                        byteArrayOf(),
                         seedPhrase.toByteArray(),
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                        DerivationTool.DEFAULT_NUMBER_OF_ACCOUNTS,
-                    )[0]
+                        1,
+                    )
+                val keys =
+                    DerivationTool.getInstance().deriveUnifiedFullViewingKey(
+                        spendingKey,
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                    )
+          //      console.log(keys);
                 return@wrap keys.encoding
+            }
+        }
+    }
+
+
+    @ReactMethod
+    fun deriveShieldedSpendingKey(
+        seed: String,
+        network: String = "VRSC",
+        promise: Promise,
+    ) {
+        moduleScope.launch {
+            promise.wrap {
+                val seedPhrase = SeedPhrase.new(seed)
+                val key =
+                    DerivationTool.getInstance().deriveUnifiedSpendingKey(
+                        byteArrayOf(),
+                        seedPhrase.toByteArray(),
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                        1,
+                    )
+        //        console.log(key);
+                return@wrap key.encoding
             }
         }
     }
