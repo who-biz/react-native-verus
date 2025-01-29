@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
@@ -226,6 +227,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
+        Log.w("ReactNative", "deriveViewingKey called!!")
         moduleScope.launch {
             promise.wrap {
                 val seedPhrase = SeedPhrase.new(seed)
@@ -234,14 +236,15 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         byteArrayOf(),
                         seedPhrase.toByteArray(),
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                        1,
+                        Account.DEFAULT,
                     )
+                Log.w("ReactNative", spendingKey.toString())
                 val keys =
                     DerivationTool.getInstance().deriveUnifiedFullViewingKey(
                         spendingKey,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-          //      console.log(keys);
+                Log.i("ReactNative", "keys:" + keys.encoding);
                 return@wrap keys.encoding
             }
         }
@@ -262,11 +265,13 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         byteArrayOf(),
                         seedPhrase.toByteArray(),
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                        1,
+                        Account.DEFAULT,
                     )
-        //        console.log(key);
-                return@wrap key.encoding
+                return@wrap key
             }
+            //Log.w("ReactNative", "seed:" + seed)
+
+            //Log.i("spendingKey", "key:" + key.toString());
         }
     }
 
