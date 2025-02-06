@@ -38,6 +38,11 @@ export interface UnifiedViewingKey {
   extpub: string
 }
 
+export interface UnifiedSpendingKey {
+  account: string
+  usk: string
+}
+
 export interface BalanceEvent {
   transparentAvailableZatoshi: string
   transparentTotalZatoshi: string

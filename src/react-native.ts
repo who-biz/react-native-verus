@@ -15,7 +15,8 @@ import {
   SpendSuccess,
   SynchronizerCallbacks,
   Transaction,
-  UnifiedViewingKey
+  UnifiedViewingKey,
+  UnifiedSpendingKey
 } from './types'
 export * from './types'
 
