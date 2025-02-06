@@ -1,4 +1,4 @@
-export type Network = 'mainnet' | 'testnet'
+export type Network = 'mainnet' | 'testnet' | 'VRSC'
 
 export interface InitializerConfig {
   networkName: Network

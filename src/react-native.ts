@@ -27,15 +27,17 @@ type Callback = (...args: any[]) => any
 export const Tools = {
   deriveViewingKey: async (
     seedBytesHex: string,
-    network: Network
+    network: Network = 'VRSC'
   ): Promise<UnifiedViewingKey> => {
+    console.log("deriveShieldedViewingkey called!")
     const result = await VerusLightClient.deriveViewingKey(seedBytesHex, network)
     return result
   },
   deriveShieldedSpendingKey: async (
     seedBytesHex: string,
-    network: Network
+    network: Network = 'VRSC'
   ): Promise<UnifiedSpendingKey> => {
+    console.log("deriveShieldedSpendkey called!")
     const result = await VerusLightClient.deriveShieldedSpendingKey(seedBytesHex, network)
     return result
   },
@@ -45,7 +47,7 @@ export const Tools = {
   },
   isValidAddress: async (
     address: string,
-    network: Network = 'mainnet'
+    network: Network = 'VRSC'
   ): Promise<boolean> => {
     const result = await VerusLightClient.isValidAddress(address, network)
     return result

@@ -257,6 +257,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
+        Log.d("ReactNative", "deriveShieldedSpendingKeyCalled!");
         moduleScope.launch {
             promise.wrap {
                 val seedPhrase = SeedPhrase.new(seed)
@@ -267,11 +268,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
+                Log.w("ReactNative", "seed:" + seed);
+
+                Log.i("spendingKey", "key:" + key.toString());
                 return@wrap key
             }
-            //Log.w("ReactNative", "seed:" + seed)
-
-            //Log.i("spendingKey", "key:" + key.toString());
         }
     }
 
