@@ -31,6 +31,13 @@ export const Tools = {
     const result = await VerusLightClient.deriveViewingKey(seedBytesHex, network)
     return result
   },
+  deriveShieldedSpendingKey: async (
+    seedBytesHex: string,
+    network: Network
+  ): Promise<UnifiedSpendingKey> => {
+    const result = await VerusLightClient.deriveShieldedSpendingKey(seedBytesHex, network)
+    return result
+  },
   getBirthdayHeight: async (host: string, port: number): Promise<number> => {
     const result = await VerusLightClient.getBirthdayHeight(host, port)
     return result
