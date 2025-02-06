@@ -227,7 +227,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
-        Log.w("ReactNative", "deriveViewingKey called!!")
+        Log.d("ReactNative", "deriveViewingKey called!!")
         moduleScope.launch {
             promise.wrap {
                 val seedPhrase = SeedPhrase.new(seed)
