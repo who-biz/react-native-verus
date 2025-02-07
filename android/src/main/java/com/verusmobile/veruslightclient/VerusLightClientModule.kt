@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import android.util.Log
 
+@OptIn(kotlin.ExperimentalStdlibApi::class)
 class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
     /**
