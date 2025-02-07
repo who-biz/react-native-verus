@@ -453,7 +453,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     //
     // AddressTool
     //
-
     @ReactMethod
     fun deriveShieldedAddress(
         seed: String,
@@ -478,10 +477,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     )
                 val shieldedAddress =
                     DerivationTool.getInstance().deriveShieldedAddress(
-                        viewingKey.toString(),
+                        viewingKey.encoding,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet)
                     )
-                Log.w("ReactNative", "spendingKey = " +spendingKey.copyBytes().toHexString())
+                Log.w("ReactNative", "spendingKey = " + spendingKey.copyBytes().toHexString())
                 Log.w("ReactNative", "viewingKey: " + viewingKey.encoding);
                 Log.w("ReactNative", "shieldedAddress: " + shieldedAddress);
                 return@wrap shieldedAddress
