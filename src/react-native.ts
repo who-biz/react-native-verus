@@ -41,6 +41,14 @@ export const Tools = {
     const result = await VerusLightClient.deriveShieldedSpendingKey(seedBytesHex, network)
     return result
   },
+  deriveShieldedAddress: async (
+    seedBytesHex: string,
+    network: Network = 'VRSC'
+  ): Promise<UnifiedSpendingKey> => {
+    console.log("deriveShieldedAddress called!")
+    const result = await VerusLightClient.deriveShieldedAddress(seedBytesHex, network)
+    return result
+  },
   getBirthdayHeight: async (host: string, port: number): Promise<number> => {
     const result = await VerusLightClient.getBirthdayHeight(host, port)
     return result
