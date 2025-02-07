@@ -454,6 +454,30 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     // AddressTool
     //
     @ReactMethod
+    fun deriveShieldedAddressFromSeed(
+        seed: String,
+        network: String = "VRSC",
+        promise: Promise,
+    ) {
+        moduleScope.launch {
+            promise.wrap {
+                val seedPhrase = SeedPhrase.new(seed)
+                val shieldedAddress =
+                    DerivationTool.getInstance().deriveShieldedAddress(
+                        seedPhrase.toByteArray(),
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                        Account(1)
+                    )
+                Log.w("ReactNative", "shieldedAddress: " + shieldedAddress);
+                return@wrap shieldedAddress
+            }
+        }
+    }
+
+    //
+    // AddressTool
+    //
+    @ReactMethod
     fun deriveShieldedAddress(
         seed: String,
         network: String = "VRSC",

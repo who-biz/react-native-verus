@@ -42,11 +42,19 @@ export const Tools = {
     return result
   },
   deriveShieldedAddress: async (
+    viewingKey: string,
+    network: Network = 'VRSC'
+  ): Promise<String> => {
+    console.log("deriveShieldedAddress called!")
+    const result = await VerusLightClient.deriveShieldedAddress(viewingKey, network)
+    return result
+  },
+  deriveShieldedAddressFromSeed: async (
     seedBytesHex: string,
     network: Network = 'VRSC'
-  ): Promise<UnifiedSpendingKey> => {
-    console.log("deriveShieldedAddress called!")
-    const result = await VerusLightClient.deriveShieldedAddress(seedBytesHex, network)
+  ): Promise<String> => {
+    console.log("deriveShieldedAddressFromSeed called!")
+    const result = await VerusLightClient.deriveShieldedAddressFromSeed(seedBytesHex, network)
     return result
   },
   getBirthdayHeight: async (host: string, port: number): Promise<number> => {
