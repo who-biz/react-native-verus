@@ -42,11 +42,11 @@ export const Tools = {
     return result
   },
   deriveShieldedAddress: async (
-    viewingKey: string,
+    seedBytesHex: string,
     network: Network = 'VRSC'
   ): Promise<String> => {
     console.log("deriveShieldedAddress called!")
-    const result = await VerusLightClient.deriveShieldedAddress(viewingKey, network)
+    const result = await VerusLightClient.deriveShieldedAddress(seedBytesHex, network)
     return result
   },
   deriveShieldedAddressFromSeed: async (

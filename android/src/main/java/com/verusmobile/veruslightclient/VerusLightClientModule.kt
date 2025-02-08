@@ -245,7 +245,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         spendingKey,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                Log.i("ReactNative", "keys:" + keys.encoding);
+                Log.i("ReactNative", "keys: " + keys.encoding);
                 return@wrap keys.encoding
             }
         }
