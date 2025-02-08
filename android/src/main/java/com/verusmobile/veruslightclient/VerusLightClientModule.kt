@@ -253,7 +253,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
 
     @ReactMethod
-    fun deriveShieldedSpendingKey(
+    fun deriveSaplingSpendingKey(
         seed: String,
         network: String,
         promise: Promise,
@@ -262,17 +262,16 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         moduleScope.launch {
             promise.wrap {
                 val seedPhrase = SeedPhrase.new(seed)
-                val keys =
-                    DerivationTool.getInstance().deriveUnifiedSpendingKey(
-                        byteArrayOf(),
+                val key =
+                    DerivationTool.getInstance().deriveSaplingSpendingKey(
                         seedPhrase.toByteArray(),
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
                 Log.w("ReactNative", "seed: " + seed);
 
-                Log.i("ReactNative", "keys: " + keys.copyBytes().toHexString());
-                return@wrap keys.copyBytes().toHexString()
+                Log.i("ReactNative", "key: " + key.copyBytes().toHexString());
+                return@wrap key.copyBytes().toHexString()
             }
         }
     }

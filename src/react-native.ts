@@ -33,12 +33,12 @@ export const Tools = {
     const result = await VerusLightClient.deriveViewingKey(seedBytesHex, network)
     return result
   },
-  deriveShieldedSpendingKey: async (
+  deriveSaplingSpendingKey: async (
     seedBytesHex: string,
     network: Network = 'VRSC'
   ): Promise<UnifiedSpendingKey> => {
     console.log("deriveShieldedSpendkey called!")
-    const result = await VerusLightClient.deriveShieldedSpendingKey(seedBytesHex, network)
+    const result = await VerusLightClient.deriveSaplingSpendingKey(seedBytesHex, network)
     return result
   },
   deriveShieldedAddress: async (
