@@ -5,6 +5,7 @@ export interface InitializerConfig {
   defaultHost: string
   defaultPort: number
   mnemonicSeed: string
+  wif: string
   alias: string
   birthdayHeight: number
   newWallet: boolean

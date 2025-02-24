@@ -92,6 +92,7 @@ export class Synchronizer {
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
     await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
+      initializerConfig.wif,
       initializerConfig.birthdayHeight,
       initializerConfig.alias,
       initializerConfig.networkName,
