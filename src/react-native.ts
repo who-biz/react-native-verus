@@ -77,7 +77,7 @@ export class Synchronizer {
   network: Network
 
   constructor(alias: string, network: Network) {
-    this.eventEmitter = new NativeEventEmitter(VerusLightClient)
+    this.eventEmitter = new NativeEventEmitter(/*VerusLightClient*/)
     this.subscriptions = []
     this.alias = alias
     this.network = network
