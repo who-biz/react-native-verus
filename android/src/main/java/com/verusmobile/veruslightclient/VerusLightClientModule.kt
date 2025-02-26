@@ -49,7 +49,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         newWallet: Boolean,
         promise: Promise,
     ) = moduleScope.launch {
+        Log.w("ReactNative", "initializer, before promise");
         promise.wrap {
+            Log.w("ReactNative", "Initializer, start func")
             val network = networks.getOrDefault(networkName, ZcashNetwork.Mainnet)
             val endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
             val seedPhrase = SeedPhrase.new(seed)
@@ -60,6 +62,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             } else {
                 transparentKey = byteArrayOf()
             }
+            Log.w("ReactNative", "Initializer bp1");
             val initMode = if (newWallet) WalletInitMode.NewWallet else WalletInitMode.ExistingWallet
             if (!synchronizerMap.containsKey(alias)) {
                 synchronizerMap[alias] =
@@ -74,6 +77,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         transparentKey,
                     ) as SdkSynchronizer
             }
+            Log.w("ReactNative", "Initializer bp2");
             val wallet = getWallet(alias)
             val scope = wallet.coroutineScope
             combine(wallet.progress, wallet.networkHeight) { progress, networkHeight ->
@@ -98,6 +102,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     args.putString("name", status.toString())
                 }
             }
+            Log.w("ReactNative", "Initializer bp3");
             wallet.transactions.collectWith(scope) { txList ->
                 scope.launch {
                     val nativeArray = Arguments.createArray()
@@ -117,6 +122,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     }
                 }
             }
+            Log.w("ReactNative", "Initializer bp4");
             combine(
                 wallet.transparentBalance,
                 wallet.saplingBalances,
@@ -140,6 +146,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
                 /*val orchardAvailableZatoshi = orchardBalances?.available ?: Zatoshi(0L)
                 val orchardTotalZatoshi = orchardBalances?.total ?: Zatoshi(0L)*/
+
+                Log.w("ReactNative", "Initializer bp5");
 
                 sendEvent("BalanceEvent") { args ->
                     args.putString("alias", alias)

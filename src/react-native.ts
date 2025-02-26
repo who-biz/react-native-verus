@@ -90,7 +90,7 @@ export class Synchronizer {
   }
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
-    console.warn("within initialize func")
+    console.warn("within initialize func, before await")
     await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
       initializerConfig.wif,
@@ -101,6 +101,7 @@ export class Synchronizer {
       initializerConfig.defaultPort,
       initializerConfig.newWallet
     )
+    console.warn("within initialize func, after await")
   }
 
   async deriveUnifiedAddress(): Promise<Addresses> {
