@@ -1,7 +1,7 @@
 export type Network = 'mainnet' | 'testnet' | 'VRSC'
 
 export interface InitializerConfig {
-  networkName: Network
+  networkName: string
   defaultHost: string
   defaultPort: number
   mnemonicSeed: string

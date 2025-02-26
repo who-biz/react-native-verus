@@ -74,9 +74,9 @@ export class Synchronizer {
   eventEmitter: NativeEventEmitter
   subscriptions: EventSubscription[]
   alias: string
-  network: Network
+  network: string
 
-  constructor(alias: string, network: Network) {
+  constructor(alias: string, network: string) {
     this.eventEmitter = new NativeEventEmitter(/*VerusLightClient*/)
     this.subscriptions = []
     this.alias = alias
@@ -90,6 +90,7 @@ export class Synchronizer {
   }
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
+    console.warn("within initialize func")
     await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
       initializerConfig.wif,
@@ -188,10 +189,13 @@ export class Synchronizer {
 export const makeSynchronizer = async (
   initializerConfig: InitializerConfig
 ): Promise<Synchronizer> => {
+  console.warn("before constructor in makeSynchronizer")
   const synchronizer = new Synchronizer(
     initializerConfig.alias,
     initializerConfig.networkName
   )
+  console.warn("before synchronizer.initialize()")
   await synchronizer.initialize(initializerConfig)
+  console.warn("before return synchronizer")
   return synchronizer
 }
