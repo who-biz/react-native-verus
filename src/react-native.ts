@@ -91,6 +91,15 @@ export class Synchronizer {
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
     console.warn("within initialize func, before await")
+    console.warn("mnemonicSeed" + initializerConfig.mnemonicSeed);
+    console.warn("wif" + initializerConfig.wif);
+    console.warn("birthday" + initializerConfig.birthdayHeight);
+    console.warn("alias" + initializerConfig.alias);
+    console.warn("networkName" + initializerConfig.networkName);
+    console.warn("host" + initializerConfig.defaultHost);
+    console.warn("port" + initializerConfig.defaultPort);
+    console.warn("newWallet" + initializerConfig.newWallet);
+
     await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
       initializerConfig.wif,
