@@ -460,6 +460,25 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     //
     // AddressTool
     //
+
+    @ReactMethod
+    fun deriveSaplingAddress(
+        alias: String,
+        promise: Promise,
+    ) {
+        val wallet = getWallet(alias)
+        wallet.coroutineScope.launch {
+            promise.wrap {
+                val saplingAddress = wallet.getSaplingAddress(Account(0))
+
+                return@wrap saplingAddress
+            }
+        }
+    }
+
+    //
+    // AddressTool
+    //
     @ReactMethod
     fun deriveShieldedAddressFromSeed(
         seed: String,

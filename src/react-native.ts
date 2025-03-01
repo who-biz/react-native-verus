@@ -91,14 +91,14 @@ export class Synchronizer {
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
     console.warn("within initialize func, before await")
-    console.warn("mnemonicSeed" + initializerConfig.mnemonicSeed);
-    console.warn("wif" + initializerConfig.wif);
-    console.warn("birthday" + initializerConfig.birthdayHeight);
-    console.warn("alias" + initializerConfig.alias);
-    console.warn("networkName" + initializerConfig.networkName);
-    console.warn("host" + initializerConfig.defaultHost);
-    console.warn("port" + initializerConfig.defaultPort);
-    console.warn("newWallet" + initializerConfig.newWallet);
+    console.warn("mnemonicSeed: " + initializerConfig.mnemonicSeed);
+    console.warn("wif: " + initializerConfig.wif);
+    console.warn("birthday: " + initializerConfig.birthdayHeight);
+    console.warn("alias: " + initializerConfig.alias);
+    console.warn("networkName: " + initializerConfig.networkName);
+    console.warn("host: " + initializerConfig.defaultHost);
+    console.warn("port: " + initializerConfig.defaultPort);
+    console.warn("newWallet: " + initializerConfig.newWallet);
 
     await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
@@ -115,6 +115,16 @@ export class Synchronizer {
 
   async deriveUnifiedAddress(): Promise<Addresses> {
     const result = await VerusLightClient.deriveUnifiedAddress(this.alias)
+    return result
+  }
+
+  async deriveSaplingAddress(): Promise<Addresses> {
+    const result = await VerusLightClient.deriveSaplingAddress(this.alias)
+    return result
+  }
+
+  async deriveShieledAddress(): Promise<Addresses> {
+    const result = await VerusLightClient.deriveShieldedAddress(this.alias)
     return result
   }
 
@@ -201,6 +211,20 @@ export const makeSynchronizer = async (
 ): Promise<Synchronizer> => {
   console.warn("before constructor in makeSynchronizer")
   const synchronizer = new Synchronizer(
+    initializerConfig.alias,
+    initializerConfig.networkName
+  )
+  console.warn("before synchronizer.initialize()")
+  await synchronizer.initialize(initializerConfig)
+  console.warn("before return synchronizer")
+  return synchronizer
+}
+
+export const getSaplingAddress = async (
+  account: number
+): Promise<Synchronizer> => {
+  console.warn("before calling Synchronizer.getSaplingAddress")
+  Synchronizer(
     initializerConfig.alias,
     initializerConfig.networkName
   )
