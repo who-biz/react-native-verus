@@ -118,7 +118,7 @@ export class Synchronizer {
     return result
   }
 
-  async deriveSaplingAddress(): Promise<Addresses> {
+  async deriveSaplingAddress(): Promise<string> {
     const result = await VerusLightClient.deriveSaplingAddress(this.alias)
     return result
   }
@@ -221,15 +221,15 @@ export const makeSynchronizer = async (
 }
 
 export const getSaplingAddress = async (
-  account: number
-): Promise<Synchronizer> => {
+  alias: string,
+  networkName: string
+): Promise<String> => {
   console.warn("before calling Synchronizer.getSaplingAddress")
-  Synchronizer(
-    initializerConfig.alias,
-    initializerConfig.networkName
+  const synchronizer = new Synchronizer(
+    alias,
+    networkName
   )
-  console.warn("before synchronizer.initialize()")
-  await synchronizer.initialize(initializerConfig)
-  console.warn("before return synchronizer")
-  return synchronizer
+  const address = await synchronizer.deriveSaplingAddress()
+  console.warn("before return saplingAddress: " + address)
+  return address
 }
