@@ -113,6 +113,12 @@ export class Synchronizer {
     console.warn("within initialize func, after await")
   }
 
+  private static _instance = new Synchronizer(this.alias, this.network);
+
+  static get instance() {
+    return this._instance;
+  }
+
   async deriveUnifiedAddress(): Promise<Addresses> {
     const result = await VerusLightClient.deriveUnifiedAddress(this.alias)
     return result
@@ -220,16 +226,14 @@ export const makeSynchronizer = async (
   return synchronizer
 }
 
+export const SdkSynchronizer = Synchronizer.instance;
+
 export const getSaplingAddress = async (
   alias: string,
   networkName: string
 ): Promise<String> => {
   console.warn("before calling Synchronizer.getSaplingAddress")
-  const synchronizer = new Synchronizer(
-    alias,
-    networkName
-  )
-  const address = await synchronizer.deriveSaplingAddress()
+  const address = await SdkSynchronizer.deriveSaplingAddress()
   console.warn("before return saplingAddress: " + address)
   return address
 }
