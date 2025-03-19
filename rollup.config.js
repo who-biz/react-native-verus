@@ -5,7 +5,7 @@ import resolve from 'rollup-plugin-node-resolve'
 
 import packageJson from './package.json'
 
-const extensions = ['.ts']
+const extensions = ['.js']
 const babelOpts = {
   babelrc: false,
   extensions,
@@ -40,7 +40,7 @@ export default [
   // React Native build:
   {
     external,
-    input: 'src/react-native.ts',
+    input: 'src/react-native.js',
     output: [{ file: packageJson.main, format: 'cjs', sourcemap: true }],
     plugins: [resolve(resolveOpts), babel(babelOpts), filesize()]
   }
