@@ -5,7 +5,7 @@ import resolve from 'rollup-plugin-node-resolve'
 
 import packageJson from './package.json'
 
-const extensions = ['.ts']
+const extensions = ['.js']
 const babelOpts = {
   babelrc: false,
   extensions,
