@@ -24,6 +24,8 @@ const { VerusLightClient } = NativeModules
 
 type Callback = (...args: any[]) => any
 
+let synchronizerInstance: Synchronizer;
+
 export const Tools = {
   deriveViewingKey: async (
     seedBytesHex: string,
@@ -212,18 +214,25 @@ export class Synchronizer {
   }
 }
 
+export const getSynchronizerInstance = (
+  alias: string,
+  network: string
+): Synchronizer => {
+  if (!synchronizerInstance) { 
+    synchronizerInstance = new Synchronizer(alias, network);
+  }
+  return synchronizerInstance;
+}
+
 export const makeSynchronizer = async (
   initializerConfig: InitializerConfig
 ): Promise<Synchronizer> => {
-  console.warn("before constructor in makeSynchronizer")
-  const synchronizer = new Synchronizer(
-    initializerConfig.alias,
-    initializerConfig.networkName
-  )
+  console.warn("before getSynchronizerInstance in makeSynchronizer")
+  getSynchronizerInstance(initializerConfig.alias, initializerConfig.networkName);
   console.warn("before synchronizer.initialize()")
-  await synchronizer.initialize(initializerConfig)
+  await synchronizerInstance.initialize(initializerConfig)
   console.warn("before return synchronizer")
-  return synchronizer
+  return synchronizerInstance;
 }
 
 //export const SdkSynchronizer = Synchronizer.instance;
