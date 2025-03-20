@@ -470,8 +470,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         wallet.coroutineScope.launch {
             promise.wrap {
                 val saplingAddress = wallet.getSaplingAddress(Account(0))
+                val saplingAddresses: Array<String> = arrayOf(saplingAddress)
 
-                return@wrap saplingAddress
+                return@wrap saplingAddresses
             }
         }
     }

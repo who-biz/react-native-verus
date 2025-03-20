@@ -124,7 +124,7 @@ export class Synchronizer {
     return result
   }
 
-  async deriveSaplingAddress(): Promise<string> {
+  async deriveSaplingAddress(): Promise<string[]> {
     const result = await VerusLightClient.deriveSaplingAddress(this.alias)
     return result
   }
