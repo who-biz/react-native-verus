@@ -177,11 +177,15 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         promise.wrap {
             combine(
                 wallet.progress,
-                wallet.networkHeight/*, wallet.latestHeight, wallet.status*/
-            ) { progress, networkHeight/*, latestHeight, status*/ ->
+                wallet.networkHeight,
+                /*wallet.latestHeight,*/
+                wallet.status
+            ) { progress, networkHeight/*, latestHeight*/, status ->
                 return@combine mapOf(
                     "progress" to progress,
-                    "networkHeight" to networkHeight /*, "latestHeight" to latestHeight, "status" to status*/
+                    "networkHeight" to networkHeight,
+                    /*"latestHeight" to latestHeight,*/
+                    "status" to status
                 )
             }.collectWith(scope) { map ->
                 val progress = map["progress"] as PercentDecimal
@@ -190,18 +194,29 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 if (networkBlockHeight == null) networkBlockHeight =
                     BlockHeight.new(wallet.network, /*wallet.birthday*/ 227520)
                 Log.w("ReactNative", "networkBlockHeight: " + networkBlockHeight.value.toInt());
+                val status = map["status"]
+                Log.w("ReactNative", "wallet status: " + status.toString().lowercase())
 
-                /*val latestHeight = map["latestHeight"] as BlockHeight?
-                Log.w("ReactNative", "latestBlockHeight: " + latestBlockHeight.value.toInt());
-                val status = map["status"] as String
-                Log.w("ReactNative", "status: " + status.value.toString());*/
+                //val latestHeight = wallet.latestHeight as BlockHeight
 
 
                 mapRes.putString("percent", progress.toPercentage().toString())
                 mapRes.putInt("longestchain", networkBlockHeight.value.toInt())
-                /*mapRes.putInt("blocks", latestBlockHeight.value.toInt())
-                mapRes.putString("status", status.value.toString().lowercase())*/
+                //mapRes.putInt("blocks", latestHeight.value.toInt())
+                mapRes.putString("status", status.toString().lowercase())
             }
+            var latestHeight = wallet.latestHeight as BlockHeight?
+            if (latestHeight == null) latestHeight =
+                BlockHeight.new(wallet.network, /*wallet.birthday*/ 227520)
+            Log.w("ReactNative", "latestBlockHeight: " + latestHeight.value.toInt());
+            mapRes.putInt("blocks", latestHeight.value.toInt())
+            /*wallet.status.collectWith(scope) { status ->
+                Log.w("ReactNative", "status: " + status.toString().lowercase())
+                mapRes.putString("status", status.toString().lowercase())
+            }*/
+            //var status = wallet.status
+            //Log.w("ReactNative", "status: " + status.toString());
+            //mapRes.putString("status", status.toString().lowercase())
             return@wrap mapRes
         }
         return mapRes
