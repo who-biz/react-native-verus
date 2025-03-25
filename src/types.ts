@@ -105,3 +105,10 @@ export interface Addresses {
   saplingAddress: string
   transparentAddress: string
 }
+
+export interface InfoResponse {
+  percent: string
+  longestchain: number
+  blocks: number
+  status: string
+}

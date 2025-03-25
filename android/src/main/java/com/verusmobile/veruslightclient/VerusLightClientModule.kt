@@ -166,6 +166,28 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
+    fun getInfo(
+        alias: String,
+        promise: Promise,
+    ) {
+      val wallet = getWallet(alias)
+      wallet.coroutineScope.launch {
+          promise.wrap {
+            val map = Arguments.createMap()
+            val progress = wallet.progress as PercentDecimal;
+            map.putString("percent", progress.toString());
+            val networkHeight = wallet.networkHeight as BlockHeight;
+            map.putInt("longestchain", networkHeight.value.toInt());
+            val blocks = wallet.latestHeight as BlockHeight;
+            map.putInt("blocks", blocks.value.toInt());
+            val status = wallet.status.toString().lowercase();
+            map.putString("status", status);
+            return@wrap map
+          }
+       }
+    }
+
+    @ReactMethod
     fun stop(
         alias: String,
         promise: Promise,

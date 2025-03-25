@@ -7,6 +7,7 @@ import {
 
 import {
   Addresses,
+  InfoResponse,
   InitializerConfig,
   Network,
   ShieldFundsInfo,
@@ -120,6 +121,11 @@ export class Synchronizer {
 //  static get instance() {
 //    return this._instance;
 //  }
+
+  async getInfo(): Promise<InfoResponse> {
+    const result = await VerusLightClient.getInfo(this.alias)
+    return result
+  }
 
   async deriveUnifiedAddress(): Promise<Addresses> {
     const result = await VerusLightClient.deriveUnifiedAddress(this.alias)
