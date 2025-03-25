@@ -124,6 +124,7 @@ export class Synchronizer {
 
   async getInfo(): Promise<InfoResponse> {
     const result = await VerusLightClient.getInfo(this.alias)
+    console.log(JSON.stringify(result));
     return result
   }
 
