@@ -169,22 +169,42 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     fun getInfo(
         alias: String,
         promise: Promise,
-    ) {
-      val wallet = getWallet(alias)
-      wallet.coroutineScope.launch {
-          promise.wrap {
-            val map = Arguments.createMap()
-            val progress = wallet.progress as PercentDecimal;
-            map.putString("percent", progress.toString());
-            val networkHeight = wallet.networkHeight as BlockHeight;
-            map.putInt("longestchain", networkHeight.value.toInt());
-            val blocks = wallet.latestHeight as BlockHeight;
-            map.putInt("blocks", blocks.value.toInt());
-            val status = wallet.status.toString().lowercase();
-            map.putString("status", status);
-            return@wrap map
-          }
-       }
+    ): WritableMap {
+      Log.w("ReactNative", "getInfo called");
+            val wallet = getWallet(alias)
+            val scope = wallet.coroutineScope
+            val mapRes = Arguments.createMap()
+        promise.wrap {
+            combine(
+                wallet.progress,
+                wallet.networkHeight/*, wallet.latestHeight, wallet.status*/
+            ) { progress, networkHeight/*, latestHeight, status*/ ->
+                return@combine mapOf(
+                    "progress" to progress,
+                    "networkHeight" to networkHeight /*, "latestHeight" to latestHeight, "status" to status*/
+                )
+            }.collectWith(scope) { map ->
+                val progress = map["progress"] as PercentDecimal
+                Log.w("ReactNative", "progress: " + progress.toPercentage().toString());
+                var networkBlockHeight = map["networkHeight"] as BlockHeight?
+                if (networkBlockHeight == null) networkBlockHeight =
+                    BlockHeight.new(wallet.network, /*wallet.birthday*/ 227520)
+                Log.w("ReactNative", "networkBlockHeight: " + networkBlockHeight.value.toInt());
+
+                /*val latestHeight = map["latestHeight"] as BlockHeight?
+                Log.w("ReactNative", "latestBlockHeight: " + latestBlockHeight.value.toInt());
+                val status = map["status"] as String
+                Log.w("ReactNative", "status: " + status.value.toString());*/
+
+
+                mapRes.putString("percent", progress.toPercentage().toString())
+                mapRes.putInt("longestchain", networkBlockHeight.value.toInt())
+                /*mapRes.putInt("blocks", latestBlockHeight.value.toInt())
+                mapRes.putString("status", status.value.toString().lowercase())*/
+            }
+            return@wrap mapRes
+        }
+        return mapRes
     }
 
     @ReactMethod
