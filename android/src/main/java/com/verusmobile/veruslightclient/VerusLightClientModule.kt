@@ -165,15 +165,16 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
     }
 
+
     @ReactMethod
     fun getInfo(alias: String, promise: Promise) {
         Log.w("ReactNative", "getInfo called")
         val wallet = getWallet(alias)
         val scope = wallet.coroutineScope
 
-        val birthdayHeight: Long = (wallet.latestBirthdayHeight ?: BlockHeight.new(wallet.network, 227520)).value.toLong()
+        val birthdayHeight = wallet.latestBirthdayHeight;
 
-        val latestHeight: BlockHeight = wallet.latestHeight ?: BlockHeight.new(wallet.network, birthdayHeight)
+        val latestHeight: BlockHeight = wallet.latestHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)
 
         scope.launch {
             try {
@@ -184,7 +185,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 ) { progress, networkHeight, status ->
                     mapOf(
                         "progress" to progress,
-                        "networkHeight" to (networkHeight ?: BlockHeight.new(wallet.network, birthdayHeight)),
+                        "networkHeight" to (networkHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)),
                         "status" to status
                     )
                 }.first()
@@ -222,32 +223,24 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
         scope.launch {
             try {
-                val map = combine(
-                    wallet.saplingBalances,
-                ) { saplingBalances ->
-                    mapOf(
-                        "saplingBalances" to saplingBalances
-                    )
-                }.first()
-
-                val saplingBalances = map["saplingBalances"] as WalletBalance?
+                val saplingBalances = wallet.saplingBalances.firstOrNull()
                 val saplingAvailableZatoshi = saplingBalances?.available ?: Zatoshi(0L)
                 val saplingTotalZatoshi = saplingBalances?.total ?: Zatoshi(0L)
 
-                Log.w("ReactNative", "saplingBalanceAvailable: ${saplingBalances.available.value}")
+                Log.w("ReactNative", "saplingBalanceAvailable: ${saplingBalances!!.available.value}")
                 Log.w("ReactNative", "saplingBalanceAvailable(Zatoshi): ${saplingAvailableZatoshi}")
-                Log.w("ReactNative", "saplingBalanceTotal: ${saplingBalances.total.value}")
+                Log.w("ReactNative", "saplingBalanceTotal: ${saplingBalances!!.total.value}")
                 Log.w("ReactNative", "saplingBalanceTotal(Zatoshi): ${saplingTotalZatoshi}")
-                Log.w("ReactNative", "saplingBalanceChangePending: ${saplingBalances.changePending}")
-                Log.w("ReactNative", "saplingBalanceValuePending: ${saplingBalances.valuePending}")
+                Log.w("ReactNative", "saplingBalanceChangePending: ${saplingBalances!!.changePending}")
+                Log.w("ReactNative", "saplingBalanceValuePending: ${saplingBalances!!.valuePending}")
 
-                val resultMap = Arguments.createMap().apply {
+                val map = Arguments.createMap().apply {
                     putString("confirmed", saplingBalances.available.value.toString())
                     putString("total", saplingBalances.total.value.toString())
                     putString("pending", saplingBalances.total.minus(saplingBalances.available).value.toString())
                 }
 
-                promise.resolve(resultMap)
+                promise.resolve(map)
 
             } catch (e: Exception) {
                 Log.e("ReactNative", "getPrivateBalance failed", e)
@@ -255,7 +248,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             }
         }
     }
-
 
     @ReactMethod
     fun stop(
