@@ -199,7 +199,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 Log.w("ReactNative", "wallet status: ${status.toString().lowercase()}")
 
                 val resultMap = Arguments.createMap().apply {
-                    putString("percent", progress.toPercentage().toString())
+                    putInt("percent", progress.toPercentage())
                     putInt("longestchain", networkBlockHeight!!.value.toInt())
                     putString("status", status.toString().lowercase())
                     putInt("blocks", latestHeight.value.toInt())

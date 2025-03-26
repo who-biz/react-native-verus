@@ -107,7 +107,7 @@ export interface Addresses {
 }
 
 export interface InfoResponse {
-  percent: string
+  percent: number
   longestchain: number
   blocks: number
   status: string
