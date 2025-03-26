@@ -112,3 +112,9 @@ export interface InfoResponse {
   blocks: number
   status: string
 }
+
+export interface PrivateBalanceResponse {
+  confirmed: number
+  total: number
+  pending: number
+}

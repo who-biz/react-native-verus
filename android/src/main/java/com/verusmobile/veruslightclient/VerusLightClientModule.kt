@@ -215,6 +215,44 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
+    fun getPrivateBalance(alias: String, promise: Promise) {
+        Log.w("ReactNative", "getPrivateBalance called")
+        val wallet = getWallet(alias)
+        val scope = wallet.coroutineScope
+
+        scope.launch {
+            try {
+                val map = combine(
+                    wallet.saplingBalances,
+                ) { saplingBalances ->
+                    mapOf(
+                        "saplingBalances" to saplingBalances
+                    )
+                }.first()
+
+                val saplingBalances = map["saplingBalances"] as WalletBalance?
+
+                Log.w("ReactNative", "saplingBalanceAvailable: ${saplingBalances.avaiable}")
+                Log.w("ReactNative", "saplingBalanceChangePending: ${saplingBalances.changePending}")
+                Log.w("ReactNative", "saplingBalanceValuePending: ${saplingBalances.valuePending}")
+
+                val resultMap = Arguments.createMap().apply {
+                    putInt("confirmed", saplingBalances.available.value)
+                    putInt("total", saplingBalances.total.value)
+                    putInt("pending", saplingBalances.total.minus(saplingBalances.available).value)
+                }
+
+                promise.resolve(resultMap)
+
+            } catch (e: Exception) {
+                Log.e("ReactNative", "getPrivateBalance failed", e)
+                promise.reject("GET_PRIVATE_BALANCE_FAILED", e.message, e)
+            }
+        }
+    }
+
+
+    @ReactMethod
     fun stop(
         alias: String,
         promise: Promise,

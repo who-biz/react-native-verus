@@ -10,6 +10,7 @@ import {
   InfoResponse,
   InitializerConfig,
   Network,
+  PrivateBalanceResponse,
   ShieldFundsInfo,
   SpendFailure,
   SpendInfo,
@@ -124,6 +125,12 @@ export class Synchronizer {
 
   async getInfo(): Promise<InfoResponse> {
     const result = await VerusLightClient.getInfo(this.alias)
+    console.log(JSON.stringify(result));
+    return result
+  }
+
+  async getPrivateBalance(): Promise<PrivateBalanceResponse> {
+    const result = await VerusLightClient.getPrivateBalance(this.alias)
     console.log(JSON.stringify(result));
     return result
   }
