@@ -231,15 +231,20 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 }.first()
 
                 val saplingBalances = map["saplingBalances"] as WalletBalance?
+                val saplingAvailableZatoshi = saplingBalances?.available ?: Zatoshi(0L)
+                val saplingTotalZatoshi = saplingBalances?.total ?: Zatoshi(0L)
 
-                Log.w("ReactNative", "saplingBalanceAvailable: ${saplingBalances.avaiable}")
+                Log.w("ReactNative", "saplingBalanceAvailable: ${saplingBalances.available.value}")
+                Log.w("ReactNative", "saplingBalanceAvailable(Zatoshi): ${saplingAvailableZatoshi}")
+                Log.w("ReactNative", "saplingBalanceTotal: ${saplingBalances.total.value}")
+                Log.w("ReactNative", "saplingBalanceTotal(Zatoshi): ${saplingTotalZatoshi}")
                 Log.w("ReactNative", "saplingBalanceChangePending: ${saplingBalances.changePending}")
                 Log.w("ReactNative", "saplingBalanceValuePending: ${saplingBalances.valuePending}")
 
                 val resultMap = Arguments.createMap().apply {
-                    putInt("confirmed", saplingBalances.available.value)
-                    putInt("total", saplingBalances.total.value)
-                    putInt("pending", saplingBalances.total.minus(saplingBalances.available).value)
+                    putString("confirmed", saplingBalances.available.value.toString())
+                    putString("total", saplingBalances.total.value.toString())
+                    putString("pending", saplingBalances.total.minus(saplingBalances.available).value.toString())
                 }
 
                 promise.resolve(resultMap)

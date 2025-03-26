@@ -114,7 +114,7 @@ export interface InfoResponse {
 }
 
 export interface PrivateBalanceResponse {
-  confirmed: number
-  total: number
-  pending: number
+  confirmed: string
+  total: string
+  pending: string
 }
