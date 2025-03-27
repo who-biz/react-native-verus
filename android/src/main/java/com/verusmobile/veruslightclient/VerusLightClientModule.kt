@@ -182,12 +182,14 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     wallet.processorInfo,
                     wallet.progress,
                     wallet.networkHeight,
+                    wallet.lastScannedHeight,
                     wallet.status
-                ) { processorInfo, progress, networkHeight, status ->
+                ) { processorInfo, progress, networkHeight, lastScannedHeight, status ->
                     mapOf(
                         "processorInfo" to processorInfo,
                         "progress" to progress,
                         "networkHeight" to (networkHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)),
+                        "lastScannedHeight" to (lastScannedHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)),
                         "status" to status
                     )
                 }.first()
@@ -197,8 +199,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 val firstUnenhancedHeight = processorInfo.firstUnenhancedHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
                 val progress = map["progress"] as PercentDecimal
                 val networkBlockHeight = map["networkHeight"] as BlockHeight
+                val lastScannedHeight = map["lastScannedHeight"] as BlockHeight
                 val status = map["status"]
 
+                Log.w("ReactNative", ">>>>> lastScannedHeight(${lastScannedHeight.value})")
                 Log.i("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
                 Log.i("ReactNative", "processorInfo: overallSyncRange(${processorInfo.overallSyncRange})")
                 Log.i("ReactNative", "processorInfo: firstUnenhancedHeight(${firstUnenhancedHeight.value})")
@@ -211,7 +215,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     putInt("percent", progress.toPercentage())
                     putInt("longestchain", networkBlockHeight.value.toInt())
                     putString("status", status.toString().lowercase())
-                    putInt("blocks", firstUnenhancedHeight.value.toInt())
+                    putInt("blocks", lastScannedHeight.value.toInt())
                 }
 
                 promise.resolve(resultMap)
