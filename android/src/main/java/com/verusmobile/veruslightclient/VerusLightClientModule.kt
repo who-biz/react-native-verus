@@ -4,6 +4,7 @@ import cash.z.ecc.android.sdk.SdkSynchronizer
 import cash.z.ecc.android.sdk.Synchronizer
 import cash.z.ecc.android.sdk.WalletInitMode
 import cash.z.ecc.android.sdk.exception.LightWalletException
+import cash.z.ecc.android.sdk.block.processor.CompactBlockProcessor
 import cash.z.ecc.android.sdk.ext.*
 import cash.z.ecc.android.sdk.internal.*
 import cash.z.ecc.android.sdk.model.*
@@ -165,7 +166,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
     }
 
-
     @ReactMethod
     fun getInfo(alias: String, promise: Promise) {
         Log.w("ReactNative", "getInfo called")
@@ -179,31 +179,39 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         scope.launch {
             try {
                 val map = combine(
+                    wallet.processorInfo,
                     wallet.progress,
                     wallet.networkHeight,
                     wallet.status
-                ) { progress, networkHeight, status ->
+                ) { processorInfo, progress, networkHeight, status ->
                     mapOf(
+                        "processorInfo" to processorInfo,
                         "progress" to progress,
                         "networkHeight" to (networkHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)),
                         "status" to status
                     )
                 }.first()
 
+                val processorInfo = map["processorInfo"] as CompactBlockProcessor.ProcessorInfo
+                val processorNetworkHeight = processorInfo.networkBlockHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
+                val firstUnenhancedHeight = processorInfo.firstUnenhancedHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
                 val progress = map["progress"] as PercentDecimal
-                val networkBlockHeight = map["networkHeight"] as BlockHeight?
+                val networkBlockHeight = map["networkHeight"] as BlockHeight
                 val status = map["status"]
 
-                Log.w("ReactNative", "progress: ${progress.toPercentage()}")
-                Log.w("ReactNative", "networkBlockHeight: ${networkBlockHeight!!.value.toInt()}")
+                Log.i("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
+                Log.i("ReactNative", "processorInfo: overallSyncRange(${processorInfo.overallSyncRange})")
+                Log.i("ReactNative", "processorInfo: firstUnenhancedHeight(${firstUnenhancedHeight.value})")
+                Log.w("ReactNative", "progress.toPercentage(): ${progress.toPercentage()}")
+                Log.w("ReactNative", "networkBlockHeight: ${networkBlockHeight.value.toInt()}")
                 Log.w("ReactNative", "latestBlockHeight: ${latestHeight.value.toInt()}")
                 Log.w("ReactNative", "wallet status: ${status.toString().lowercase()}")
 
                 val resultMap = Arguments.createMap().apply {
                     putInt("percent", progress.toPercentage())
-                    putInt("longestchain", networkBlockHeight!!.value.toInt())
+                    putInt("longestchain", networkBlockHeight.value.toInt())
                     putString("status", status.toString().lowercase())
-                    putInt("blocks", latestHeight.value.toInt())
+                    putInt("blocks", firstUnenhancedHeight.value.toInt())
                 }
 
                 promise.resolve(resultMap)
