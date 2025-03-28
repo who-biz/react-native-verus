@@ -182,14 +182,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     wallet.processorInfo,
                     wallet.progress,
                     wallet.networkHeight,
-                    wallet.lastScannedHeight,
                     wallet.status
-                ) { processorInfo, progress, networkHeight, lastScannedHeight, status ->
+                ) { processorInfo, progress, networkHeight, status ->
                     mapOf(
                         "processorInfo" to processorInfo,
                         "progress" to progress,
                         "networkHeight" to (networkHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)),
-                        "lastScannedHeight" to (lastScannedHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)),
                         "status" to status
                     )
                 }.first()
@@ -197,14 +195,14 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 val processorInfo = map["processorInfo"] as CompactBlockProcessor.ProcessorInfo
                 val processorNetworkHeight = processorInfo.networkBlockHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
                 val firstUnenhancedHeight = processorInfo.firstUnenhancedHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
+                val processorScannedHeight = processorInfo.lastScannedHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
                 val progress = map["progress"] as PercentDecimal
                 val networkBlockHeight = map["networkHeight"] as BlockHeight
-                val lastScannedHeight = map["lastScannedHeight"] as BlockHeight
                 val status = map["status"]
 
-                Log.w("ReactNative", ">>>>> lastScannedHeight(${lastScannedHeight.value})")
                 Log.i("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
                 Log.i("ReactNative", "processorInfo: overallSyncRange(${processorInfo.overallSyncRange})")
+                Log.i("ReactNative", "processorInfo: lastScannedHeight(${processorScannedHeight.value})")
                 Log.i("ReactNative", "processorInfo: firstUnenhancedHeight(${firstUnenhancedHeight.value})")
                 Log.w("ReactNative", "progress.toPercentage(): ${progress.toPercentage()}")
                 Log.w("ReactNative", "networkBlockHeight: ${networkBlockHeight.value.toInt()}")
@@ -215,7 +213,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     putInt("percent", progress.toPercentage())
                     putInt("longestchain", networkBlockHeight.value.toInt())
                     putString("status", status.toString().lowercase())
-                    putInt("blocks", lastScannedHeight.value.toInt())
+                    putInt("blocks", processorScannedHeight.value.toInt())
                 }
 
                 promise.resolve(resultMap)
