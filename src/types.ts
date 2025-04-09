@@ -118,3 +118,7 @@ export interface PrivateBalanceResponse {
   total: string
   pending: string
 }
+
+export interface PrivateTransactionsResponse {
+  transactions: Transaction[]
+}

@@ -260,6 +260,39 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
+    fun getPrivateTransactions(alias: String, promise: Promise) {
+        Log.w("ReactNative", "getPrivateBalance called")
+        val wallet = getWallet(alias)
+        val scope = wallet.coroutineScope
+
+        scope.launch {
+            try {
+                val txList = wallet.transactions;
+                val nativeArray = Arguments.createArray();
+                txList.filter { tx -> tx.transactionState != TransactionState.Expired }.map { tx ->
+                    launch {
+                        val parsedTx = parseTx(wallet, tx)
+                        nativeArray.pushMap(parsedTx)
+                    }
+                }.forEach { it.join() }
+
+                Log.e("ReactNative", "transactionsArray: ${nativeArray}")
+
+                val map = Arguments.createMap().apply {
+                    putArray("transactions", nativeArray)
+                }
+
+                promise.resolve(map)
+
+            } catch (e: Exception) {
+                Log.e("ReactNative", "getPrivateTransactions failed", e)
+                promise.reject("GET_PRIVATE_TRANSACTIONS_FAILED", e.message, e)
+            }
+        }
+    }
+
+
+    @ReactMethod
     fun stop(
         alias: String,
         promise: Promise,
