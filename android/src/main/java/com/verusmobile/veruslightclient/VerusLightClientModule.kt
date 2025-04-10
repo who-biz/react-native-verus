@@ -22,6 +22,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import android.util.Log
+import java.lang.Error
 
 @OptIn(kotlin.ExperimentalStdlibApi::class)
 class VerusLightClient(private val reactContext: ReactApplicationContext) :
@@ -264,34 +265,36 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         Log.w("ReactNative", "getPrivateTransactions called")
         val wallet = getWallet(alias)
         val scope = wallet.coroutineScope
+
         try {
-            wallet.transactions.collectWith(scope) { txList ->
-                scope.launch {
-                    val nativeArray = Arguments.createArray();
-                    txList.filter { tx -> tx.transactionState != TransactionState.Expired }
-                        .map { tx ->
-                            launch {
-                                try {
-                                    val recipient = wallet.getRecipients(tx).first()
-                                    Log.w("ReactNative", "TransactionRecipient: ${recipient}");
-                                    //if (recipient is TransactionRecipient.Address) {
-                                    //    map.putString("toAddress", recipient.addressValue)
-                                    //}
-                                } catch (t: Throwable) {
-                                    // Error is OK. SDK limitation means we cannot find recipient for shielding transactions
-                                }
+            scope.launch {
+                try {
+                    val txList = wallet.transactions.first()
+                    val nativeArray = Arguments.createArray()
+
+                    for (tx in txList) {
+                        if (tx.transactionState != TransactionState.Expired) {
+                            try {
                                 val parsedTx = parseTx(wallet, tx)
+                                //Log.d("ReactNative", "Parsed TX Map: ${parsedTx.toString()}")
+
                                 nativeArray.pushMap(parsedTx)
+                            } catch (t: Throwable) {
+                                // It's okay if recipient can't be fetched (e.g. shielding tx) )
                             }
-                        }.forEach { it.join() }
+                        }
+                    }
 
-                    Log.e("ReactNative", "transactionsArray: ${nativeArray}")
+                    //Log.e("ReactNative", "transactionsArray: $nativeArray")
 
-                    val map = Arguments.createMap().apply {
+                    val result = Arguments.createMap().apply {
                         putArray("transactions", nativeArray)
                     }
 
-                    promise.resolve(map)
+                    promise.resolve(result)
+                } catch (e: Exception) {
+                    Log.e("ReactNative", "Error while collecting transactions", e)
+                    promise.reject("GET_PRIVATE_TRANSACTIONS_FAILED", e.message, e)
                 }
             }
         } catch (e: Exception) {
@@ -313,41 +316,83 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
     }
 
+    //TODO: consider adding boolean argument to conditionally include rawTxData
     private suspend fun parseTx(
         wallet: SdkSynchronizer,
         tx: TransactionOverview,
     ): WritableMap {
+        //Log.e("ReactNative", "parseTx called!")
         val map = Arguments.createMap()
-        val job =
-            wallet.coroutineScope.launch {
-                map.putString("value", tx.netValue.value.toString())
-                if (tx.feePaid != null) {
-                    map.putString("fee", tx.feePaid!!.value.toString())
-                }
-                map.putInt("minedHeight", tx.minedHeight?.value?.toInt() ?: 0)
-                map.putInt("blockTimeInSeconds", tx.blockTimeEpochSeconds?.toInt() ?: 0)
-                map.putString("rawTransactionId", tx.rawId.byteArray.toHexReversed())
-                if (tx.raw != null) {
-                    map.putString("raw", tx.raw!!.byteArray.toHex())
-                }
-                if (tx.isSentTransaction) {
-                    try {
-                        val recipient = wallet.getRecipients(tx).first()
-                        if (recipient is TransactionRecipient.Address) {
-                            map.putString("toAddress", recipient.addressValue)
-                        }
-                    } catch (t: Throwable) {
-                        // Error is OK. SDK limitation means we cannot find recipient for shielding transactions
+        try {
+            //Log.d("ReactNative", "TransactionOverview: " + tx.toString())
+            map.putString("amount", tx.netValue.value.toString())
+
+            tx.feePaid?.let {
+                map.putString("fee", it.value.toString())
+            }
+
+            map.putInt("height", tx.minedHeight?.value?.toInt() ?: 0)
+
+            map.putString(
+                "status",
+                if (tx.transactionState == TransactionState.Confirmed) "confirmed" else "pending"
+            )
+
+            map.putInt("time", tx.blockTimeEpochSeconds?.toInt() ?: 0)
+            map.putString("txid", tx.rawId.byteArray.toHexReversed())
+
+            /*tx.raw?.let {
+                map.putString("raw", it.byteArray.toHex())
+            }*/
+
+            //TODO: investigate why the above was causing partial data return...
+            // commenting it out solved the issue where (amount, txid, statu, time, height) was being returned for only one transfer
+            // latter tx only had category, empty memos, and rawTxData
+
+            if (tx.isSentTransaction) {
+                map.putString("category", "sent")
+                try {
+                    val recipient = wallet.getRecipients(tx).firstOrNull()
+                    if (recipient is TransactionRecipient.Address) {
+                        map.putString("address", recipient.addressValue)
                     }
+                } catch (t: Throwable) {
+                    Log.w("ReactNative", "Could not get recipient: ${t.localizedMessage}")
                 }
-                if (tx.memoCount > 0) {
+            } else {
+                map.putString("category", "received")
+                map.putString("address", wallet.getSaplingAddress(Account(0)))
+                //TODO: probably a more graceful way to handle "address" above
+
+                /*try {
+                    val recipient = wallet.getRecipients(tx).firstOrNull() // SDK does not let us retrieve this for received txs
+                    if (recipient is TransactionRecipient.Address) {
+                        map.putString("address", recipient.addressValue)
+                    } else if (recipient is TransactionRecipient.Account) {
+                        Log.e("ReactNative", "TransactionRecipient.Account = ${recipient.accountValue}")
+                        map.putString("addresss", wallet.getSaplingAddress(recipient.accountValue))
+                    }
+                } catch (t: Throwable) {
+                    Log.w("ReactNative", "Could not get recipient: ${t.localizedMessage}")
+                }*/
+            }
+
+            if (tx.memoCount > 0) {
+                try {
                     val memos = wallet.getMemos(tx).take(tx.memoCount).toList()
                     map.putArray("memos", Arguments.fromList(memos))
-                } else {
+                } catch (t: Throwable) {
+                    Log.w("ReactNative", "Could not get memos: ${t.localizedMessage}")
                     map.putArray("memos", Arguments.createArray())
                 }
+            } else {
+                map.putArray("memos", Arguments.createArray())
             }
-        job.join()
+
+        } catch (e: Exception) {
+            Log.w("ReactNative", "Exception while parsing tx: ${e.localizedMessage}")
+        }
+
         return map
     }
 
