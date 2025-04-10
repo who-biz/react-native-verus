@@ -261,7 +261,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun getPrivateTransactions(alias: String, promise: Promise) {
-        Log.w("ReactNative", "getPrivateBalance called")
+        Log.w("ReactNative", "getPrivateTransactions called")
         val wallet = getWallet(alias)
         val scope = wallet.coroutineScope
         try {
@@ -271,6 +271,15 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     txList.filter { tx -> tx.transactionState != TransactionState.Expired }
                         .map { tx ->
                             launch {
+                                try {
+                                    val recipient = wallet.getRecipients(tx).first()
+                                    Log.w("ReactNative", "TransactionRecipient: ${recipient}");
+                                    //if (recipient is TransactionRecipient.Address) {
+                                    //    map.putString("toAddress", recipient.addressValue)
+                                    //}
+                                } catch (t: Throwable) {
+                                    // Error is OK. SDK limitation means we cannot find recipient for shielding transactions
+                                }
                                 val parsedTx = parseTx(wallet, tx)
                                 nativeArray.pushMap(parsedTx)
                             }
