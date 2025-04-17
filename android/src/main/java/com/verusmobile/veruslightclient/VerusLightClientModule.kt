@@ -554,7 +554,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     transparentKey = byteArrayOf()
                 }*/
                 val seedPhrase = SeedPhrase.new(seed)
-                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
+                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, seedPhrase.toByteArray(), wallet.network, Account(0))
                 val internalId =
                     wallet.sendToAddress(
                         usk,
