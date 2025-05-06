@@ -543,6 +543,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         promise: Promise,
     ) {
         val wallet = getWallet(alias)
+        Log.i("ReactNative", "sendToAddress called!");
         wallet.coroutineScope.launch {
             try {
                 val transparentKey = byteArrayOf()
@@ -564,6 +565,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     )
                 val tx = wallet.coroutineScope.async { wallet.transactions.first().first() }.await()
                 val map = Arguments.createMap()
+                Log.i("ReactNative", "sendToAddress: txid(${tx.rawId.byteArray.toHexReversed()}");
                 map.putString("txid", tx.rawId.byteArray.toHexReversed())
                 if (tx.raw != null) map.putString("raw", tx.raw?.byteArray?.toHex())
                 promise.resolve(map)
