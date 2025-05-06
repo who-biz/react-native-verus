@@ -51,9 +51,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         newWallet: Boolean,
         promise: Promise,
     ) = moduleScope.launch {
-        Log.w("ReactNative", "initializer, before promise");
+        //Log.w("ReactNative", "initializer, before promise");
         promise.wrap {
-            Log.w("ReactNative", "Initializer, start func")
+            //Log.w("ReactNative", "Initializer, start func")
             val network = networks.getOrDefault(networkName, ZcashNetwork.Mainnet)
             val endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
             val seedPhrase = SeedPhrase.new(seed)
@@ -64,7 +64,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             } else {
                 transparentKey = byteArrayOf()
             }
-            Log.w("ReactNative", "Initializer bp1");
+            //Log.w("ReactNative", "Initializer bp1");
             val initMode = if (newWallet) WalletInitMode.NewWallet else WalletInitMode.ExistingWallet
             if (!synchronizerMap.containsKey(alias)) {
                 synchronizerMap[alias] =
@@ -79,7 +79,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         transparentKey,
                     ) as SdkSynchronizer
             }
-            Log.w("ReactNative", "Initializer bp2");
+            //Log.w("ReactNative", "Initializer bp2");
             val wallet = getWallet(alias)
             val scope = wallet.coroutineScope
             combine(wallet.progress, wallet.networkHeight) { progress, networkHeight ->
@@ -104,7 +104,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     args.putString("name", status.toString())
                 }
             }
-            Log.w("ReactNative", "Initializer bp3");
+            //Log.w("ReactNative", "Initializer bp3");
             wallet.transactions.collectWith(scope) { txList ->
                 scope.launch {
                     val nativeArray = Arguments.createArray()
@@ -124,7 +124,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     }
                 }
             }
-            Log.w("ReactNative", "Initializer bp4");
+            //Log.w("ReactNative", "Initializer bp4");
             combine(
                 wallet.transparentBalance,
                 wallet.saplingBalances,
@@ -149,7 +149,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 /*val orchardAvailableZatoshi = orchardBalances?.available ?: Zatoshi(0L)
                 val orchardTotalZatoshi = orchardBalances?.total ?: Zatoshi(0L)*/
 
-                Log.w("ReactNative", "Initializer bp5");
+                //Log.w("ReactNative", "Initializer bp5");
 
                 sendEvent("BalanceEvent") { args ->
                     args.putString("alias", alias)
@@ -169,7 +169,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun getInfo(alias: String, promise: Promise) {
-        Log.w("ReactNative", "getInfo called")
+        //Log.w("ReactNative", "getInfo called")
         val wallet = getWallet(alias)
         val scope = wallet.coroutineScope
 
@@ -228,7 +228,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun getPrivateBalance(alias: String, promise: Promise) {
-        Log.w("ReactNative", "getPrivateBalance called")
+        //Log.w("ReactNative", "getPrivateBalance called")
         val wallet = getWallet(alias)
         val scope = wallet.coroutineScope
 
@@ -238,12 +238,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 val saplingAvailableZatoshi = saplingBalances?.available ?: Zatoshi(0L)
                 val saplingTotalZatoshi = saplingBalances?.total ?: Zatoshi(0L)
 
-                Log.w("ReactNative", "saplingBalanceAvailable: ${saplingBalances!!.available.value}")
-                Log.w("ReactNative", "saplingBalanceAvailable(Zatoshi): ${saplingAvailableZatoshi}")
-                Log.w("ReactNative", "saplingBalanceTotal: ${saplingBalances!!.total.value}")
-                Log.w("ReactNative", "saplingBalanceTotal(Zatoshi): ${saplingTotalZatoshi}")
-                Log.w("ReactNative", "saplingBalanceChangePending: ${saplingBalances!!.changePending}")
-                Log.w("ReactNative", "saplingBalanceValuePending: ${saplingBalances!!.valuePending}")
+                //Log.w("ReactNative", "saplingBalanceAvailable: ${saplingBalances!!.available.value}")
+                //Log.w("ReactNative", "saplingBalanceAvailable(Zatoshi): ${saplingAvailableZatoshi}")
+                //Log.w("ReactNative", "saplingBalanceTotal: ${saplingBalances!!.total.value}")
+                //Log.w("ReactNative", "saplingBalanceTotal(Zatoshi): ${saplingTotalZatoshi}")
+                //Log.w("ReactNative", "saplingBalanceChangePending: ${saplingBalances!!.changePending}")
+                //Log.w("ReactNative", "saplingBalanceValuePending: ${saplingBalances!!.valuePending}")
 
                 val map = Arguments.createMap().apply {
                     putString("confirmed", saplingBalances.available.value.toString())
@@ -262,7 +262,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun getPrivateTransactions(alias: String, promise: Promise) {
-        Log.w("ReactNative", "getPrivateTransactions called")
+        //Log.w("ReactNative", "getPrivateTransactions called")
         val wallet = getWallet(alias)
         val scope = wallet.coroutineScope
 
@@ -363,18 +363,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 map.putString("category", "received")
                 map.putString("address", wallet.getSaplingAddress(Account(0)))
                 //TODO: probably a more graceful way to handle "address" above
-
-                /*try {
-                    val recipient = wallet.getRecipients(tx).firstOrNull() // SDK does not let us retrieve this for received txs
-                    if (recipient is TransactionRecipient.Address) {
-                        map.putString("address", recipient.addressValue)
-                    } else if (recipient is TransactionRecipient.Account) {
-                        Log.e("ReactNative", "TransactionRecipient.Account = ${recipient.accountValue}")
-                        map.putString("addresss", wallet.getSaplingAddress(recipient.accountValue))
-                    }
-                } catch (t: Throwable) {
-                    Log.w("ReactNative", "Could not get recipient: ${t.localizedMessage}")
-                }*/
             }
 
             if (tx.memoCount > 0) {
@@ -416,7 +404,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
-        Log.d("ReactNative", "deriveViewingKey called!!")
+        //Log.d("ReactNative", "deriveViewingKey called!!")
         moduleScope.launch {
             promise.wrap {
                 val seedPhrase = SeedPhrase.new(seed)
@@ -427,13 +415,13 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
-                Log.w("ReactNative", spendingKey.copyBytes().toHexString())
+                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
                 val keys =
                     DerivationTool.getInstance().deriveUnifiedFullViewingKey(
                         spendingKey,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                Log.i("ReactNative", "keys: " + keys.encoding);
+                //Log.i("ReactNative", "keys: " + keys.encoding);
                 return@wrap keys.encoding
             }
         }
@@ -446,7 +434,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String,
         promise: Promise,
     ) {
-        Log.d("ReactNative", "deriveShieldedSpendingKeyCalled!");
+        //Log.d("ReactNative", "deriveShieldedSpendingKeyCalled!");
         moduleScope.launch {
             promise.wrap {
                 val seedPhrase = SeedPhrase.new(seed)
@@ -456,9 +444,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
-                Log.w("ReactNative", "seed: " + seed);
+                //Log.w("ReactNative", "seed: " + seed);
 
-                Log.i("ReactNative", "key: " + key.copyBytes().toHexString());
+                //Log.i("ReactNative", "key: " + key.copyBytes().toHexString());
                 return@wrap key.copyBytes().toHexString()
             }
         }
@@ -543,7 +531,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         promise: Promise,
     ) {
         val wallet = getWallet(alias)
-        Log.i("ReactNative", "sendToAddress called!");
+        //Log.i("ReactNative", "sendToAddress called!");
         wallet.coroutineScope.launch {
             try {
                 val transparentKey = byteArrayOf()
@@ -565,7 +553,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     )
                 val tx = wallet.coroutineScope.async { wallet.transactions.first().first() }.await()
                 val map = Arguments.createMap()
-                Log.i("ReactNative", "sendToAddress: txid(${tx.rawId.byteArray.toHexReversed()}");
+                //Log.i("ReactNative", "sendToAddress: txid(${tx.rawId.byteArray.toHexReversed()}");
                 map.putString("txid", tx.rawId.byteArray.toHexReversed())
                 if (tx.raw != null) map.putString("raw", tx.raw?.byteArray?.toHex())
                 promise.resolve(map)
@@ -702,7 +690,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
-                Log.w("ReactNative", spendingKey.copyBytes().toHexString())
+                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
                 val viewingKey =
                     DerivationTool.getInstance().deriveUnifiedFullViewingKey(
                         spendingKey,
@@ -713,9 +701,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         viewingKey.encoding,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet)
                     )
-                Log.w("ReactNative", "spendingKey = " + spendingKey.copyBytes().toHexString())
-                Log.w("ReactNative", "viewingKey: " + viewingKey.encoding);
-                Log.w("ReactNative", "shieldedAddress: " + shieldedAddress);
+                //Log.w("ReactNative", "spendingKey = " + spendingKey.copyBytes().toHexString())
+                //Log.w("ReactNative", "viewingKey: " + viewingKey.encoding);
+                //Log.w("ReactNative", "shieldedAddress: " + shieldedAddress);
                 return@wrap shieldedAddress
             }
         }
