@@ -564,7 +564,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     )
                 val tx = wallet.coroutineScope.async { wallet.transactions.first().first() }.await()
                 val map = Arguments.createMap()
-                map.putString("txId", tx.rawId.byteArray.toHexReversed())
+                map.putString("txid", tx.rawId.byteArray.toHexReversed())
                 if (tx.raw != null) map.putString("raw", tx.raw?.byteArray?.toHex())
                 promise.resolve(map)
             } catch (t: Throwable) {

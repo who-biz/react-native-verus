@@ -25,7 +25,7 @@ export interface ShieldFundsInfo {
 }
 
 export interface SpendSuccess {
-  txId: string
+  txid: string
   raw: string
 }
 
