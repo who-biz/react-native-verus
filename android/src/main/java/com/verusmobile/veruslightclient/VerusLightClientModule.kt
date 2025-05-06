@@ -246,9 +246,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 //Log.w("ReactNative", "saplingBalanceValuePending: ${saplingBalances!!.valuePending}")
 
                 val map = Arguments.createMap().apply {
-                    putString("confirmed", saplingBalances.available.value.toString())
-                    putString("total", saplingBalances.total.value.toString())
-                    putString("pending", saplingBalances.total.minus(saplingBalances.available).value.toString())
+                    putString("confirmed", saplingAvailableZatoshi.value.toString())
+                    putString("total", saplingTotalZatoshi.value.toString())
+                    putString("pending", saplingTotalZatoshi.minus(saplingAvailableZatoshi).value.toString())
                 }
 
                 promise.resolve(map)
