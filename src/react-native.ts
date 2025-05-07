@@ -34,7 +34,7 @@ export const Tools = {
     seedBytesHex: string,
     network: Network = 'VRSC'
   ): Promise<UnifiedViewingKey> => {
-    console.log("deriveShieldedViewingkey called!")
+    //console.log("deriveShieldedViewingkey called!")
     const result = await VerusLightClient.deriveViewingKey(seedBytesHex, network)
     return result
   },
@@ -42,7 +42,7 @@ export const Tools = {
     seedBytesHex: string,
     network: Network = 'VRSC'
   ): Promise<UnifiedSpendingKey> => {
-    console.log("deriveShieldedSpendkey called!")
+    //console.log("deriveShieldedSpendkey called!")
     const result = await VerusLightClient.deriveSaplingSpendingKey(seedBytesHex, network)
     return result
   },
@@ -50,7 +50,7 @@ export const Tools = {
     seedBytesHex: string,
     network: Network = 'VRSC'
   ): Promise<String> => {
-    console.log("deriveShieldedAddress called!")
+    //console.log("deriveShieldedAddress called!")
     const result = await VerusLightClient.deriveShieldedAddress(seedBytesHex, network)
     return result
   },
@@ -58,7 +58,7 @@ export const Tools = {
     seedBytesHex: string,
     network: Network = 'VRSC'
   ): Promise<String> => {
-    console.log("deriveShieldedAddressFromSeed called!")
+    //console.log("deriveShieldedAddressFromSeed called!")
     const result = await VerusLightClient.deriveShieldedAddressFromSeed(seedBytesHex, network)
     return result
   },
@@ -95,15 +95,15 @@ export class Synchronizer {
   }
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
-    console.warn("within initialize func, before await")
+    //console.warn("within initialize func, before await")
     console.warn("mnemonicSeed: " + initializerConfig.mnemonicSeed);
-    console.warn("wif: " + initializerConfig.wif);
-    console.warn("birthday: " + initializerConfig.birthdayHeight);
-    console.warn("alias: " + initializerConfig.alias);
-    console.warn("networkName: " + initializerConfig.networkName);
-    console.warn("host: " + initializerConfig.defaultHost);
-    console.warn("port: " + initializerConfig.defaultPort);
-    console.warn("newWallet: " + initializerConfig.newWallet);
+    //console.warn("wif: " + initializerConfig.wif);
+    //console.warn("birthday: " + initializerConfig.birthdayHeight);
+    //console.warn("alias: " + initializerConfig.alias);
+    //console.warn("networkName: " + initializerConfig.networkName);
+    //console.warn("host: " + initializerConfig.defaultHost);
+    //console.warn("port: " + initializerConfig.defaultPort);
+    //console.warn("newWallet: " + initializerConfig.newWallet);
 
     await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
@@ -115,7 +115,7 @@ export class Synchronizer {
       initializerConfig.defaultPort,
       initializerConfig.newWallet
     )
-    console.warn("within initialize func, after await")
+    //console.warn("within initialize func, after await")
   }
 
 //  private static _instance = new Synchronizer(this.alias, this.network);
@@ -126,19 +126,19 @@ export class Synchronizer {
 
   async getInfo(): Promise<InfoResponse> {
     const result = await VerusLightClient.getInfo(this.alias)
-    console.log(JSON.stringify(result));
+    //console.log(JSON.stringify(result));
     return result
   }
 
   async getPrivateBalance(): Promise<PrivateBalanceResponse> {
     const result = await VerusLightClient.getPrivateBalance(this.alias)
-    console.log(JSON.stringify(result));
+    //console.log(JSON.stringify(result));
     return result
   }
 
   async getPrivateTransactions(): Promise<PrivateTransactionsResponse> {
     const result = await VerusLightClient.getPrivateTransactions(this.alias)
-    console.log(JSON.stringify(result));
+    //console.log(JSON.stringify(result));
     return result
   }
 
@@ -177,7 +177,7 @@ export class Synchronizer {
       spendInfo.memo,
       spendInfo.mnemonicSeed
     )
-    console.warn("in sendToAddress, result.txid(" + result.txid + ")");
+    //console.warn("in sendToAddress, result.txid(" + result.txid + ")");
     return result
   }
 
@@ -250,11 +250,11 @@ export const getSynchronizerInstance = (
 export const makeSynchronizer = async (
   initializerConfig: InitializerConfig
 ): Promise<Synchronizer> => {
-  console.warn("before getSynchronizerInstance in makeSynchronizer")
+  //console.warn("before getSynchronizerInstance in makeSynchronizer")
   getSynchronizerInstance(initializerConfig.alias, initializerConfig.networkName);
-  console.warn("before synchronizer.initialize()")
+  //console.warn("before synchronizer.initialize()")
   await synchronizerInstance.initialize(initializerConfig)
-  console.warn("before return synchronizer")
+  //console.warn("before return synchronizer")
   return synchronizerInstance;
 }
 
