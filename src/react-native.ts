@@ -96,7 +96,7 @@ export class Synchronizer {
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
     //console.warn("within initialize func, before await")
-    console.warn("mnemonicSeed: " + initializerConfig.mnemonicSeed);
+    //console.warn("mnemonicSeed: " + initializerConfig.mnemonicSeed);
     //console.warn("wif: " + initializerConfig.wif);
     //console.warn("birthday: " + initializerConfig.birthdayHeight);
     //console.warn("alias: " + initializerConfig.alias);
