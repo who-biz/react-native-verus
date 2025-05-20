@@ -70,7 +70,28 @@ export const Tools = {
     address: string,
     network: Network = 'VRSC'
   ): Promise<boolean> => {
+    //TODO: this is broken
     const result = await VerusLightClient.isValidAddress(address, network)
+    return result
+  }
+  ka_agree: async (
+    saplingViewingKey: string,
+    ephemeralPublicKey: string
+  ): Promise<String> => {
+
+    //TODO: we might want to specify specific return type as 'ssk'/'SharedSecret'
+
+    const result = await VerusLightClient.ka_agree(saplingViewingKey, ephemeralPublicKey)
+    return result
+  }
+  ka_derive_public: async (
+    note: string,
+    ephemeralSecretKey: string
+  ): Promise<String> => {
+
+    //TODO: we might want to specify specific return type as 'EphemeralPublicKey'
+
+    const result = await VerusLightClient.ka_derive_public(note, ephemeralSecretKey)
     return result
   }
 }
