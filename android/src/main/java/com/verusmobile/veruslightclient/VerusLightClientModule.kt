@@ -398,60 +398,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
     }
 
-    @ReactMethod
-    fun deriveViewingKey(
-        seed: String,
-        network: String = "VRSC",
-        promise: Promise,
-    ) {
-        //Log.d("ReactNative", "deriveViewingKey called!!")
-        moduleScope.launch {
-            promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
-                val spendingKey =
-                    DerivationTool.getInstance().deriveUnifiedSpendingKey(
-                        byteArrayOf(),
-                        seedPhrase.toByteArray(),
-                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                        Account.DEFAULT,
-                    )
-                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
-                val keys =
-                    DerivationTool.getInstance().deriveUnifiedFullViewingKey(
-                        spendingKey,
-                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                    )
-                //Log.i("ReactNative", "keys: " + keys.encoding);
-                return@wrap keys.encoding
-            }
-        }
-    }
-
-
-    @ReactMethod
-    fun deriveSaplingSpendingKey(
-        seed: String,
-        network: String,
-        promise: Promise,
-    ) {
-        //Log.d("ReactNative", "deriveShieldedSpendingKeyCalled!");
-        moduleScope.launch {
-            promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
-                val key =
-                    DerivationTool.getInstance().deriveSaplingSpendingKey(
-                        seedPhrase.toByteArray(),
-                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                        Account.DEFAULT,
-                    )
-                //Log.w("ReactNative", "seed: " + seed);
-
-                //Log.i("ReactNative", "key: " + key.copyBytes().toHexString());
-                return@wrap key.copyBytes().toHexString()
-            }
-        }
-    }
-
     //
     // Properties
     //
@@ -674,6 +620,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     //
     // AddressTool
     //
+
     @ReactMethod
     fun deriveShieldedAddress(
         seed: String,
@@ -708,6 +655,138 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             }
         }
     }
+
+    //
+    // AddressTool
+    //
+
+    @ReactMethod
+    fun deriveViewingKey(
+        seed: String,
+        network: String = "VRSC",
+        promise: Promise,
+    ) {
+        //Log.d("ReactNative", "deriveViewingKey called!!")
+        moduleScope.launch {
+            promise.wrap {
+                val seedPhrase = SeedPhrase.new(seed)
+                val spendingKey =
+                    DerivationTool.getInstance().deriveUnifiedSpendingKey(
+                        byteArrayOf(),
+                        seedPhrase.toByteArray(),
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                        Account.DEFAULT,
+                    )
+                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
+                val keys =
+                    DerivationTool.getInstance().deriveUnifiedFullViewingKey(
+                        spendingKey,
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                    )
+                //Log.i("ReactNative", "keys: " + keys.encoding);
+                return@wrap keys.encoding
+            }
+        }
+    }
+
+
+    //
+    // AddressTool
+    //
+
+    @ReactMethod
+    fun deriveSaplingSpendingKey(
+        seed: String,
+        network: String,
+        promise: Promise,
+    ) {
+        //Log.d("ReactNative", "deriveShieldedSpendingKeyCalled!");
+        moduleScope.launch {
+            promise.wrap {
+                val seedPhrase = SeedPhrase.new(seed)
+                val key =
+                    DerivationTool.getInstance().deriveSaplingSpendingKey(
+                        seedPhrase.toByteArray(),
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                        Account.DEFAULT,
+                    )
+                //Log.w("ReactNative", "seed: " + seed);
+
+                //Log.i("ReactNative", "key: " + key.copyBytes().toHexString());
+                return@wrap key.copyBytes().toHexString()
+            }
+        }
+    }
+
+    //
+    // AddressTool
+    //
+
+    @ReactMethod
+    fun ka_agree(
+        viewingKey: String,
+        ephemeralPublicKey: String,
+        promise: Promise,
+    ) {
+        Log.w("ReactNative", "VerusLightClient.ka_agree() called!!")
+        moduleScope.launch {
+            promise.wrap {
+                /*
+                val seedPhrase = SeedPhrase.new(seed)
+                val spendingKey =
+                    DerivationTool.getInstance().deriveUnifiedSpendingKey(
+                        byteArrayOf(),
+                        seedPhrase.toByteArray(),
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                        Account.DEFAULT,
+                    )
+                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
+                val keys =
+                    DerivationTool.getInstance().deriveUnifiedFullViewingKey(
+                        spendingKey,
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                    )
+                //Log.i("ReactNative", "keys: " + keys.encoding);
+                return@wrap keys.encoding
+                */
+            }
+        }
+    }
+
+
+    //
+    // AddressTool
+    //
+
+    @ReactMethod
+    fun ka_derive_public(
+        note: String,
+        ephemeralSecretKey: String,
+        promise: Promise,
+    ) {
+        Log.w("ReactNative", "VerusLightClient.ka_derive_public() called!");
+        moduleScope.launch {
+            promise.wrap {
+                /*
+                val seedPhrase = SeedPhrase.new(seed)
+                val key =
+                    DerivationTool.getInstance().deriveSaplingSpendingKey(
+                        seedPhrase.toByteArray(),
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                        Account.DEFAULT,
+                    )
+                //Log.w("ReactNative", "seed: " + seed);
+
+                //Log.i("ReactNative", "key: " + key.copyBytes().toHexString());
+                return@wrap key.copyBytes().toHexString()
+                */
+            }
+        }
+    }
+
+    //
+    // AddressTool
+    //
 
     @ReactMethod
     fun isValidAddress(
