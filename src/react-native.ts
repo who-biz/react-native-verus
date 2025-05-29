@@ -94,7 +94,7 @@ export const Tools = {
 
     //TODO: we might want to specify specific return type as 'EphemeralPublicKey'
 
-    const result = await VerusLightClient.ka_derive_public(recipient, ephemeralSecretKeyHex)
+    const result = await VerusLightClient.ka_derive_public(recipient, ephemeralSecretKeyHex, network)
     return result
   }
 }
