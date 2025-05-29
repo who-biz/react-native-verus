@@ -735,7 +735,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 val epkBytes = ephemeralPublicKeyHex.hexToByteArray()
                 Log.w("ReactNative", "ka_agree: epkBytes($epkBytes)")
                 val sharedSecret = 
-                    DerivationTool.getInstance().ka_agree_dec(
+                    DerivationTool.getInstance().ka_agree(
                         ufvk, 
                         epkBytes,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),

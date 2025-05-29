@@ -82,7 +82,7 @@ export const Tools = {
     console.warn("ka_agree called!, ufvk(" + ufvk + "), epkHex(" + ephemeralPublicKeyHex + ")"); 
     //TODO: we might want to specify specific return type as 'ssk'/'SharedSecret'
 
-    const result = await VerusLightClient.ka_agree(ufvk, ephemeralPublicKeyHex)
+    const result = await VerusLightClient.ka_agree(ufvk, ephemeralPublicKeyHex, network)
     console.warn("ka_agree result: " + result.toString())
     return result
   },
