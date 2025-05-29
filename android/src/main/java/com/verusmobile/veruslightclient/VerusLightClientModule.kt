@@ -754,26 +754,25 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun ka_derive_public(
-        note: String,
-        ephemeralSecretKey: String,
+        recipient: String,
+        ephemeralSecretKeyHex: String,
+        network: String = "VRSC",
         promise: Promise,
     ) {
-        Log.w("ReactNative", "VerusLightClient.ka_derive_public() called!");
+        Log.w("ReactNative", "VerusLightClient.ka_derive_public() called! recipient($recipient), esk($ephemeralSecretKeyHex)");
         moduleScope.launch {
             promise.wrap {
-                /*
-                val seedPhrase = SeedPhrase.new(seed)
-                val key =
-                    DerivationTool.getInstance().deriveSaplingSpendingKey(
-                        seedPhrase.toByteArray(),
+                val eskBytes = ephemeralSecretKeyHex.hexToByteArray()
+                Log.w("ReactNative", "ka_derive_public: eskBytes($eskBytes)")
+                val epkBytes = 
+                    DerivationTool.getInstance().ka_derive_public(
+                        recipient,
+                        eskBytes,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                        Account.DEFAULT,
                     )
-                //Log.w("ReactNative", "seed: " + seed);
-
-                //Log.i("ReactNative", "key: " + key.copyBytes().toHexString());
-                return@wrap key.copyBytes().toHexString()
-                */
+                val ephemeralPublicKeyHex = epkBytes.copyBytes().toHexString()
+                Log.w("ReactNative", "ka_derive_public: epkHex($ephemeralPublicKeyHex)")
+                return@wrap ephemeralPublicKeyHex
             }
         }
     }
