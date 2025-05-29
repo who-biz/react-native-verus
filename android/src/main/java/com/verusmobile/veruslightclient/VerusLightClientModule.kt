@@ -742,7 +742,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     )
                 val sharedSecretHex = sharedSecret.copyBytes().toHexString()
                 Log.w("ReactNative", "ka_agree: sharedSecret($sharedSecret), hex($sharedSecretHex)")
-                return@wrap sharedSecret
+                return@wrap sharedSecretHex
             }
         }
     }
