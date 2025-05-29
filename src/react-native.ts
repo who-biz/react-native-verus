@@ -73,25 +73,28 @@ export const Tools = {
     //TODO: this is broken
     const result = await VerusLightClient.isValidAddress(address, network)
     return result
-  }
+  },
   ka_agree: async (
-    saplingViewingKey: string,
-    ephemeralPublicKey: string
+    ufvk: string,
+    ephemeralPublicKeyHex: string,
+    network: Network = 'VRSC'
   ): Promise<String> => {
-
+    console.warn("ka_agree called!, ufvk(" + ufvk + "), epkHex(" + ephemeralPublicKeyHex + ")"); 
     //TODO: we might want to specify specific return type as 'ssk'/'SharedSecret'
 
-    const result = await VerusLightClient.ka_agree(saplingViewingKey, ephemeralPublicKey)
+    const result = await VerusLightClient.ka_agree(ufvk, ephemeralPublicKeyHex)
+    console.warn("ka_agree result: " + result.toString())
     return result
-  }
+  },
   ka_derive_public: async (
-    note: string,
-    ephemeralSecretKey: string
+    recipient: string,
+    ephemeralSecretKeyHex: string,
+    network: Network = 'VRSC'
   ): Promise<String> => {
 
     //TODO: we might want to specify specific return type as 'EphemeralPublicKey'
 
-    const result = await VerusLightClient.ka_derive_public(note, ephemeralSecretKey)
+    const result = await VerusLightClient.ka_derive_public(recipient, ephemeralSecretKeyHex)
     return result
   }
 }

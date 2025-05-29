@@ -724,31 +724,25 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun ka_agree(
-        viewingKey: String,
-        ephemeralPublicKey: String,
+        ufvk: String,
+        ephemeralPublicKeyHex: String,
+        network: String = "VRSC",
         promise: Promise,
     ) {
-        Log.w("ReactNative", "VerusLightClient.ka_agree() called!!")
+        Log.w("ReactNative", "VerusLightClient.ka_agree() called!! ufvk($ufvk), epk($ephemeralPublicKeyHex)")
         moduleScope.launch {
             promise.wrap {
-                /*
-                val seedPhrase = SeedPhrase.new(seed)
-                val spendingKey =
-                    DerivationTool.getInstance().deriveUnifiedSpendingKey(
-                        byteArrayOf(),
-                        seedPhrase.toByteArray(),
-                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                        Account.DEFAULT,
-                    )
-                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
-                val keys =
-                    DerivationTool.getInstance().deriveUnifiedFullViewingKey(
-                        spendingKey,
+                val epkBytes = ephemeralPublicKeyHex.hexToByteArray()
+                Log.w("ReactNative", "ka_agree: epkBytes($epkBytes)")
+                val sharedSecret = 
+                    DerivationTool.getInstance().ka_agree_dec(
+                        ufvk, 
+                        epkBytes,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                //Log.i("ReactNative", "keys: " + keys.encoding);
-                return@wrap keys.encoding
-                */
+                val sharedSecretHex = sharedSecret.copyBytes().toHexString()
+                Log.w("ReactNative", "ka_agree: sharedSecret($sharedSecret), hex($sharedSecretHex)")
+                return@wrap sharedSecret
             }
         }
     }
