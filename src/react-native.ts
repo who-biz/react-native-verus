@@ -54,6 +54,7 @@ export const Tools = {
     const result = await VerusLightClient.deriveShieldedAddress(seedBytesHex, network)
     return result
   },
+  /*
   deriveShieldedAddressFromSeed: async (
     seedBytesHex: string,
     network: Network = 'VRSC'
@@ -62,6 +63,7 @@ export const Tools = {
     const result = await VerusLightClient.deriveShieldedAddressFromSeed(seedBytesHex, network)
     return result
   },
+*/
   getBirthdayHeight: async (host: string, port: number): Promise<number> => {
     const result = await VerusLightClient.getBirthdayHeight(host, port)
     return result
@@ -264,8 +266,8 @@ export const makeSynchronizer = async (
   alias: string,
   networkName: string
 ): Promise<String> => {
-  console.warn("before calling Synchronizer.getSaplingAddress")
+  //console.warn("before calling Synchronizer.getSaplingAddress")
   const address = await Synchronizer.deriveSaplingAddress()
   console.warn("before return saplingAddress: " + address)
-  return address
+  //return address
 }*/

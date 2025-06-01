@@ -201,14 +201,14 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 val networkBlockHeight = map["networkHeight"] as BlockHeight
                 val status = map["status"]
 
-                Log.i("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
-                Log.i("ReactNative", "processorInfo: overallSyncRange(${processorInfo.overallSyncRange})")
-                Log.i("ReactNative", "processorInfo: lastScannedHeight(${processorScannedHeight.value})")
-                Log.i("ReactNative", "processorInfo: firstUnenhancedHeight(${firstUnenhancedHeight.value})")
-                Log.w("ReactNative", "progress.toPercentage(): ${progress.toPercentage()}")
-                Log.w("ReactNative", "networkBlockHeight: ${networkBlockHeight.value.toInt()}")
-                Log.w("ReactNative", "latestBlockHeight: ${latestHeight.value.toInt()}")
-                Log.w("ReactNative", "wallet status: ${status.toString().lowercase()}")
+                Log.d("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
+                Log.d("ReactNative", "processorInfo: overallSyncRange(${processorInfo.overallSyncRange})")
+                Log.d("ReactNative", "processorInfo: lastScannedHeight(${processorScannedHeight.value})")
+                Log.d("ReactNative", "processorInfo: firstUnenhancedHeight(${firstUnenhancedHeight.value})")
+                Log.d("ReactNative", "progress.toPercentage(): ${progress.toPercentage()}")
+                Log.d("ReactNative", "networkBlockHeight: ${networkBlockHeight.value.toInt()}")
+                Log.d("ReactNative", "latestBlockHeight: ${latestHeight.value.toInt()}")
+                Log.d("ReactNative", "wallet status: ${status.toString().lowercase()}")
 
                 val resultMap = Arguments.createMap().apply {
                     putInt("percent", progress.toPercentage())
@@ -647,9 +647,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
     }
 
-    //
-    // AddressTool
-    //
+    /*
     @ReactMethod
     fun deriveShieldedAddressFromSeed(
         seed: String,
@@ -665,11 +663,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account(1)
                     )
-                Log.w("ReactNative", "shieldedAddress: " + shieldedAddress);
+                //Log.w("ReactNative", "shieldedAddress: " + shieldedAddress);
                 return@wrap shieldedAddress
             }
         }
     }
+    */
 
     //
     // AddressTool
