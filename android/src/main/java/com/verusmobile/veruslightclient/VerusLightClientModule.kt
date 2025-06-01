@@ -791,7 +791,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 val wallets = synchronizerMap.asIterable()
                 for (wallet in wallets) {
                     if (wallet.value.network.networkName == network) {
-                        isValid = wallet.value.isValidAddress(address)
+                        isValid = wallet.value.isValidShieldedAddress(address)
                         break
                     }
                 }
