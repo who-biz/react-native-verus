@@ -734,15 +734,14 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             promise.wrap {
                 val epkBytes = ephemeralPublicKeyHex.hexToByteArray()
                 Log.w("ReactNative", "ka_agree: epkBytes($epkBytes)")
-                val sharedSecret = 
+                val symmetricKey =
                     DerivationTool.getInstance().ka_agree(
                         ufvk, 
                         epkBytes,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                val sharedSecretHex = sharedSecret.copyBytes().toHexString()
-                Log.w("ReactNative", "ka_agree: sharedSecret($sharedSecret), hex($sharedSecretHex)")
-                return@wrap sharedSecretHex
+                Log.w("ReactNative", "ka_agree: symmetricKey($symmetricKey)")
+                return@wrap symmetricKey
             }
         }
     }
@@ -764,15 +763,14 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             promise.wrap {
                 val eskBytes = ephemeralSecretKeyHex.hexToByteArray()
                 Log.w("ReactNative", "ka_derive_public: eskBytes($eskBytes)")
-                val epkBytes = 
+                val symmetricKey =
                     DerivationTool.getInstance().ka_derive_public(
                         recipient,
                         eskBytes,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                val ephemeralPublicKeyHex = epkBytes.copyBytes().toHexString()
-                Log.w("ReactNative", "ka_derive_public: epkHex($ephemeralPublicKeyHex)")
-                return@wrap ephemeralPublicKeyHex
+                Log.w("ReactNative", "ka_derive_public: symmetricKey($symmetricKey)")
+                return@wrap symmetricKey
             }
         }
     }
