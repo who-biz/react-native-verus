@@ -723,24 +723,24 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     //
 
     @ReactMethod
-    fun ka_agree(
+    fun getSymmetricKey(
         ufvk: String,
         ephemeralPublicKeyHex: String,
         network: String = "VRSC",
         promise: Promise,
     ) {
-        Log.w("ReactNative", "VerusLightClient.ka_agree() called!! ufvk($ufvk), epk($ephemeralPublicKeyHex)")
+        Log.w("ReactNative", "VerusLightClient.getSymmetricKey() called!! ufvk($ufvk), epk($ephemeralPublicKeyHex)")
         moduleScope.launch {
             promise.wrap {
                 val epkBytes = ephemeralPublicKeyHex.hexToByteArray()
-                Log.w("ReactNative", "ka_agree: epkBytes($epkBytes)")
+                Log.w("ReactNative", "getSymmetricKey: epkBytes($epkBytes)")
                 val symmetricKey =
-                    DerivationTool.getInstance().ka_agree(
+                    DerivationTool.getInstance().getSymmetricKey(
                         ufvk, 
                         epkBytes,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                Log.w("ReactNative", "ka_agree: symmetricKey($symmetricKey)")
+                Log.w("ReactNative", "getSymmetricKey: symmetricKey($symmetricKey)")
                 return@wrap symmetricKey
             }
         }
@@ -752,24 +752,20 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     //
 
     @ReactMethod
-    fun ka_derive_public(
+    fun generateSymmetricKey(
         recipient: String,
-        ephemeralSecretKeyHex: String,
         network: String = "VRSC",
         promise: Promise,
     ) {
-        Log.w("ReactNative", "VerusLightClient.ka_derive_public() called! recipient($recipient), esk($ephemeralSecretKeyHex)");
+        Log.w("ReactNative", "VerusLightClient.generateSymmetricKey() called! recipient($recipient)");
         moduleScope.launch {
             promise.wrap {
-                val eskBytes = ephemeralSecretKeyHex.hexToByteArray()
-                Log.w("ReactNative", "ka_derive_public: eskBytes($eskBytes)")
                 val symmetricKey =
-                    DerivationTool.getInstance().ka_derive_public(
+                    DerivationTool.getInstance().generateSymmetricKey(
                         recipient,
-                        eskBytes,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                Log.w("ReactNative", "ka_derive_public: symmetricKey($symmetricKey)")
+                Log.w("ReactNative", "generateSymmetricKey: symmetricKey($symmetricKey)")
                 return@wrap symmetricKey
             }
         }
