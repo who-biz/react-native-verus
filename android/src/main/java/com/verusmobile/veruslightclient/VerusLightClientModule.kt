@@ -716,14 +716,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ) {
         moduleScope.launch {
             promise.wrap {
-                var isValid = false
-                val wallets = synchronizerMap.asIterable()
-                for (wallet in wallets) {
-                    if (wallet.value.network.networkName == network) {
-                        isValid = wallet.value.isValidAddress(address)
-                        break
-                    }
-                }
+                val isValid = DerivationTool.getInstance().isValidShieldedAddress(
+                    address,
+                    networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                )
                 return@wrap isValid
             }
         }
