@@ -43,6 +43,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     fun initialize(
         seed: String,
         wif: String,
+        extsk: String,
         birthdayHeight: Int,
         alias: String,
         networkName: String = "VRSC",
@@ -77,6 +78,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         BlockHeight.new(network, birthdayHeight.toLong()),
                         initMode,
                         transparentKey,
+                        extsk
                     ) as SdkSynchronizer
             }
             //Log.w("ReactNative", "Initializer bp2");

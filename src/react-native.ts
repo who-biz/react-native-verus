@@ -100,6 +100,7 @@ export class Synchronizer {
     //console.warn("within initialize func, before await")
     //console.warn("mnemonicSeed: " + initializerConfig.mnemonicSeed);
     //console.warn("wif: " + initializerConfig.wif);
+    console.warn("extsk: " + initializerConfig.extsk);
     //console.warn("birthday: " + initializerConfig.birthdayHeight);
     //console.warn("alias: " + initializerConfig.alias);
     //console.warn("networkName: " + initializerConfig.networkName);
@@ -109,6 +110,7 @@ export class Synchronizer {
 
     await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
+      initializerConfig.extsk,
       initializerConfig.wif,
       initializerConfig.birthdayHeight,
       initializerConfig.alias,
