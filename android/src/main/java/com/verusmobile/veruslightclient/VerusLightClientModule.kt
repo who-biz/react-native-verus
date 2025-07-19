@@ -776,6 +776,36 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     //
 
     @ReactMethod
+    fun zGetEncryptionAddress(
+        seed: String,
+        fromid: String,
+        toid: String,
+        network: String = "VRSC",
+        promise: Promise,
+    ) {
+        Log.w("ReactNative", "VerusLightClient.zGetEncryptionAddress() called!! seed($seed), fromid($fromid), toid($toid)");
+        moduleScope.launch {
+            promise.wrap {
+                val encryptionAddress =
+                    DerivationTool.getInstance().zGetEncryptionAddress(
+                        seed, 
+                        fromid,
+                        toid,
+                        0 /*accountid*/,
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                    )
+                Log.w("ReactNative", "zGetEncryptionAddress: encryptionAddress($encryptionAddress)")
+                return@wrap encryptionAddress
+            }
+        }
+    }
+
+
+    //
+    // AddressTool
+    //
+
+    @ReactMethod
     fun isValidAddress(
         address: String,
         network: String,

@@ -90,6 +90,16 @@ export const Tools = {
   ): Promise<String> => {
     const result = await VerusLightClient.generateSymmetricKey(recipient, network)
     return result
+  },
+  zGetEncryptionAddress: async (
+    seed: string,
+    fromid: string,
+    toid: string,
+    network: Network = 'VRSC'
+  ): Promise<String> => {
+    console.warn("zGetEncryptionAddress called!, seed(" + seed + "), fromid(" + fromid + "), toid(" + toid + ")");
+    const result = await VerusLightClient.zGetEncryptionAddress(seed, fromid, toid, network);
+    return result
   }
 }
 
