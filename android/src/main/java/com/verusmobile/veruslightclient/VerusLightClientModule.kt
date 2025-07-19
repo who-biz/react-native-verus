@@ -786,11 +786,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         Log.w("ReactNative", "VerusLightClient.zGetEncryptionAddress() called!! seed($seed), fromid($fromid), toid($toid)");
         moduleScope.launch {
             promise.wrap {
+                val seedPhrase = SeedPhrase.new(seed)
                 val encryptionAddress =
-                    DerivationTool.getInstance().zGetEncryptionAddress(
-                        seed, 
-                        fromid,
-                        toid,
+                    DerivationTool.getInstance().getEncryptionAddress(
+                        seedPhrase.toByteArray(),
+                        fromid.toByteArray(),
+                        toid.toByteArray(),
                         0 /*accountid*/,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
