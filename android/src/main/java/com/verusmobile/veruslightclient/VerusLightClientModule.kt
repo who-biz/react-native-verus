@@ -606,6 +606,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun deleteWallet(
         alias: String,
+        network: String,
         //clearCache: Boolean,
         //clearDataDb: Boolean,
         promise: Promise
@@ -613,7 +614,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         Log.w("ReactNative", "deleteWallet called!");
         moduleScope.launch {
             try {
-                val result = Synchronizer.erase(reactApplicationContext, wallet.network, alias)
+                val result = Synchronizer.erase(reactApplicationContext, networks.getOrDefault(network, ZcashNetwork.Mainnet), alias)
  //               withContext(Dispatchers.Main) {
                     promise.resolve(result)
  //               }

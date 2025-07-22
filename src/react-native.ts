@@ -261,7 +261,8 @@ export const makeSynchronizer = async (
 }
 
 export const deleteWallet = async (
-  alias: string
+  alias: string, 
+  network: string
 ): Promise<boolean> => {
    console.warn("deleteWallet called in typescript! alias(" + alias + ")");
    const result = await VerusLightClient.deleteWallet(alias);
