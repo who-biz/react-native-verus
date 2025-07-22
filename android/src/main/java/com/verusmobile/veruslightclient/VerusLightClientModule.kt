@@ -605,6 +605,29 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
     }
 
+    @ReactMethod
+    fun deleteWallet(
+        alias: String,
+        //clearCache: Boolean,
+        //clearDataDb: Boolean,
+        promise: Promise
+    ) {
+        Log.w("ReactNative", "deleteWallet called!");
+        val wallet = getWallet(alias)
+        wallet.coroutineScope.launch {
+            try {
+                val result = wallet.erase(reactApplicationContext, wallet.network, alias)
+ //               withContext(Dispatchers.Main) {
+                    promise.resolve(result)
+ //               }
+            } catch (e: Exception) {
+ //               withContext(Dispatchers.Main) {
+                    promise.reject("CLEAR_ERROR", "Failed to clear Rust backend", e)
+ //               }
+            }
+        }
+    }
+
     //
     // AddressTool
     //
@@ -718,14 +741,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ) {
         moduleScope.launch {
             promise.wrap {
-                var isValid = false
-                val wallets = synchronizerMap.asIterable()
-                for (wallet in wallets) {
-                    if (wallet.value.network.networkName == network) {
-                        isValid = wallet.value.isValidAddress(address)
-                        break
-                    }
-                }
+                val isValid = DerivationTool.getInstance().isValidShieldedAddress(
+                    address,
+                    networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                )
                 return@wrap isValid
             }
         }
