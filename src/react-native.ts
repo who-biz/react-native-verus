@@ -267,7 +267,7 @@ export const deleteWallet = async (
   network: string
 ): Promise<boolean> => {
    console.warn("deleteWallet called in typescript! alias(" + alias + ")");
-   const result = await VerusLightClient.deleteWallet(alias);
+   const result = await VerusLightClient.deleteWallet(alias, network);
    return result;
 }
 
