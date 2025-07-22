@@ -262,6 +262,15 @@ export const makeSynchronizer = async (
   return synchronizerInstance;
 }
 
+export const deleteWallet = async (
+  alias: string, 
+  network: string
+): Promise<boolean> => {
+   console.warn("deleteWallet called in typescript! alias(" + alias + ")");
+   const result = await VerusLightClient.deleteWallet(alias);
+   return result;
+}
+
 //export const SdkSynchronizer = Synchronizer.instance;
 
 /*export const getSaplingAddress = async (
