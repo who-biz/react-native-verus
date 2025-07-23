@@ -4,7 +4,7 @@ export interface InitializerConfig {
   networkName: string
   defaultHost: string
   defaultPort: number
-  mnemonicSeed: string
+  mnemonicSeed?: string
   extsk?: string
   wif?: string
   alias: string
@@ -16,7 +16,8 @@ export interface SpendInfo {
   zatoshi: string
   toAddress: string
   memo?: string
-  mnemonicSeed: string
+  extsk?: string
+  mnemonicSeed?: string
 }
 
 export interface ShieldFundsInfo {

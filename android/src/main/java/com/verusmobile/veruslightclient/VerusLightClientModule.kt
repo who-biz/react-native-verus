@@ -57,14 +57,24 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             //Log.w("ReactNative", "Initializer, start func")
             val network = networks.getOrDefault(networkName, ZcashNetwork.Mainnet)
             val endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
-            val seedPhrase = SeedPhrase.new(seed)
-            val transparentKey: ByteArray
+            val seedPhrase = byteArrayOf()
+            val extendedSecretKey = byteArrayOf()
+            val transparentKey = byteArrayOf()
+
+            // check presence of data, for each key import method/type
+            // pass through empty array if data is not present
+
+            if (!seed.isNullOrEmpty) {
+                seedPhrase = SeedPhrase.new(seed).toByteArray()
+            }
+            if(!extsk.isNullOrEmpty) {
+                extendedSecretKey = extsk.toByteArrayArray()
+            }
             if (!wif.isNullOrEmpty()) {
                 val decodedWif = wif.decodeBase58WithChecksum()
                 transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
-            } else {
-                transparentKey = byteArrayOf()
             }
+
             //Log.w("ReactNative", "Initializer bp1");
             val initMode = if (newWallet) WalletInitMode.NewWallet else WalletInitMode.ExistingWallet
             if (!synchronizerMap.containsKey(alias)) {
@@ -74,7 +84,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         network,
                         alias,
                         endpoint,
-                        seedPhrase.toByteArray(),
+                        seedPhrase,
                         BlockHeight.new(network, birthdayHeight.toLong()),
                         initMode,
                         transparentKey,
@@ -402,6 +412,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun deriveViewingKey(
+        extsk: String,
         seed: String,
         network: String = "VRSC",
         promise: Promise,
@@ -409,10 +420,18 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         //Log.d("ReactNative", "deriveViewingKey called!!")
         moduleScope.launch {
             promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
+                val seedPhrase = byteArrayOf()
+                val extendedSecretKey = byteArrayOf()
+                if (!seed.isNullOrEmpty()) {
+                    seedPhrase = SeedPhrase.new(seed).toByteArray()
+                }
+                if (!extsk.isNullOrEmpty()) {
+                    extendedSecretKey = extsk.toByteArray()
+                }
                 val spendingKey =
                     DerivationTool.getInstance().deriveUnifiedSpendingKey(
                         byteArrayOf(),
+                        extendedSecretKey,
                         seedPhrase.toByteArray(),
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
@@ -528,7 +547,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         zatoshi: String,
         toAddress: String,
         memo: String = "",
-        //wif: String,
+        extsk: String,
         seed: String,
         promise: Promise,
     ) {
@@ -536,16 +555,22 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         //Log.i("ReactNative", "sendToAddress called!");
         wallet.coroutineScope.launch {
             try {
+                val extendedSecretKey = byteArrayOf()
+                val seedPhrase = byteArrayOf()
                 val transparentKey = byteArrayOf()
-                /*val transparentKey: ByteArray
-                if (!wif.isNullOrEmpty()) {
+
+                if (!seed.isNullOrEmpty()) {
+                    seedPhrase = SeedPhrase.new(seed).toByteArray()
+                }
+                if (!extsk.isNullOrEmpty()) {
+                    extendedSecretKey = extsk.toByteArray()
+                }
+                /*if (!wif.isNullOrEmpty()) {
                     val decodedWif = wif.decodeBase58WithChecksum()
                     transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
-                } else {
-                    transparentKey = byteArrayOf()
                 }*/
-                val seedPhrase = SeedPhrase.new(seed)
-                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, seedPhrase.toByteArray(), wallet.network, Account(0))
+
+                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, extendedSecretKey, seedPhrase, wallet.network, Account(0))
                 val internalId =
                     wallet.sendToAddress(
                         usk,
@@ -578,6 +603,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         wallet.coroutineScope.launch {
             try {
                 val transparentKey: ByteArray
+                val extsk = byteArrayOf()
                 if (!wif.isNullOrEmpty()) {
                     val decodedWif = wif.decodeBase58WithChecksum()
                     transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
@@ -585,7 +611,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     transparentKey = byteArrayOf()
                 }
                 val seedPhrase = SeedPhrase.new(seed)
-                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
+                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, extsk, seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
                 val internalId =
                     wallet.shieldFunds(
                         usk,
@@ -700,17 +726,26 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     //
     @ReactMethod
     fun deriveShieldedAddress(
+        extsk: String,
         seed: String,
         network: String = "VRSC",
         promise: Promise,
     ) {
         moduleScope.launch {
             promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
+                val seedPhrase = byteArrayOf()
+                val extendedSecretKey = byteArrayOf()
+                if (!seed.isNullOrEmpty()){
+                    seedPhrase = SeedPhrase.new(seed).toByteArray()
+                }
+                if (!extsk.isNullOrEmpty()){
+                    extendedSecretKey = extsk.toByteArray()
+                }
                 val spendingKey =
                     DerivationTool.getInstance().deriveUnifiedSpendingKey(
                         byteArrayOf(),
-                        seedPhrase.toByteArray(),
+                        extendedSecretKey,
+                        seedPhrase,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
@@ -732,6 +767,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             }
         }
     }
+
+    //
+    // AddressTool
+    //
 
     @ReactMethod
     fun isValidAddress(

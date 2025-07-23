@@ -31,7 +31,8 @@ let synchronizerInstance: Synchronizer;
 
 export const Tools = {
   deriveViewingKey: async (
-    seedBytesHex: string,
+    extsk?: string,
+    seedBytesHex?: string,
     network: Network = 'VRSC'
   ): Promise<UnifiedViewingKey> => {
     //console.log("deriveShieldedViewingkey called!")
@@ -47,7 +48,8 @@ export const Tools = {
     return result
   },
   deriveShieldedAddress: async (
-    seedBytesHex: string,
+    extsk?: string,
+    seedBytesHex?: string,
     network: Network = 'VRSC'
   ): Promise<String> => {
     //console.log("deriveShieldedAddress called!")
@@ -179,6 +181,7 @@ export class Synchronizer {
       spendInfo.zatoshi,
       spendInfo.toAddress,
       spendInfo.memo,
+      spendInfo.extsk,
       spendInfo.mnemonicSeed
     )
     //console.warn("in sendToAddress, result.txid(" + result.txid + ")");
