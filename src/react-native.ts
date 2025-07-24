@@ -113,8 +113,8 @@ export class Synchronizer {
 
     await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
-      initializerConfig.extsk,
       initializerConfig.wif,
+      initializerConfig.extsk,
       initializerConfig.birthdayHeight,
       initializerConfig.alias,
       initializerConfig.networkName,

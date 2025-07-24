@@ -68,7 +68,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 seedPhrase = SeedPhrase.new(seed).toByteArray()
             }
             if(!extsk.isNullOrEmpty()) {
-                extendedSecretKey = extsk.toByteArray()
+                extendedSecretKey = SeedPhrase.new(extsk).toByteArray()
             }
             if (!wif.isNullOrEmpty()) {
                 val decodedWif = wif.decodeBase58WithChecksum()
@@ -426,7 +426,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     seedPhrase = SeedPhrase.new(seed).toByteArray()
                 }
                 if (!extsk.isNullOrEmpty()) {
-                    extendedSecretKey = extsk.toByteArray()
+                    extendedSecretKey = SeedPhrase.new(extsk).toByteArray()
                 }
                 val spendingKey =
                     DerivationTool.getInstance().deriveUnifiedSpendingKey(
@@ -563,7 +563,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     seedPhrase = SeedPhrase.new(seed).toByteArray()
                 }
                 if (!extsk.isNullOrEmpty()) {
-                    extendedSecretKey = extsk.toByteArray()
+                    extendedSecretKey = SeedPhrase.new(extsk).toByteArray()
                 }
                 /*if (!wif.isNullOrEmpty()) {
                     val decodedWif = wif.decodeBase58WithChecksum()
@@ -740,7 +740,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     seedPhrase = SeedPhrase.new(seed).toByteArray()
                 }
                 if (!extsk.isNullOrEmpty()){
-                    extendedSecretKey = extsk.toByteArray()
+                    extendedSecretKey = SeedPhrase.new(extsk).toByteArray()
                 }
                 val spendingKey =
                     DerivationTool.getInstance().deriveUnifiedSpendingKey(
