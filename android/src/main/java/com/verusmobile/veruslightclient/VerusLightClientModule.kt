@@ -54,7 +54,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ) = moduleScope.launch {
         //Log.w("ReactNative", "initializer, before promise");
         promise.wrap {
-            //Log.w("ReactNative", "Initializer, start func")
+            Log.w("ReactNative", "Initializer, start func, extsk($extsk)")
             val network = networks.getOrDefault(networkName, ZcashNetwork.Mainnet)
             val endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
             var seedPhrase = byteArrayOf()
@@ -417,7 +417,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
-        //Log.d("ReactNative", "deriveViewingKey called!!")
+        Log.w("ReactNative", "deriveViewingKey called, extsk($extsk)")
         moduleScope.launch {
             promise.wrap {
                 var seedPhrase = byteArrayOf()
@@ -552,7 +552,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         promise: Promise,
     ) {
         val wallet = getWallet(alias)
-        //Log.i("ReactNative", "sendToAddress called!");
+        Log.w("ReactNative", "sendToAddress called, extsk($extsk)");
         wallet.coroutineScope.launch {
             try {
                 var extendedSecretKey = byteArrayOf()
@@ -731,6 +731,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
+        Log.w("ReactNative", "deriveShieldedAddress called, extsk($extsk)");
         moduleScope.launch {
             promise.wrap {
                 var seedPhrase = byteArrayOf()

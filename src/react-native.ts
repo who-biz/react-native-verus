@@ -36,6 +36,7 @@ export const Tools = {
     network: Network = 'VRSC'
   ): Promise<UnifiedViewingKey> => {
     //console.log("deriveShieldedViewingkey called!")
+    console.warn("typescript: extsk(" + extsk + ")");
     const result = await VerusLightClient.deriveViewingKey(extsk, seedBytesHex, network)
     return result
   },
@@ -52,7 +53,7 @@ export const Tools = {
     seedBytesHex?: string,
     network: Network = 'VRSC'
   ): Promise<String> => {
-    //console.log("deriveShieldedAddress called!")
+    console.warn("deriveShieldedAddress called! extsk(" + extsk + ")")
     const result = await VerusLightClient.deriveShieldedAddress(extsk, seedBytesHex, network)
     return result
   },
