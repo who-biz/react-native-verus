@@ -258,9 +258,9 @@ export const getSynchronizerInstance = (
 export const makeSynchronizer = async (
   initializerConfig: InitializerConfig
 ): Promise<Synchronizer> => {
-  //console.warn("before getSynchronizerInstance in makeSynchronizer")
+  console.warn("before getSynchronizerInstance in makeSynchronizer")
   getSynchronizerInstance(initializerConfig.alias, initializerConfig.networkName);
-  //console.warn("before synchronizer.initialize()")
+  console.warn("before synchronizer.initialize() extsk(" + initializerConfig.extsk + ")")
   await synchronizerInstance.initialize(initializerConfig)
   //console.warn("before return synchronizer")
   return synchronizerInstance;
