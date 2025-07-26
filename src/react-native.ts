@@ -30,6 +30,13 @@ type Callback = (...args: any[]) => any
 let synchronizerInstance: Synchronizer;
 
 export const Tools = {
+  bech32Decode: async (
+    bech32Key: string
+  ): Promise<String> => {
+    console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
+    const result = await VerusLightClient.bech32Decode(bech32Key)
+    return result
+  },
   deriveViewingKey: async (
     extsk?: string,
     seedBytesHex?: string,

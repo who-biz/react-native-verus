@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+
 import android.util.Log
 import java.lang.Error
 
@@ -182,15 +183,14 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun getInfo(alias: String, promise: Promise) {
         //Log.w("ReactNative", "getInfo called")
-        val wallet = getWallet(alias)
-        val scope = wallet.coroutineScope
 
-        val birthdayHeight = wallet.latestBirthdayHeight;
-
-        val latestHeight: BlockHeight = wallet.latestHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)
-
-        scope.launch {
+        moduleScope.launch {
             try {
+                val wallet = getWallet(alias)
+                val birthdayHeight = wallet.latestBirthdayHeight;
+
+                val latestHeight: BlockHeight = wallet.latestHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)
+
                 val map = combine(
                     wallet.processorInfo,
                     wallet.progress,
@@ -659,6 +659,28 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     //
 
     @ReactMethod
+    fun bech32Decode(
+        bech32Key: String,
+        promise: Promise,
+    ) {
+        Log.w("ReactNative", "bech32Decode called!, bech32Key(${bech32Key})");
+        moduleScope.launch {
+            try {
+                val keyBytes = decodeSaplingSpendKey(bech32Key)
+                val result = keyBytes.toHexString()
+                Log.w("ReactNative", "bech32Decode: ${result}");
+                promise.resolve(result)
+            } catch (e: Exception) {
+                promise.reject("DECODE_ERROR","Failed to decode bech32 spendkey", e)
+            }
+        }
+    }
+
+    //
+    // AddressTool
+    //
+
+    @ReactMethod
     fun deriveUnifiedAddress(
         alias: String,
         promise: Promise,
@@ -836,4 +858,24 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         val saplingBalances: WalletBalance?,
         /*val orchardBalances: WalletBalance?,*/
     )
+
+    private fun decodeSaplingSpendKey(bech32Key: String): ByteArray {
+        val (hrp, data, encoding) = Bech32.decode(encoded)
+
+        require(encoding == Bech32.Encoding.Bech32m) {
+            "Invalid Bech32 encoding: expected Bech32m"
+        }
+
+        require(hrp == "secret-extended-key-main" || hrp == "secret-extended-key-test") {
+            "Invalid HRP: $hrp"
+        }
+
+        val bytes = Bech32.five2eight(data, offset = 0)
+
+        require(bytes.size == 169) {
+            "Unexpected decoded key length: ${bytes.size} bytes"
+        }
+
+       return bytes
+    }
 }
