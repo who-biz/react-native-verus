@@ -35,6 +35,7 @@ export const Tools = {
   ): Promise<String> => {
     console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
     const result = await VerusLightClient.bech32Decode(bech32Key)
+    console.warn("bech32decodedResult: " + result);
     return result
   },
   deriveViewingKey: async (

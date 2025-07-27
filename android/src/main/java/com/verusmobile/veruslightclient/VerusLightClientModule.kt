@@ -860,11 +860,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     )
 
     private fun decodeSaplingSpendKey(bech32Key: String): ByteArray {
-        val (hrp, data, encoding) = Bech32.decode(encoded)
+        Log.w("ReactNative", "decodeSaplingSpendkey called!")
+        val (hrp, data, encoding) = Bech32.decode(bech32Key)
 
-        require(encoding == Bech32.Encoding.Bech32m) {
-            "Invalid Bech32 encoding: expected Bech32m"
-        }
+        Log.w("ReactNative", "hrp({$hrp}), data(${data}), encoding(${encoding})");
 
         require(hrp == "secret-extended-key-main" || hrp == "secret-extended-key-test") {
             "Invalid HRP: $hrp"
