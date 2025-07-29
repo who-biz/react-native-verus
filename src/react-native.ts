@@ -33,9 +33,9 @@ export const Tools = {
   bech32Decode: async (
     bech32Key: string
   ): Promise<String> => {
-    console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
+    //console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
     const result = await VerusLightClient.bech32Decode(bech32Key)
-    console.warn("bech32decodedResult: " + result);
+    //console.warn("bech32decodedResult: " + result);
     return result
   },
   deriveViewingKey: async (
@@ -44,7 +44,7 @@ export const Tools = {
     network: Network = 'VRSC'
   ): Promise<UnifiedViewingKey> => {
     //console.log("deriveShieldedViewingkey called!")
-    console.warn("typescript: extsk(" + extsk + ")");
+    //console.warn("typescript: extsk(" + extsk + ")");
     const result = await VerusLightClient.deriveViewingKey(extsk, seedBytesHex, network)
     return result
   },
@@ -61,7 +61,7 @@ export const Tools = {
     seedBytesHex?: string,
     network: Network = 'VRSC'
   ): Promise<String> => {
-    console.warn("deriveShieldedAddress called! extsk(" + extsk + ")")
+    //console.warn("deriveShieldedAddress called! extsk(" + extsk + ")")
     const result = await VerusLightClient.deriveShieldedAddress(extsk, seedBytesHex, network)
     return result
   },
@@ -111,7 +111,7 @@ export class Synchronizer {
     //console.warn("within initialize func, before await")
     //console.warn("mnemonicSeed: " + initializerConfig.mnemonicSeed);
     //console.warn("wif: " + initializerConfig.wif);
-    console.warn("extsk: " + initializerConfig.extsk);
+    //console.warn("extsk: " + initializerConfig.extsk);
     //console.warn("birthday: " + initializerConfig.birthdayHeight);
     //console.warn("alias: " + initializerConfig.alias);
     //console.warn("networkName: " + initializerConfig.networkName);
@@ -184,7 +184,7 @@ export class Synchronizer {
   async sendToAddress(
     spendInfo: SpendInfo
   ): Promise<SpendSuccess | SpendFailure> {
-    console.warn("mnemonicSeed(" + spendInfo.mnemonicSeed + "), extsk(" + spendInfo.extsk + ")");
+    //console.warn("mnemonicSeed(" + spendInfo.mnemonicSeed + "), extsk(" + spendInfo.extsk + ")");
     const result = await VerusLightClient.sendToAddress(
       this.alias,
       spendInfo.zatoshi,
@@ -266,9 +266,9 @@ export const getSynchronizerInstance = (
 export const makeSynchronizer = async (
   initializerConfig: InitializerConfig
 ): Promise<Synchronizer> => {
-  console.warn("before getSynchronizerInstance in makeSynchronizer")
+  //console.warn("before getSynchronizerInstance in makeSynchronizer")
   getSynchronizerInstance(initializerConfig.alias, initializerConfig.networkName);
-  console.warn("before synchronizer.initialize() extsk(" + initializerConfig.extsk + ")")
+  //console.warn("before synchronizer.initialize() extsk(" + initializerConfig.extsk + ")")
   await synchronizerInstance.initialize(initializerConfig)
   //console.warn("before return synchronizer")
   return synchronizerInstance;
@@ -278,7 +278,7 @@ export const deleteWallet = async (
   alias: string, 
   network: string
 ): Promise<boolean> => {
-   console.warn("deleteWallet called in typescript! alias(" + alias + ")");
+   //console.warn("deleteWallet called in typescript! alias(" + alias + ")");
    const result = await VerusLightClient.deleteWallet(alias, network);
    return result;
 }
@@ -291,6 +291,6 @@ export const deleteWallet = async (
 ): Promise<String> => {
   //console.warn("before calling Synchronizer.getSaplingAddress")
   const address = await Synchronizer.deriveSaplingAddress()
-  console.warn("before return saplingAddress: " + address)
+  //console.warn("before return saplingAddress: " + address)
   //return address
 }*/

@@ -55,7 +55,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ) = moduleScope.launch {
         //Log.w("ReactNative", "initializer, before promise");
         promise.wrap {
-            Log.w("ReactNative", "Initializer, start func, extsk($extsk)")
+            //Log.w("ReactNative", "Initializer, start func, extsk($extsk)")
             val network = networks.getOrDefault(networkName, ZcashNetwork.Mainnet)
             val endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
             var seedPhrase = byteArrayOf()
@@ -417,7 +417,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
-        Log.w("ReactNative", "deriveViewingKey called, extsk($extsk)")
+        //Log.w("ReactNative", "deriveViewingKey called, extsk($extsk)")
         moduleScope.launch {
             promise.wrap {
                 var seedPhrase = byteArrayOf()
@@ -552,7 +552,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         promise: Promise,
     ) {
         val wallet = getWallet(alias)
-        Log.w("ReactNative", "sendToAddress called, extsk($extsk)");
+        //Log.w("ReactNative", "sendToAddress called, extsk($extsk)");
         wallet.coroutineScope.launch {
             try {
                 var extendedSecretKey = byteArrayOf()
@@ -563,8 +563,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     seedPhrase = SeedPhrase.new(seed).toByteArray()
                 }
                 if (!extsk.isNullOrEmpty()) {
-                    var extendedSk = SeedPhrase.new(extsk)
-                    Log.w("ReactNative", "extendedSk(${extendedSk})")
                     extendedSecretKey = SeedPhrase.new(extsk).toByteArray()
                 }
                 /*if (!wif.isNullOrEmpty()) {
@@ -641,7 +639,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         //clearDataDb: Boolean,
         promise: Promise
     ) {
-        Log.w("ReactNative", "deleteWallet called!");
+        //Log.w("ReactNative", "deleteWallet called!");
         moduleScope.launch {
             try {
                 val result = Synchronizer.erase(reactApplicationContext, networks.getOrDefault(network, ZcashNetwork.Mainnet), alias)
@@ -665,12 +663,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         bech32Key: String,
         promise: Promise,
     ) {
-        Log.w("ReactNative", "bech32Decode called!, bech32Key(${bech32Key})");
+        //Log.w("ReactNative", "bech32Decode called!, bech32Key(${bech32Key})");
         moduleScope.launch {
             try {
                 val keyBytes = decodeSaplingSpendKey(bech32Key)
                 val result = keyBytes.toHexString()
-                Log.w("ReactNative", "bech32Decode: ${result}");
+                //Log.w("ReactNative", "bech32Decode: ${result}");
                 promise.resolve(result)
             } catch (e: Exception) {
                 promise.reject("DECODE_ERROR","Failed to decode bech32 spendkey", e)
@@ -755,7 +753,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
-        Log.w("ReactNative", "deriveShieldedAddress called, extsk($extsk)");
+        //Log.w("ReactNative", "deriveShieldedAddress called, extsk($extsk)");
         moduleScope.launch {
             promise.wrap {
                 var seedPhrase = byteArrayOf()
@@ -862,19 +860,19 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     )
 
     private fun decodeSaplingSpendKey(bech32Key: String): ByteArray {
-        Log.w("ReactNative", "decodeSaplingSpendkey called!")
+        //Log.w("ReactNative", "decodeSaplingSpendkey called!")
         val (hrp, data, encoding) = Bech32.decode(bech32Key)
 
-        Log.w("ReactNative", "hrp({$hrp}), data(${data}), encoding(${encoding})");
+        //Log.w("ReactNative", "hrp({$hrp}), data(${data}), encoding(${encoding})");
 
-        require(hrp == "secret-extended-key-main" || hrp == "secret-extended-key-test") {
-            "Invalid HRP: $hrp"
+        require(hrp == "secret-extended-key-main"/* || hrp == "secret-extended-key-test"*/) {
+            throw Exception("Invalid HRP: $hrp")
         }
 
         val bytes = Bech32.five2eight(data, offset = 0)
 
         require(bytes.size == 169) {
-            "Unexpected decoded key length: ${bytes.size} bytes"
+            throw Exception("Unexpected decoded key length: ${bytes.size} bytes")
         }
 
        return bytes
