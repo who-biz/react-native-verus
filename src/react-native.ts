@@ -184,7 +184,7 @@ export class Synchronizer {
   async sendToAddress(
     spendInfo: SpendInfo
   ): Promise<SpendSuccess | SpendFailure> {
-    //console.log("mnemonicSeed = " + spendInfo.mnemonicSeed);
+    console.warn("mnemonicSeed(" + spendInfo.mnemonicSeed + "), extsk(" + spendInfo.extsk + ")");
     const result = await VerusLightClient.sendToAddress(
       this.alias,
       spendInfo.zatoshi,

@@ -563,6 +563,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     seedPhrase = SeedPhrase.new(seed).toByteArray()
                 }
                 if (!extsk.isNullOrEmpty()) {
+                    var extendedSk = SeedPhrase.new(extsk)
+                    Log.w("ReactNative", "extendedSk(${extendedSk})")
                     extendedSecretKey = SeedPhrase.new(extsk).toByteArray()
                 }
                 /*if (!wif.isNullOrEmpty()) {
