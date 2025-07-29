@@ -38,6 +38,14 @@ export const Tools = {
     //console.warn("bech32decodedResult: " + result);
     return result
   },
+  deterministicSeedBytes: async (
+    seed: string
+  ): Promise<String> => {
+    //console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
+    const result = await VerusLightClient.deterministicSeedBytes(seed);
+    //console.warn("bech32decodedResult: " + result);
+    return result
+  },
   deriveViewingKey: async (
     extsk?: string,
     seedBytesHex?: string,

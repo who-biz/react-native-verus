@@ -681,6 +681,28 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     //
 
     @ReactMethod
+    fun deterministicSeedBytes(
+        seed: String,
+        promise: Promise,
+    ) {
+        //Log.w("ReactNative", "bech32Decode called!, bech32Key(${bech32Key})");
+        moduleScope.launch {
+            try {
+                val keyBytes = SeedPhrase.new(seed).toByteArray()
+                val result = keyBytes.toHexString()
+                //Log.w("ReactNative", "bech32Decode: ${result}");
+                promise.resolve(result)
+            } catch (e: Exception) {
+                promise.reject("SEED_ERROR","Failed to convert mnemonicSeed to bytes", e)
+            }
+        }
+    }
+
+    //
+    // AddressTool
+    //
+
+    @ReactMethod
     fun deriveUnifiedAddress(
         alias: String,
         promise: Promise,
