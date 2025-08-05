@@ -442,8 +442,17 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         spendingKey,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                //Log.i("ReactNative", "keys: " + keys.encoding);
-                return@wrap keys.encoding
+                Log.w("ReactNative", "keys: ${keys.encoding}");
+                val key = DerivationTool.getInstance().deriveSaplingViewingKey(
+                    extendedSecretKey,
+                    seedPhrase,
+                    networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                    Account.DEFAULT
+                )
+                val data = SeedPhrase.new(key.encoding).toByteArray()
+                val encoded = encodeSaplingViewingKey(data)
+                Log.w("ReactNative", "key: ${encoded}")
+                return@wrap encoded
             }
         }
     }
@@ -898,5 +907,15 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
 
        return bytes
+    }
+    private fun encodeSaplingViewingKey(data: ByteArray): String {
+        //Log.w("ReactNative", "decodeSaplingSpendkey called!")
+        val encoded = Bech32.encodeBytes("zxviews", data, Bech32.Encoding.Bech32)
+
+        /*require(bytes.size == 169) {
+            throw Exception("Unexpected decoded key length: ${bytes.size} bytes")
+        }*/
+
+        return encoded
     }
 }
