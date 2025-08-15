@@ -84,7 +84,7 @@ class RNZcash: RCTEventEmitter {
 
   // Synchronizer
   @objc func initialize(
-    _ seed: String, _ birthdayHeight: Int, _ alias: String, _ networkName: String,
+    _ seed: String, _ wif: String, _ extsk: String, _ birthdayHeight: Int, _ alias: String, _ networkName: String,
     _ defaultHost: String, _ defaultPort: Int, _ newWallet: Bool,
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
@@ -200,7 +200,7 @@ class RNZcash: RCTEventEmitter {
   }
 
   @objc func sendToAddress(
-    _ alias: String, _ zatoshi: String, _ toAddress: String, _ memo: String, _ seed: String,
+    _ alias: String, _ zatoshi: String, _ toAddress: String, _ memo: String, _ seed: String, _ extsk: String,
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
@@ -213,7 +213,7 @@ class RNZcash: RCTEventEmitter {
         }
 
         do {
-          let spendingKey = try deriveUnifiedSpendingKey(seed, wallet.synchronizer.network)
+          let spendingKey = try deriveUnifiedSpendingKey(extsk, seed, wallet.synchronizer.network)
           var sdkMemo: Memo? = nil
           if memo != "" {
             sdkMemo = try Memo(string: memo)
@@ -317,11 +317,14 @@ class RNZcash: RCTEventEmitter {
     }
   }
 
-  private func deriveUnifiedSpendingKey(_ seed: String, _ network: ZcashNetwork) throws
+  private func deriveUnifiedSpendingKey(_ extsk: String, _ seed: String, _ network: ZcashNetwork) throws
     -> UnifiedSpendingKey
   {
+    //TODO: handle extsk bech32 decoding, and use Mnemonic.deterministicSeedBytes() to create byte array
+    // then pass to deriveUnifiedSpendingKey
     let derivationTool = DerivationTool(networkType: network.networkType)
     let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
+    //let extskBytes = try Mnemonic.deterministicSeedBytes(from: extsk)
     let spendingKey = try derivationTool.deriveUnifiedSpendingKey(seed: seedBytes, accountIndex: 0)
     return spendingKey
   }
