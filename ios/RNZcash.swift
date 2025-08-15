@@ -108,10 +108,14 @@ class RNZcash: RCTEventEmitter {
         do {
           let wallet = try WalletSynchronizer(
             alias: alias, initializer: initializer, emitter: sendToJs)
+
           let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
+          let extskBytes = try Mnemonic.deterministicSeedBytes(from:extsk)
+
           let initMode = newWallet ? WalletInitMode.newWallet : WalletInitMode.existingWallet
 
           _ = try await wallet.synchronizer.prepare(
+            //TODO extsk handling here, need to figure out "with/for" syntax
             with: seedBytes,
             walletBirthday: birthdayHeight,
             for: initMode
@@ -324,27 +328,27 @@ class RNZcash: RCTEventEmitter {
     // then pass to deriveUnifiedSpendingKey
     let derivationTool = DerivationTool(networkType: network.networkType)
     let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
-    //let extskBytes = try Mnemonic.deterministicSeedBytes(from: extsk)
-    let spendingKey = try derivationTool.deriveUnifiedSpendingKey(seed: seedBytes, accountIndex: 0)
+    let extskBytes = try Mnemonic.deterministicSeedBytes(from: extsk)
+    let spendingKey = try derivationTool.deriveUnifiedSpendingKey(extsk: extskBytes, seed: seedBytes, accountIndex: 0)
     return spendingKey
   }
 
-  private func deriveUnifiedViewingKey(_ seed: String, _ network: ZcashNetwork) throws
+  private func deriveUnifiedViewingKey(_ extsk: String, _ seed: String, _ network: ZcashNetwork) throws
     -> UnifiedFullViewingKey
   {
-    let spendingKey = try deriveUnifiedSpendingKey(seed, network)
+    let spendingKey = try deriveUnifiedSpendingKey(extsk, seed, network)
     let derivationTool = DerivationTool(networkType: network.networkType)
     let viewingKey = try derivationTool.deriveUnifiedFullViewingKey(from: spendingKey)
     return viewingKey
   }
 
   @objc func deriveViewingKey(
-    _ seed: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
+    _ extsk: String, _ seed: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     do {
       let zcashNetwork = getNetworkParams(network)
-      let viewingKey = try deriveUnifiedViewingKey(seed, zcashNetwork)
+      let viewingKey = try deriveUnifiedViewingKey(extsk, seed, zcashNetwork)
       resolve(viewingKey.stringEncoded)
     } catch {
       reject("DeriveViewingKeyError", "Failed to derive viewing key", error)
@@ -382,6 +386,7 @@ class RNZcash: RCTEventEmitter {
     _ address: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
+    //TODO: this needs modified probably, needed a change in Android SDK
     let derivationTool = getDerivationToolForNetwork(network)
     if derivationTool.isValidUnifiedAddress(address)
       || derivationTool.isValidSaplingAddress(address)

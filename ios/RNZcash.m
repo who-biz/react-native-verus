@@ -5,6 +5,8 @@
 
 // Synchronizer
 RCT_EXTERN_METHOD(initialize:(NSString *)seed
+:(NSString *)wif
+:(NSString *)extsk
 :(NSInteger *)birthdayHeight
 :(NSString *)alias
 :(NSString *)networkName
@@ -59,7 +61,8 @@ rejecter:(RCTPromiseRejectBlock)reject
 )
 
 // Derivation tool
-RCT_EXTERN_METHOD(deriveViewingKey:(NSString *)seed
+RCT_EXTERN_METHOD(deriveViewingKey:(NSString *)extsk
+:(NSString *)seed
 :(NSString *)network
 resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
