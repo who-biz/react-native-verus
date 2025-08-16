@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
 
   s.platform     = :ios, "13.0"
   s.source = {
-    :git => "https://github.com/EdgeApp/react-native-zcash.git",
+    :git => "https://github.com/who-biz/react-native-zcash.git",
     :tag => "v#{s.version}"
   }
   s.source_files =
