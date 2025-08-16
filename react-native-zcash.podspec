@@ -26,7 +26,7 @@ Pod::Spec.new do |s|
   }
   s.vendored_frameworks = "ios/libzcashlc.xcframework"
 
-  s.dependency "MnemonicSwift", "~> 2.2"
+  s.dependency "MnemonicSwift", "~> 2.0"
   s.dependency "gRPC-Swift", "~> 1.8"
   s.dependency "SQLite.swift", "~> 0.12"
   s.dependency "React-Core"
