@@ -45,3 +45,4 @@ export default [
     plugins: [resolve(resolveOpts), babel(babelOpts), filesize()]
   }
 ]
+

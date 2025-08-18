@@ -45,7 +45,7 @@
     "*.{js,ts}": "eslint"
   },
   "dependencies": {
-    "biggystring": "^4.1.3",
+    "biggystring": "^4.2.3",
     "rfc4648": "^1.3.0"
   },
   "devDependencies": {
@@ -54,8 +54,8 @@
     "@babel/preset-env": "^7.9.6",
     "@babel/preset-typescript": "^7.9.0",
     "@grpc/grpc-js": "^1.8.20",
-    "@types/node": "^16.14.1",
-    "@types/react-native": "^0.68.5",
+    "@types/node": "^14.0.5",
+    "@types/react-native": "^0.62.11",
     "@typescript-eslint/eslint-plugin": "^2.34.0",
     "@typescript-eslint/parser": "^3.0.1",
     "babel-eslint": "^10.1.0",
@@ -78,9 +78,9 @@
     "rollup-plugin-flow-entry": "^0.3.4",
     "rollup-plugin-node-resolve": "^5.2.0",
     "sucrase": "^3.15.0",
-    "typescript": "4.8.4"
+    "typescript": "^3.9.3"
   },
   "peerDependencies": {
-    "react-native": "^0.68.5"
+    "react-native": ">=0.47.0 <1.0.0"
   }
 }
