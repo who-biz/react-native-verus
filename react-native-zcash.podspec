@@ -21,7 +21,6 @@ Pod::Spec.new do |s|
     "ios/RNZcash.swift",
     "ios/zcashlc.h",
     "ios/ZCashLightClientKit/**/*.swift"
-    "ios/zcashlc.h",
   s.resource_bundles = {
     "zcash-mainnet" => "ios/ZCashLightClientKit/Resources/checkpoints/mainnet/*.json",
     "zcash-testnet" => "ios/ZCashLightClientKit/Resources/checkpoints/testnet/*.json"
