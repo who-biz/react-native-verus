@@ -6,7 +6,7 @@
 import { execSync } from 'child_process'
 import { deepList, justFiles, makeNodeDisklet, navigateDisklet } from 'disklet'
 import { existsSync, mkdirSync } from 'fs'
-import { join } from 'path'
+import { join, basename } from 'path'
 
 import { copyCheckpoints } from './copyCheckpoints'
 
@@ -24,17 +24,43 @@ async function main(): Promise<void> {
 function downloadSources(): void {
   getRepo(
     'ZcashLightClientKit',
-    'https://github.com/zcash/ZcashLightClientKit.git',
+    'https://github.com/who-biz/verus-swift-wallet-sdk.git',
     // 2.0.3:
-    '23486ccfcd1a9d3da551c7423dd65bfe4abf92f1'
+    'verus'
   )
   getRepo(
     'zcash-light-client-ffi',
-    'https://github.com/zcash-hackworks/zcash-light-client-ffi.git',
+    'https://github.com/who-biz/verus-light-client-ffi.git',
     // 0.4.0:
-    '9bc5877ef6302e877922f79ebead52e50bce94fd'
+    'verus'
   )
 }
+
+/**
+ * Ensure each static lib is single-arch.
+ * If it's a fat binary, split into multiple thin .a files and return their paths.
+ */
+function prepareSingleArchLib(libPath: string, workDir: string): string[] {
+  const info = execSync(`lipo -info "${libPath}"`).toString();
+
+  if (!info.includes("Architectures in the fat file")) {
+    // Already a single-arch lib
+    return [libPath];
+  }
+
+  // Extract each architecture slice
+  const archs = info.split(":").pop()!.trim().split(" ");
+  const outputs: string[] = [];
+
+  archs.forEach((arch) => {
+    const outPath = join(workDir, `${basename(libPath, ".a")}-${arch}.a`);
+    execSync(`lipo "${libPath}" -thin ${arch} -output "${outPath}"`);
+    outputs.push(outPath);
+  });
+
+  return outputs;
+}
+
 
 /**
  * Re-packages zcash-light-client-ffi.
@@ -62,15 +88,24 @@ async function rebuildXcframework(): Promise<void> {
       'tmp/zcash-light-client-ffi/releases/XCFramework/libzcashlc.xcframework/ios-arm64/libzcashlc.framework/libzcashlc'
     )
   )
-  await disklet.setText(
-    'ios/ZCashLightClientKit/Rust/zcashlc.h',
-    await disklet.getText(
-      'tmp/zcash-light-client-ffi/releases/XCFramework/libzcashlc.xcframework/ios-arm64/libzcashlc.framework/Headers/zcashlc.h'
-    )
-  )
 
   // Build the XCFramework:
-  quietExec([
+const tmpDir = join(__dirname, "..", "tmp", "thin");
+mkdirSync(tmpDir, { recursive: true });
+
+const simLibs = prepareSingleArchLib('./tmp/zcash-light-client-ffi/releases/XCFramework/libzcashlc.xcframework/ios-arm64_x86_64-simulator/libzcashlc.framework/libzcashlc', tmpDir);
+const deviceLibs = prepareSingleArchLib('./tmp/zcash-light-client-ffi/releases/XCFramework/libzcashlc.xcframework/ios-arm64/libzcashlc.framework/libzcashlc', tmpDir);
+
+const args = [
+  "-create-xcframework",
+  ...simLibs.flatMap((lib) => ["-library", lib]),
+  ...deviceLibs.flatMap((lib) => ["-library", lib]),
+  "-output", join(__dirname, '../ios/libzcashlc.xcframework')
+];
+
+execSync(`xcodebuild ${args.join(" ")}`, { stdio: "inherit" });
+
+/*  loudExec(tmp, [
     'xcodebuild',
     '-create-xcframework',
     '-library',
@@ -79,7 +114,7 @@ async function rebuildXcframework(): Promise<void> {
     join(__dirname, '../tmp/lib/ios/libzcashlc.a'),
     '-output',
     join(__dirname, '../ios/libzcashlc.xcframework')
-  ])
+  ])*/
 }
 
 /**
@@ -92,6 +127,7 @@ async function copySwift(): Promise<void> {
     'tmp/ZCashLightClientKit/Sources'
   )
   const toDisklet = navigateDisklet(disklet, 'ios')
+  await toDisklet.delete('ZCashLightClientKit/')
   const files = justFiles(await deepList(fromDisklet, 'ZCashLightClientKit/'))
 
   for (const file of files) {
@@ -113,9 +149,21 @@ async function copySwift(): Promise<void> {
       // This block of code uses "Bundle.module" too,
       // but we can just delete it since phone builds don't need it:
       .replace(/static let macOS = BundleCheckpointURLProvider.*}\)/s, '')
+      .replace(
+        `public static func from(decimal: Decimal) -> Zatoshi`,
+        `public static func from(decimal: Foundation.Decimal) -> Zatoshi`
+      )
 
     await toDisklet.setText(file, fixed)
   }
+
+  // Copy the Rust header into the Swift location:
+  await disklet.setText(
+    'ios/zcashlc.h',
+    await disklet.getText(
+      'tmp/zcash-light-client-ffi/releases/XCFramework/libzcashlc.xcframework/ios-arm64/libzcashlc.framework/Headers/zcashlc.h'
+    )
+  )
 }
 
 /**
@@ -124,10 +172,17 @@ async function copySwift(): Promise<void> {
 function getRepo(name: string, uri: string, hash: string): void {
   const path = join(tmp, name)
 
-  // Clone (if needed):
+  // Either clone or fetch:
   if (!existsSync(path)) {
     console.log(`Cloning ${name}...`)
-    loudExec(['git', 'clone', uri, name])
+    loudExec(tmp, ['git', 'clone', uri, name])
+  } else {
+    // We might already have the right commit, so fetch lazily:
+    try {
+      loudExec(path, ['git', 'fetch'])
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   // Checkout:
@@ -140,24 +195,18 @@ function getRepo(name: string, uri: string, hash: string): void {
 }
 
 /**
- * Runs a command and returns its results.
- */
-function quietExec(argv: string[]): string {
-  return execSync(argv.join(' '), {
-    cwd: tmp,
-    encoding: 'utf8'
-  }).replace(/\n$/, '')
-}
-
-/**
  * Runs a command and displays its results.
  */
-function loudExec(argv: string[]): void {
+function loudExec(path: string, argv: string[]): void {
   execSync(argv.join(' '), {
-    cwd: tmp,
+    cwd: path,
     stdio: 'inherit',
     encoding: 'utf8'
   })
 }
 
-main().catch(error => console.log(error))
+main().catch(error => {
+  console.log(error)
+  process.exit(1)
+})
+
