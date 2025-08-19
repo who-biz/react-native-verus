@@ -17,18 +17,32 @@ Pod::Spec.new do |s|
   }
 
   s.prepare_command = <<-CMD
-    echo "Preparing react-native-verus sources..."
-    set -e  # abort on first failure
+    echo "[react-native-verus] prepare_command starting..."
+    set -e
 
-    cd "$(pwd)"
-    echo "Running yarn install in react-native-verus..."
-    yarn install --frozen-lockfile --ignore-scripts
+    echo "PWD=$(pwd)"
+    export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH"
+    export HUSKY=0
+    export CI=1
 
-    echo "Running update-sources..."
-    npx sucrase-node ./scripts/updateSources.ts
-    #npm run update-sources
+    echo "Installing deps (ignoring lifecycle scripts to avoid Husky)..."
+    yarn install --frozen-lockfile --ignore-scripts || npm ci --ignore-scripts
 
-    echo "Done preparing react-native-verus."
+    echo "Transpiling TS -> JS (with imports->CJS) ..."
+    rm -rf ./scripts-built
+      ./node_modules/.bin/sucrase ./scripts \
+      --transforms typescript,imports \
+      --out-dir ./scripts-built
+
+    if [ ! -f "./scripts-built/updateSources.js" ]; then
+      echo "ERROR: Expected ./scripts-built/updateSources.js after transpile."
+      exit 1
+    fi
+
+    echo "Running updateSources.js ..."
+    node ./scripts-built/updateSources.js
+
+    echo "[react-native-verus] prepare_command finished."
   CMD
 
   s.source_files =
