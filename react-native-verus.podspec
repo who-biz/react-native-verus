@@ -25,7 +25,8 @@ Pod::Spec.new do |s|
     yarn install --frozen-lockfile --ignore-scripts
 
     echo "Running update-sources..."
-    npm run update-sources
+    npx sucrase-node ./scripts/updateSources.ts
+    #npm run update-sources
 
     echo "Done preparing react-native-verus."
   CMD
