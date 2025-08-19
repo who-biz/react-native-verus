@@ -22,7 +22,7 @@ Pod::Spec.new do |s|
 
     cd "$(pwd)"
     echo "Running yarn install in react-native-verus..."
-    yarn install --frozen-lockfile
+    yarn install --frozen-lockfile --ignore-scripts
 
     echo "Running update-sources..."
     npm run update-sources
