@@ -28,7 +28,8 @@
     "/react-native-verus.podspec",
     "/README.md",
     "/src/",
-    "yarn.lock"
+    "/scripts",
+    "/yarn.lock"
   ],
   "scripts": {
     "build": "(cd android && gradle assemble -DheapDumpOnOutOfMemoryError=false)",
