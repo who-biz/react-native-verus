@@ -15,6 +15,21 @@ Pod::Spec.new do |s|
     :git => "https://github.com/who-biz/react-native-zcash.git",
     :tag => "v#{s.version}"
   }
+
+  s.prepare_command = <<-CMD
+    echo "Preparing react-native-verus sources..."
+    set -e  # abort on first failure
+
+    cd "$(pwd)"
+    echo "Running yarn install in react-native-verus..."
+    yarn install --frozen-lockfile
+
+    echo "Running update-sources..."
+    npm run update-sources
+
+    echo "Done preparing react-native-verus."
+  CMD
+
   s.source_files =
     "ios/react-native-verus-Bridging-Header.h",
     "ios/RNZcash.m",
@@ -25,8 +40,11 @@ Pod::Spec.new do |s|
     "zcash-mainnet" => "ios/ZCashLightClientKit/Resources/checkpoints/mainnet/*.json",
     "zcash-testnet" => "ios/ZCashLightClientKit/Resources/checkpoints/testnet/*.json"
   }
-  s.vendored_frameworks = "ios/libzcashlc.xcframework"
 
+  s.vendored_frameworks = "ios/ZcashLightClientKit/**/*.framework"
+  s.preserve_paths = "ios/ZCashLightClientKit"
+
+  s.dependency "React-Core"
   s.dependency "MnemonicSwift", "~> 2.0"
   s.dependency "gRPC-Swift", "~> 1.8"
   s.dependency "SQLite.swift", "~> 0.12"
