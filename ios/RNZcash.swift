@@ -116,7 +116,9 @@ class RNZcash: RCTEventEmitter {
 
           _ = try await wallet.synchronizer.prepare(
             //TODO extsk handling here, need to figure out "with/for" syntax
-            with: seedBytes,
+            transparent_key: [UInt8()],
+            extsk: extskBytes,
+            seed: seedBytes,
             walletBirthday: birthdayHeight,
             for: initMode
           )
@@ -243,7 +245,7 @@ class RNZcash: RCTEventEmitter {
     }
   }
 
-  @objc func shieldFunds(
+  /*@objc func shieldFunds(
     _ alias: String, _ seed: String, _ memo: String, _ threshold: String,
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
@@ -278,7 +280,7 @@ class RNZcash: RCTEventEmitter {
         reject("shieldFunds", "Wallet does not exist", genericError)
       }
     }
-  }
+  }*/
 
   @objc func rescan(
     _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
@@ -329,7 +331,7 @@ class RNZcash: RCTEventEmitter {
     let derivationTool = DerivationTool(networkType: network.networkType)
     let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
     let extskBytes = try Mnemonic.deterministicSeedBytes(from: extsk)
-    let spendingKey = try derivationTool.deriveUnifiedSpendingKey(extsk: extskBytes, seed: seedBytes, accountIndex: 0)
+      let spendingKey = try derivationTool.deriveUnifiedSpendingKey(transparent_key: [], extsk: extskBytes, seed: seedBytes, accountIndex: 0)
     return spendingKey
   }
 
@@ -528,16 +530,36 @@ class WalletSynchronizer: NSObject {
   }
 
   func updateBalanceState(event: SynchronizerState) {
-    let transparentBalance = event.transparentBalance
-    let shieldedBalance = event.shieldedBalance
+    //let transparentBalance = event.transparentBalance
+    //let shieldedBalance = event.shieldedBalance
+      let transparentBalance = event.accountBalance?.unshielded ?? Zatoshi(0)
+      let shieldedBalance = event.accountBalance?.saplingBalance ?? PoolBalance.zero
+      let orchardBalance = event.accountBalance?.orchardBalance ?? PoolBalance.zero
+      let transparentAvailableZatoshi = transparentBalance
+      let transparentTotalZatoshi = transparentBalance
 
-    let transparentAvailableZatoshi = transparentBalance.verified
-    let transparentTotalZatoshi = transparentBalance.total
+      let saplingAvailableZatoshi = shieldedBalance.spendableValue
+      let saplingTotalZatoshi = shieldedBalance.total()
 
-    let saplingAvailableZatoshi = shieldedBalance.verified
-    let saplingTotalZatoshi = shieldedBalance.total
+      //let orchardAvailableZatoshi = orchardBalance.spendableValue
+      //let orchardTotalZatoshi = orchardBalance.total()
 
-    if transparentAvailableZatoshi == self.balances.transparentAvailableZatoshi
+      self.balances = TotalBalances(
+        transparentAvailableZatoshi: transparentAvailableZatoshi,
+        transparentTotalZatoshi: transparentTotalZatoshi,
+        saplingAvailableZatoshi: saplingAvailableZatoshi,
+        saplingTotalZatoshi: saplingTotalZatoshi
+      )
+      let data = NSMutableDictionary(dictionary: self.balances.nsDictionary)
+      data["alias"] = self.alias
+      emit("BalanceEvent", data)
+      //let transparentAvailableZatoshi = transparentBalance.verified
+    //let transparentTotalZatoshi = transparentBalance.total
+
+    //let saplingAvailableZatoshi = shieldedBalance.verified
+    //let saplingTotalZatoshi = shieldedBalance.total
+
+    /*if transparentAvailableZatoshi == self.balances.transparentAvailableZatoshi
       && transparentTotalZatoshi == self.balances.transparentTotalZatoshi
       && saplingAvailableZatoshi == self.balances.saplingAvailableZatoshi
       && saplingTotalZatoshi == self.balances.saplingTotalZatoshi
@@ -554,6 +576,7 @@ class WalletSynchronizer: NSObject {
     let data = NSMutableDictionary(dictionary: self.balances.nsDictionary)
     data["alias"] = self.alias
     emit("BalanceEvent", data)
+     */
   }
 
   func parseTx(tx: ZcashTransaction.Overview) async -> ConfirmedTx {
