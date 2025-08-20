@@ -53,7 +53,7 @@ function prepareSingleArchLib(libPath: string, workDir: string): string[] {
   const outputs: string[] = [];
 
   archs.forEach((arch) => {
-    const outPath = join(workDir, `${basename(libPath, ".a")}-${arch}.a`);
+    const outPath = join(workDir, `${basename(libPath, ".a")}.a`);
     execSync(`lipo "${libPath}" -thin ${arch} -output "${outPath}"`);
     outputs.push(outPath);
   });
@@ -114,7 +114,8 @@ execSync(`xcodebuild ${args.join(" ")}`, { stdio: "inherit" });
     join(__dirname, '../tmp/lib/ios/libzcashlc.a'),
     '-output',
     join(__dirname, '../ios/libzcashlc.xcframework')
-  ])*/
+  ])
+*/
 }
 
 /**
