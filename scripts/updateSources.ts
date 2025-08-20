@@ -37,85 +37,108 @@ function downloadSources(): void {
 }
 
 /**
- * Ensure each static lib is single-arch.
- * If it's a fat binary, split into multiple thin .a files and return their paths.
+ * Ensure each static lib is single-arch and placed in the requested folders.
+ * For device slices -> ios/<arch>/libzcashlc.a
+ * For simulator slices -> ios-simulator/<arch>/libzcashlc.a
+ *
+ * Returns absolute output paths of the generated (or copied) thin libs.
  */
-function prepareSingleArchLib(libPath: string, workDir: string): string[] {
+function prepareSingleArchLib(libPath: string, _workDir: string): string[] {
   const info = execSync(`lipo -info "${libPath}"`).toString();
 
-  if (!info.includes("Architectures in the fat file")) {
-    // Already a single-arch lib
-    return [libPath];
+  // Decide if this input is a simulator or device lib based on its path/name:
+  const isSimulator = /ios[-_]?simulator|simulator/i.test(libPath);
+
+  // Helper to map an arch to the desired destination directory:
+  const destFor = (arch: string) =>
+    join(__dirname, "..", isSimulator ? "ios-simulator" : "ios", arch);
+
+  // Parse architectures present in the input library:
+  let archs: string[];
+  if (info.includes("Architectures in the fat file")) {
+    // Typical fat binary output
+    archs = info.split(":").pop()!.trim().split(/\s+/);
+  } else {
+    // Non-fat file: <path> is architecture: <arch>
+    const m = info.match(/is architecture:\s*([^\s]+)/);
+    archs = m ? [m[1]] : [];
   }
 
-  // Extract each architecture slice
-  const archs = info.split(":").pop()!.trim().split(" ");
+  if (archs.length === 0) {
+    throw new Error(`Could not detect architectures from: ${info}`);
+  }
+
   const outputs: string[] = [];
 
-  archs.forEach((arch) => {
-    const outPath = join(workDir, `${basename(libPath, ".a")}-${arch}.a`);
-    execSync(`lipo "${libPath}" -thin ${arch} -output "${outPath}"`);
+  for (const arch of archs) {
+    const destDir = destFor(arch);
+    const outPath = join(destDir, "libzcashlc.a");
+    mkdirSync(destDir, { recursive: true });
+
+    if (archs.length === 1) {
+      // Already thin — just copy to the requested location
+      execSync(`cp -f "${libPath}" "${outPath}"`);
+    } else {
+      // Thin the fat archive to the requested location
+      execSync(`lipo "${libPath}" -thin ${arch} -output "${outPath}"`);
+    }
     outputs.push(outPath);
-  });
+  }
 
   return outputs;
 }
 
-
 /**
- * Re-packages zcash-light-client-ffi.
- *
- * An XCFramework can either include a static library (.a)
- * or a dynamically-linked library (.framework).
- * The zcash-light-client-ffi package tries to stuff a static library
- * into a dynamic framework, which doesn't work correctly.
- * We fix this by simply re-building the XCFramework.
+ * Re-packages zcash-light-client-ffi by extracting static libs,
+ * slicing into single-arch outputs in fixed folders, and then
+ * creating a proper XCFramework from those exact thin archives.
  */
 async function rebuildXcframework(): Promise<void> {
-  console.log('Creating XCFramework...')
-  await disklet.delete('ios/libzcashlc.xcframework')
+  console.log("Creating XCFramework…");
+  await disklet.delete("ios/libzcashlc.xcframework");
 
-  // Extract the static libraries:
+  // 1) Extract the static libraries from the vendor XCFramework:
   await disklet.setData(
-    'tmp/lib/ios-simulator/libzcashlc.a',
+    "tmp/lib/ios-simulator/libzcashlc.a",
     await disklet.getData(
-      'tmp/zcash-light-client-ffi/releases/XCFramework/libzcashlc.xcframework/ios-arm64_x86_64-simulator/libzcashlc.framework/libzcashlc'
+      "tmp/zcash-light-client-ffi/releases/XCFramework/libzcashlc.xcframework/ios-arm64_x86_64-simulator/libzcashlc.framework/libzcashlc"
     )
-  )
+  );
   await disklet.setData(
-    'tmp/lib/ios/libzcashlc.a',
+    "tmp/lib/ios/libzcashlc.a",
     await disklet.getData(
-      'tmp/zcash-light-client-ffi/releases/XCFramework/libzcashlc.xcframework/ios-arm64/libzcashlc.framework/libzcashlc'
+      "tmp/zcash-light-client-ffi/releases/XCFramework/libzcashlc.xcframework/ios-arm64/libzcashlc.framework/libzcashlc"
     )
-  )
+  );
 
-  // Build the XCFramework:
-const tmpDir = join(__dirname, "..", "tmp", "thin");
-mkdirSync(tmpDir, { recursive: true });
+  // 2) Slice to single-arch and place them in the requested folders:
+  //    ios/arm64/, ios/x86_64/ (device input usually only contains arm64)
+  //    ios-simulator/arm64/, ios-simulator/x86_64/
+  const simThinPaths = prepareSingleArchLib(
+    './tmp/lib/ios-simulator/libzcashlc.a',
+    '' // workDir unused
+  );
+  const deviceThinPaths = prepareSingleArchLib(
+    './tmp/lib/ios/libzcashlc.a',
+    '' // workDir unused
+  );
 
-const simLibs = prepareSingleArchLib('./tmp/zcash-light-client-ffi/releases/XCFramework/libzcashlc.xcframework/ios-arm64_x86_64-simulator/libzcashlc.framework/libzcashlc', tmpDir);
-const deviceLibs = prepareSingleArchLib('./tmp/zcash-light-client-ffi/releases/XCFramework/libzcashlc.xcframework/ios-arm64/libzcashlc.framework/libzcashlc', tmpDir);
+  // 3) Rebuild the XCFramework from those exact outputs:
+  const args = [
+    "-create-xcframework",
+    // Simulator slices:
+    ...simThinPaths.flatMap((lib) => ["-library", lib]),
+    // Device slices:
+    ...deviceThinPaths.flatMap((lib) => ["-library", lib]),
+    "-output",
+    join(__dirname, "../ios/libzcashlc.xcframework"),
+  ];
 
-const args = [
-  "-create-xcframework",
-  ...simLibs.flatMap((lib) => ["-library", lib]),
-  ...deviceLibs.flatMap((lib) => ["-library", lib]),
-  "-output", join(__dirname, '../ios/libzcashlc.xcframework')
-];
+  execSync(`xcodebuild ${args.map((a) => `"${a}"`).join(" ")}`, {
+    stdio: "inherit",
+  });
 
-execSync(`xcodebuild ${args.join(" ")}`, { stdio: "inherit" });
-
-/*  loudExec(tmp, [
-    'xcodebuild',
-    '-create-xcframework',
-    '-library',
-    join(__dirname, '../tmp/lib/ios-simulator/libzcashlc.a'),
-    '-library',
-    join(__dirname, '../tmp/lib/ios/libzcashlc.a'),
-    '-output',
-    join(__dirname, '../ios/libzcashlc.xcframework')
-  ])
-*/
+  console.log("XCFramework created at ios/libzcashlc.xcframework");
 }
 
 /**
