@@ -57,7 +57,8 @@ Pod::Spec.new do |s|
   }
 
   s.vendored_frameworks = "ios/libzcashlc.xcframework"
-  #s.preserve_paths = "ios/ZCashLightClientKit"
+  s.libraries = "z", "sqlite3", "c++"
+  s.preserve_paths = "ios/libzcashlc.xcframework"
 
   s.dependency "React-Core"
   s.dependency "MnemonicSwift", "~> 2.0"
