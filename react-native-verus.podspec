@@ -56,8 +56,8 @@ Pod::Spec.new do |s|
     "zcash-testnet" => "ios/ZCashLightClientKit/Resources/checkpoints/testnet/*.json"
   }
 
-  s.vendored_frameworks = "ios/ZcashLightClientKit/**/*.framework"
-  s.preserve_paths = "ios/ZCashLightClientKit"
+  s.vendored_frameworks = "ios/libzcashlc.xcframework"
+  #s.preserve_paths = "ios/ZCashLightClientKit"
 
   s.dependency "React-Core"
   s.dependency "MnemonicSwift", "~> 2.0"
