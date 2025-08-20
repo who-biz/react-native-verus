@@ -60,6 +60,17 @@ Pod::Spec.new do |s|
   s.libraries = "z", "sqlite3", "c++"
   s.preserve_paths = "ios/libzcashlc.xcframework"
 
+  s.user_target_xcconfig = {
+    'LIBRARY_SEARCH_PATHS'   => '$(inherited) $(PODS_CONFIGURATION_BUILD_DIR) $(PODS_XCFRAMEWORKS_BUILD_DIR)/libzcashlc',
+    'FRAMEWORK_SEARCH_PATHS' => '$(inherited) $(PODS_CONFIGURATION_BUILD_DIR) $(PODS_XCFRAMEWORKS_BUILD_DIR)'
+  }
+
+  s.pod_target_xcconfig = {
+    'HEADER_SEARCH_PATHS'    => '$(inherited) $(PODS_TARGET_SRCROOT)/ios $(PODS_XCFRAMEWORKS_BUILD_DIR)/libzcashlc/**',
+    'LIBRARY_SEARCH_PATHS'   => '$(inherited) $(PODS_CONFIGURATION_BUILD_DIR) $(PODS_XCFRAMEWORKS_BUILD_DIR)/libzcashlc',
+    'DEAD_CODE_STRIPPING'    => 'NO',
+  }
+
   s.dependency "React-Core"
   s.dependency "MnemonicSwift", "~> 2.0"
   s.dependency "gRPC-Swift", "~> 1.8"
