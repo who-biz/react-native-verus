@@ -53,7 +53,7 @@ function prepareSingleArchLib(libPath: string, workDir: string): string[] {
   const outputs: string[] = [];
 
   archs.forEach((arch) => {
-    const outPath = join(workDir, `${basename(libPath, ".a")}.a`);
+    const outPath = join(workDir, `${basename(libPath, ".a")}-${arch}.a`);
     execSync(`lipo "${libPath}" -thin ${arch} -output "${outPath}"`);
     outputs.push(outPath);
   });
