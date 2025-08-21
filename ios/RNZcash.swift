@@ -384,6 +384,21 @@ class RNZcash: RCTEventEmitter {
     }
   }
 
+  @objc func deriveShieldedAddress(
+    _ seed: String, _ network: ZcashNetwork, resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    do {
+      let zcashNetwork = getNetworkParams(network)
+      let viewingKey = try deriveUnifiedViewingKey(extsk, seed, zcashNetwork)
+      let derivationTool = DerivationTool(networkType: network.networkType)
+      let saplingAddress = derivationTool.deriveShieldedAddress(from: viewingKey)
+      resolve(saplingAddress)
+    } catch {
+      reject("DeriveShieldedAddressError", "Failed to derive shieldedAddress", error)
+    }
+  }
+
   @objc func isValidAddress(
     _ address: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
