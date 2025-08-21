@@ -33,17 +33,17 @@ export const Tools = {
   bech32Decode: async (
     bech32Key: string
   ): Promise<String> => {
-    //console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
+    console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
     const result = await VerusLightClient.bech32Decode(bech32Key)
-    //console.warn("bech32decodedResult: " + result);
+    console.warn("bech32decodedResult: " + result);
     return result
   },
   deterministicSeedBytes: async (
     seed: string
   ): Promise<String> => {
-    //console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
+    console.warn("bech32 decode called in typescript! bech32Key(" + seed + ")");
     const result = await VerusLightClient.deterministicSeedBytes(seed);
-    //console.warn("bech32decodedResult: " + result);
+    console.warn("bech32decodedResult: " + result);
     return result
   },
   deriveViewingKey: async (
@@ -51,8 +51,8 @@ export const Tools = {
     seedBytesHex?: string,
     network: Network = 'VRSC'
   ): Promise<UnifiedViewingKey> => {
-    //console.log("deriveShieldedViewingkey called!")
-    //console.warn("typescript: extsk(" + extsk + ")");
+    console.warn("deriveShieldedViewingkey called!")
+    console.warn("typescript: extsk(" + extsk + ")");
     const result = await VerusLightClient.deriveViewingKey(extsk, seedBytesHex, network)
     return result
   },
@@ -60,7 +60,7 @@ export const Tools = {
     seedBytesHex: string,
     network: Network = 'VRSC'
   ): Promise<UnifiedSpendingKey> => {
-    //console.log("deriveShieldedSpendkey called!")
+    console.warn("deriveShieldedSpendkey called!")
     const result = await VerusLightClient.deriveSaplingSpendingKey(seedBytesHex, network)
     return result
   },
@@ -69,7 +69,7 @@ export const Tools = {
     seedBytesHex?: string,
     network: Network = 'VRSC'
   ): Promise<String> => {
-    //console.warn("deriveShieldedAddress called! extsk(" + extsk + ")")
+    console.warn("deriveShieldedAddress called! extsk(" + extsk + ")")
     const result = await VerusLightClient.deriveShieldedAddress(extsk, seedBytesHex, network)
     return result
   },
@@ -91,6 +91,7 @@ export const Tools = {
     address: string,
     network: Network = 'VRSC'
   ): Promise<boolean> => {
+    console.warn("isValidAddress called!");
     const result = await VerusLightClient.isValidAddress(address, network)
     return result
   }
@@ -148,39 +149,46 @@ export class Synchronizer {
 //  }
 
   async getInfo(): Promise<InfoResponse> {
+    console.warn("getInfo called!");
     const result = await VerusLightClient.getInfo(this.alias)
-    //console.log(JSON.stringify(result));
+    console.warn(JSON.stringify(result));
     return result
   }
 
   async getPrivateBalance(): Promise<PrivateBalanceResponse> {
+    console.warn("getPrivateBalance called!");
     const result = await VerusLightClient.getPrivateBalance(this.alias)
     //console.log(JSON.stringify(result));
     return result
   }
 
   async getPrivateTransactions(): Promise<PrivateTransactionsResponse> {
+    console.warn("getPrivateTransactions called!");
     const result = await VerusLightClient.getPrivateTransactions(this.alias)
     //console.log(JSON.stringify(result));
     return result
   }
 
   async deriveUnifiedAddress(): Promise<Addresses> {
+    console.warn("deriveUnifiedAddress called!");
     const result = await VerusLightClient.deriveUnifiedAddress(this.alias)
     return result
   }
 
   async deriveSaplingAddress(): Promise<string> {
+    console.warn("deriveSaplingAddress called!");
     const result = await VerusLightClient.deriveSaplingAddress(this.alias)
     return result
   }
 
   async deriveShieledAddress(): Promise<Addresses> {
+    console.warn("deriveShieldedAddress called!");
     const result = await VerusLightClient.deriveShieldedAddress(this.alias)
     return result
   }
 
   async getLatestNetworkHeight(alias: string): Promise<number> {
+    console.warn("getLatestNetworkHeight called!");
     const result = await VerusLightClient.getLatestNetworkHeight(alias)
     return result
   }
@@ -274,11 +282,11 @@ export const getSynchronizerInstance = (
 export const makeSynchronizer = async (
   initializerConfig: InitializerConfig
 ): Promise<Synchronizer> => {
-  //console.warn("before getSynchronizerInstance in makeSynchronizer")
+  console.warn("before getSynchronizerInstance in makeSynchronizer")
   getSynchronizerInstance(initializerConfig.alias, initializerConfig.networkName);
-  //console.warn("before synchronizer.initialize() extsk(" + initializerConfig.extsk + ")")
+  console.warn("before synchronizer.initialize() extsk(" + initializerConfig.extsk + "), seed (" + initializerConfig.mnemonicSeed + ")");
   await synchronizerInstance.initialize(initializerConfig)
-  //console.warn("before return synchronizer")
+  console.warn("before return synchronizer")
   return synchronizerInstance;
 }
 
@@ -286,7 +294,7 @@ export const deleteWallet = async (
   alias: string, 
   network: string
 ): Promise<boolean> => {
-   //console.warn("deleteWallet called in typescript! alias(" + alias + ")");
+   console.warn("deleteWallet called in typescript! alias(" + alias + ")");
    const result = await VerusLightClient.deleteWallet(alias, network);
    return result;
 }
