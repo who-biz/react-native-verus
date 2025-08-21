@@ -2,6 +2,9 @@ import Combine
 import Foundation
 import MnemonicSwift
 import os
+import OSLog
+
+let logger = Logger(subsystem: "com.verusmobile", category: "DataHandling")
 
 var SynchronizerMap = [String: WalletSynchronizer]()
 
@@ -330,8 +333,8 @@ class RNZcash: RCTEventEmitter {
     // then pass to deriveUnifiedSpendingKey
     let derivationTool = DerivationTool(networkType: network.networkType)
     let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
-    let extskBytes = try Mnemonic.deterministicSeedBytes(from: extsk)
-      let spendingKey = try derivationTool.deriveUnifiedSpendingKey(transparent_key: [], extsk: extskBytes, seed: seedBytes, accountIndex: 0)
+    //let extskBytes = try Mnemonic.deterministicSeedBytes(from: extsk)
+      let spendingKey = try derivationTool.deriveUnifiedSpendingKey(transparent_key: [], extsk: [], seed: seedBytes, accountIndex: 0)
     return spendingKey
   }
 
@@ -351,7 +354,7 @@ class RNZcash: RCTEventEmitter {
     do {
       let zcashNetwork = getNetworkParams(network)
       let viewingKey = try deriveUnifiedViewingKey(extsk, seed, zcashNetwork)
-      NSLog("Viewing key: %@", viewingKey.stringEncoded)
+      logger.warning("Viewing key: \(viewingKey.stringEncoded, privacy: .public)")
       resolve(viewingKey.stringEncoded)
     } catch {
       reject("DeriveViewingKeyError", "Failed to derive viewing key", error)
@@ -386,7 +389,7 @@ class RNZcash: RCTEventEmitter {
   }
 
   @objc func deriveShieldedAddress(
-    _ seed: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
+    _ extsk: String, _ seed: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     do {
