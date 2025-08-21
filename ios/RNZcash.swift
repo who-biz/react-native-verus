@@ -351,6 +351,7 @@ class RNZcash: RCTEventEmitter {
     do {
       let zcashNetwork = getNetworkParams(network)
       let viewingKey = try deriveUnifiedViewingKey(extsk, seed, zcashNetwork)
+      NSLog("Viewing key: %@", viewingKey.stringEncoded)
       resolve(viewingKey.stringEncoded)
     } catch {
       reject("DeriveViewingKeyError", "Failed to derive viewing key", error)
