@@ -2,9 +2,7 @@ import Combine
 import Foundation
 import MnemonicSwift
 import os
-import OSLog
-
-let logger = Logger(subsystem: "com.verusmobile", category: "DataHandling")
+import React
 
 var SynchronizerMap = [String: WalletSynchronizer]()
 
@@ -354,7 +352,7 @@ class RNZcash: RCTEventEmitter {
     do {
       let zcashNetwork = getNetworkParams(network)
       let viewingKey = try deriveUnifiedViewingKey(extsk, seed, zcashNetwork)
-      logger.warning("Viewing key: \(viewingKey.stringEncoded, privacy: .public)")
+      RCTLogWarn("Viewing key: " + viewingKey.stringEncoded);
       resolve(viewingKey.stringEncoded)
     } catch {
       reject("DeriveViewingKeyError", "Failed to derive viewing key", error)
