@@ -67,8 +67,8 @@ struct ProcessorState {
 // Used when calling reject where there isn't an error object
 let genericError = NSError(domain: "", code: 0)
 
-@objc(RNZcash)
-class RNZcash: RCTEventEmitter {
+@objc(VerusLightClient)
+class VerusLightClient: RCTEventEmitter {
 
   override static func requiresMainQueueSetup() -> Bool {
     return true

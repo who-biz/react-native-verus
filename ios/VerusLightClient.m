@@ -1,7 +1,7 @@
 #import <React/RCTBridgeModule.h>
 #import <React/RCTEventEmitter.h>
 
-@interface RCT_EXTERN_MODULE(RNZcash, RCTEventEmitter<RCTBridgeModule>)
+@interface RCT_EXTERN_MODULE(VerusLightClient, RCTEventEmitter<RCTBridgeModule>)
 
 // Synchronizer
 RCT_EXTERN_METHOD(initialize:(NSString *)seed
