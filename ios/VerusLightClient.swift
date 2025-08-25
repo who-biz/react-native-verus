@@ -352,10 +352,24 @@ class VerusLightClient: RCTEventEmitter {
     do {
       let zcashNetwork = getNetworkParams(network)
       let viewingKey = try deriveUnifiedViewingKey(extsk, seed, zcashNetwork)
-      RCTLogWarn("Viewing key: " + viewingKey.stringEncoded);
+      print("Viewing key: " + viewingKey.stringEncoded);
       resolve(viewingKey.stringEncoded)
     } catch {
       reject("DeriveViewingKeyError", "Failed to derive viewing key", error)
+    }
+  }
+
+  @objc func deriveUnifiedSpendingKey(
+    _ extsk: String, _ seed: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    do {
+      let zcashNetwork = getNetworkParams(network)
+      let spendingKey = try deriveUnifiedSpendingKey(extsk, seed, zcashNetwork)
+      print("Spending key: " + spendingKey);
+      resolve(spendingKey)
+    } catch {
+      reject("DeriveSpendingKeyError", "Failed to derive spending key", error)
     }
   }
 
