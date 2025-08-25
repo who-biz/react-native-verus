@@ -47,8 +47,8 @@ Pod::Spec.new do |s|
 
   s.source_files =
     "ios/react-native-verus-Bridging-Header.h",
-    "ios/RNZcash.m",
-    "ios/RNZcash.swift",
+    "ios/VerusLightClient.m",
+    "ios/VerusLightClient.swift",
     "ios/zcashlc.h",
     "ios/ZCashLightClientKit/**/*.swift"
   s.resource_bundles = {
