@@ -75,6 +75,12 @@ resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(deriveSaplingSpendingKey:(NSString *)seed
+:(NSString *)network
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
 RCT_EXTERN_METHOD(deriveShieldedAddress:(NSString *)extsk
 :(NSString *)seed
 :(NSString *)network
