@@ -46,6 +46,11 @@ export interface UnifiedSpendingKey {
   usk: string
 }
 
+export interface SaplingSpendingKey {
+  account: string
+  extsk: string
+}
+
 export interface BalanceEvent {
   transparentAvailableZatoshi: string
   transparentTotalZatoshi: string

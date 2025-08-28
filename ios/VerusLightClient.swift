@@ -67,15 +67,18 @@ struct ProcessorState {
 // Used when calling reject where there isn't an error object
 let genericError = NSError(domain: "", code: 0)
 
+@_silgen_name("init_rust_logging") func init_rust_logging()
+
 @objc(VerusLightClient)
 class VerusLightClient: RCTEventEmitter {
 
   override static func requiresMainQueueSetup() -> Bool {
     return true
   }
+    
+    @_silgen_name("init_rust_logging") func init_rust_logging()
 
   private func getNetworkParams(_ network: String) -> ZcashNetwork {
-    @_silgen_name("init_rust_logging") func init_rust_logging()
     init_rust_logging()  // important: do this before any Rust logging
     switch network {
     case "testnet":
@@ -339,7 +342,7 @@ class VerusLightClient: RCTEventEmitter {
   }
 
   private func deriveSaplingSpendingKey(_ seed: String, _ network: ZcashNetwork) throws
-    -> SaplingExtendedSpendingKey
+    -> SaplingSpendingKey
   {
     //TODO: handle extsk bech32 decoding, and use Mnemonic.deterministicSeedBytes() to create byte array
     // then pass to deriveUnifiedSpendingKey
@@ -379,7 +382,8 @@ class VerusLightClient: RCTEventEmitter {
     do {
       let zcashNetwork = getNetworkParams(network)
       let spendingKey = try deriveUnifiedSpendingKey(extsk, seed, zcashNetwork)
-      print("Spending key: " + spendingKey);
+        let hex = spendingKey.bytes.map { String(format: "%02x", $0) }.joined()
+        print("Spending key: " + hex);
       resolve(spendingKey)
     } catch {
       reject("DeriveSpendingKeyError", "Failed to derive spending key", error)
@@ -393,8 +397,9 @@ class VerusLightClient: RCTEventEmitter {
     do {
       let zcashNetwork = getNetworkParams(network)
       let spendingKey = try deriveSaplingSpendingKey(seed, zcashNetwork)
-      print("Spending key: " + spendingKey);
-      resolve(spendingKey)
+      let hex = spendingKey.bytes.map { String(format: "%02x", $0) }.joined()
+      print("Spending key: " + hex);
+      resolve(hex)
     } catch {
       reject("DeriveSpendingKeyError", "Failed to derive spending key", error)
     }
