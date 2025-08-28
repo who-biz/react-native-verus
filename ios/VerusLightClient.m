@@ -94,6 +94,11 @@ resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(deriveSaplingAddress:(NSString *)alias
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
 RCT_EXTERN_METHOD(isValidAddress:(NSString *)address
 :(NSString *)network
 resolver:(RCTPromiseResolveBlock)resolve

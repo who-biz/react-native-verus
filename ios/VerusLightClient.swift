@@ -439,6 +439,25 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
+  @objc func deriveSaplingAddress(
+    _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    Task {
+      if let wallet = SynchronizerMap[alias] {
+        do {
+          let saplingAddress = try await wallet.synchronizer.getSaplingAddress(accountIndex: 0)
+          resolve(saplingAddress)
+          return
+        } catch {
+          reject("deriveSaplingAddress", "Failed to derive sapling address", error)
+        }
+      } else {
+        reject("deriveSaplingAddress", "Wallet does not exist", genericError)
+      }
+    }
+  }
+
   @objc func deriveShieldedAddress(
     _ extsk: String, _ seed: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
