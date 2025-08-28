@@ -75,6 +75,8 @@ class VerusLightClient: RCTEventEmitter {
   }
 
   private func getNetworkParams(_ network: String) -> ZcashNetwork {
+    @_silgen_name("init_rust_logging") func init_rust_logging()
+    init_rust_logging()  // important: do this before any Rust logging
     switch network {
     case "testnet":
       return ZcashNetworkBuilder.network(for: .testnet)
