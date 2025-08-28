@@ -73,13 +73,12 @@ let genericError = NSError(domain: "", code: 0)
 class VerusLightClient: RCTEventEmitter {
 
   override static func requiresMainQueueSetup() -> Bool {
+    init_rust_logging()  // important: do this before any Rust logging
     return true
   }
     
-    @_silgen_name("init_rust_logging") func init_rust_logging()
 
   private func getNetworkParams(_ network: String) -> ZcashNetwork {
-    init_rust_logging()  // important: do this before any Rust logging
     switch network {
     case "testnet":
       return ZcashNetworkBuilder.network(for: .testnet)
@@ -112,24 +111,32 @@ class VerusLightClient: RCTEventEmitter {
       )
       if SynchronizerMap[alias] == nil {
         do {
+          print("bp1")
           let wallet = try WalletSynchronizer(
             alias: alias, initializer: initializer, emitter: sendToJs)
 
+
+          print("bp2")
+          var emptyBytes: [UInt8] = []
           let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
-          let extskBytes = try Mnemonic.deterministicSeedBytes(from:extsk)
 
           let initMode = newWallet ? WalletInitMode.newWallet : WalletInitMode.existingWallet
+          print("bp3")
 
           _ = try await wallet.synchronizer.prepare(
             //TODO extsk handling here, need to figure out "with/for" syntax
-            transparent_key: [UInt8()],
-            extsk: extskBytes,
+            transparent_key: emptyBytes,
+            extsk: emptyBytes,
             seed: seedBytes,
             walletBirthday: birthdayHeight,
             for: initMode
           )
+          print("bp4")
+
           try await wallet.synchronizer.start()
+          print("bp5")
           wallet.subscribe()
+          print("bp6")
           SynchronizerMap[alias] = wallet
           resolve(nil)
         } catch {

@@ -51,7 +51,7 @@ export const Tools = {
     seedBytesHex?: string,
     network: Network = 'VRSC'
   ): Promise<UnifiedViewingKey> => {
-    console.warn("deriveShieldedViewingkey called!")
+    console.warn("deriveViewingkey called!")
     console.warn("typescript: extsk(" + extsk + "), seed (" + seedBytesHex + ")");
     const result = await VerusLightClient.deriveViewingKey(extsk, seedBytesHex, network)
     return result
