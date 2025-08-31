@@ -1,4 +1,4 @@
-import Combine
+=import Combine
 import Foundation
 import MnemonicSwift
 import os
@@ -111,17 +111,14 @@ class VerusLightClient: RCTEventEmitter {
       )
       if SynchronizerMap[alias] == nil {
         do {
-          print("bp1")
           let wallet = try WalletSynchronizer(
             alias: alias, initializer: initializer, emitter: sendToJs)
 
 
-          print("bp2")
           var emptyBytes: [UInt8] = []
           let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
 
           let initMode = newWallet ? WalletInitMode.newWallet : WalletInitMode.existingWallet
-          print("bp3")
 
           _ = try await wallet.synchronizer.prepare(
             //TODO extsk handling here, need to figure out "with/for" syntax
@@ -131,12 +128,9 @@ class VerusLightClient: RCTEventEmitter {
             walletBirthday: birthdayHeight,
             for: initMode
           )
-          print("bp4")
 
           try await wallet.synchronizer.start()
-          print("bp5")
           wallet.subscribe()
-          print("bp6")
           SynchronizerMap[alias] = wallet
           resolve(nil)
         } catch {
@@ -214,6 +208,49 @@ class VerusLightClient: RCTEventEmitter {
         resolve(height)
       } catch {
         reject("getLatestNetworkHeightGrpc", "Failed to query blockheight", error)
+      }
+    }
+  }
+
+ 
+  @objc func getInfo(
+    _ alias: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    Task {
+      if let wallet = SynchronizerMap[alias] {
+        do {
+
+          let birthdayHeight = 227520
+          let latestHeight = try await wallet.synchronizer.latestHeight() /* ?? BlockHeight(birthdayHeight)*/
+          let progress = wallet.processorState.scanProgress
+          let networkHeight = wallet.processorState.networkBlockHeight
+          let status = wallet.status
+            
+          //TODO: needs replaced, currently no method in swiftSDK to get this info for lastScannedHeight
+          // Needs made available as a method from BlockDownloader, through BlockProcessor
+          let processorScannedHeight = try await wallet.synchronizer.latestHeight()/* ?? BlockHeight(birthdayHeight)*/
+
+          //let processorScannedHeight = try await wallet.synchronizer.lastScannedHeight() ?? BlockHeight(birthdayHeight)
+
+          print("processorInfo: lastScannedHeight(\(processorScannedHeight))")
+          print("progress.toPercentage(): \(progress)")
+          print("networkBlockHeight: \(networkHeight)")
+          print("latestBlockHeight: \(latestHeight)")
+          print("wallet status: \(status.description.lowercased())")
+
+          let resultMap: [String: Any] = [
+            "percent": progress,
+            "longestchain": Int(truncatingIfNeeded: networkHeight),
+            "status": status.description.lowercased(),
+            "blocks": Int(truncatingIfNeeded: processorScannedHeight)
+          ]
+
+          resolve(resultMap)
+        }
+      } else {
+        reject("getInfoError", "Wallet does not exist", genericError)
       }
     }
   }
@@ -325,6 +362,8 @@ class VerusLightClient: RCTEventEmitter {
       }
     }
   }
+
+
 
   // Derivation Tool
   private func getDerivationToolForNetwork(_ network: String) -> DerivationTool {
