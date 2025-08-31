@@ -7,9 +7,10 @@ import React
 var SynchronizerMap = [String: WalletSynchronizer]()
 
 struct ConfirmedTx {
+  var category: String?
   var minedHeight: Int
   var toAddress: String?
-  var raw: String?
+  //var raw: String?
   var rawTransactionId: String
   var blockTimeInSeconds: Int
   var value: String
@@ -17,13 +18,14 @@ struct ConfirmedTx {
   var memos: [String]?
   var dictionary: [String: Any?] {
     return [
-      "minedHeight": minedHeight,
-      "toAddress": toAddress,
-      "raw": raw,
-      "rawTransactionId": rawTransactionId,
-      "blockTimeInSeconds": blockTimeInSeconds,
+      "category": category,
+      "height": minedHeight,
+      "address": toAddress,
+      //"raw": raw,
+      "txid": rawTransactionId,
+      "time": blockTimeInSeconds,
       "value": value,
-      "fee": fee,
+      "fee": fee ?? "",
       "memos": memos ?? [],
     ]
   }
@@ -783,13 +785,14 @@ class WalletSynchronizer: NSObject {
       blockTimeInSeconds: Int(tx.blockTime ?? 0),
       value: String(describing: abs(tx.value.amount))
     )
-    if tx.raw != nil {
+    /*if tx.raw != nil {
       confTx.raw = tx.raw!.hexEncodedString()
-    }
+    }*/
     if tx.fee != nil {
       confTx.fee = String(describing: abs(tx.fee!.amount))
     }
     if tx.isSentTransaction {
+      confTx.category = "sent"
       let recipients = await self.synchronizer.getRecipients(for: tx)
       if recipients.count > 0 {
         let addresses = recipients.compactMap {
@@ -803,12 +806,23 @@ class WalletSynchronizer: NSObject {
           confTx.toAddress = addresses.first!.stringEncoded
         }
       }
+    } else {
+        confTx.toAddress = try? await self.synchronizer.getSaplingAddress(accountIndex: Int(0)).stringEncoded
+        confTx.category = "received"
     }
     if tx.memoCount > 0 {
       let memos = (try? await self.synchronizer.getMemos(for: tx)) ?? []
       let textMemos = memos.compactMap {
         return $0.toString()
       }
+       /* var seen = Set<String>()
+        let unique = textMemos.compactMap { memo -> String? in
+          let trimmed = memo.trimmingCharacters(in: .whitespacesAndNewlines)
+          guard !trimmed.isEmpty, !seen.contains(trimmed) else { return nil }
+          seen.insert(trimmed)
+          return trimmed
+        }
+        confTx.memos = unique*/
       confTx.memos = textMemos
     }
     return confTx
@@ -874,3 +888,4 @@ func generalStorageURLHelper(_ alias: String, _ network: ZcashNetwork) throws ->
       isDirectory: true
     )
 }
+
