@@ -447,7 +447,7 @@ class VerusLightClient: RCTEventEmitter {
       if let wallet = SynchronizerMap[alias] {
         do {
           let saplingAddress = try await wallet.synchronizer.getSaplingAddress(accountIndex: 0)
-          resolve(saplingAddress)
+          resolve(saplingAddress.stringEncoded)
           return
         } catch {
           reject("deriveSaplingAddress", "Failed to derive sapling address", error)
