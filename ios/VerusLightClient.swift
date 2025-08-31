@@ -1,4 +1,4 @@
-=import Combine
+import Combine
 import Foundation
 import MnemonicSwift
 import os
@@ -265,8 +265,8 @@ class VerusLightClient: RCTEventEmitter {
     Task {
       if let wallet = SynchronizerMap[alias] {
         do {
-          let saplingAvailable = wallet.balances.saplingAvailableZatoshi
-          let saplingTotal = wallet.balances.saplingTotalZatoshi
+          let saplingAvailable = wallet.balances.saplingAvailableZatoshi.amount
+          let saplingTotal = wallet.balances.saplingTotalZatoshi.amount
           let saplingPending = saplingTotal - saplingAvailable
 
           print("saplingBalanceAvailable(Zatoshi): \(saplingAvailable)")
@@ -274,9 +274,9 @@ class VerusLightClient: RCTEventEmitter {
           print("saplingBalancePending(Zatoshi): \(saplingPending)")
 
           let resultMap: [String: Any] = [
-            "confirmed": saplingAvailable.value.description,
-            "total": saplingTotal.value.description,
-            "pending": saplingPending.value.description
+            "confirmed": String(saplingAvailable),
+            "total": String(saplingTotal),
+            "pending": String(saplingPending)
           ]
 
           resolve(resultMap)
