@@ -248,9 +248,43 @@ class VerusLightClient: RCTEventEmitter {
           ]
 
           resolve(resultMap)
+        } catch {
+          reject("getInfoError", "Failed to getInfo", error)
         }
       } else {
         reject("getInfoError", "Wallet does not exist", genericError)
+      }
+    }
+  }
+
+  @objc func getPrivateBalance(
+    _ alias: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    Task {
+      if let wallet = SynchronizerMap[alias] {
+        do {
+          let saplingAvailable = wallet.balances.saplingAvailableZatoshi
+          let saplingTotal = wallet.balances.saplingTotalZatoshi
+          let saplingPending = saplingTotal - saplingAvailable
+
+          print("saplingBalanceAvailable(Zatoshi): \(saplingAvailable)")
+          print("saplingBalanceTotal(Zatoshi): \(saplingTotal)")
+          print("saplingBalancePending(Zatoshi): \(saplingPending)")
+
+          let resultMap: [String: Any] = [
+            "confirmed": saplingAvailable.value.description,
+            "total": saplingTotal.value.description,
+            "pending": saplingPending.value.description
+          ]
+
+          resolve(resultMap)
+        } catch {
+          reject("getPrivateBalanceError", "Failed to getPrivateBalance", error)
+        }
+      } else {
+        reject("getPrivateBalanceError", "Wallet does not exist", genericError)
       }
     }
   }
