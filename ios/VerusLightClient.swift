@@ -289,6 +289,43 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
+  @objc func getPrivateTransactions(
+    _ alias: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    Task {
+      if let wallet = SynchronizerMap[alias] {
+        do {
+          let txList = try await wallet.synchronizer.allTransactions
+          var out: [NSDictionary] = []
+
+          for tx in txList {
+            if tx.isExpiredUnmined ?? false { continue }
+
+            do {
+              let confTx = await wallet.parseTx(tx: tx)
+              out.append(confTx.nsDictionary)
+            } catch {
+              // Safe to ignore if recipient/memo can’t be parsed
+              continue
+            }
+          }
+
+          print("transactionsArray: \(out)")
+          let resultMap: [String: Any] = [
+            "transactions": NSArray(array: out)
+          ]
+          resolve(resultMap)
+        } catch {
+          reject("getPrivateTransactionsError", "Failed to collect transactions", error)
+        }
+      } else {
+        reject("getPrivateTransactionsError", "Wallet does not exist", genericError)
+      }
+    }
+  }
+
   @objc func sendToAddress(
     _ alias: String, _ zatoshi: String, _ toAddress: String, _ memo: String, _ seed: String, _ extsk: String,
     resolver resolve: @escaping RCTPromiseResolveBlock,
