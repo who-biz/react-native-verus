@@ -297,18 +297,15 @@ class VerusLightClient: RCTEventEmitter {
     Task {
       if let wallet = SynchronizerMap[alias] {
         do {
-          let txList = try await wallet.synchronizer.allTransactions
+          let txList = try await wallet.synchronizer.allTransactions()
           var out: [NSDictionary] = []
 
           for tx in txList {
-            if tx.isExpiredUnmined ?? false { continue }
+            if tx.isExpiredUmined ?? false { continue }
 
             do {
               let confTx = await wallet.parseTx(tx: tx)
               out.append(confTx.nsDictionary)
-            } catch {
-              // Safe to ignore if recipient/memo can’t be parsed
-              continue
             }
           }
 
