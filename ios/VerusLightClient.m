@@ -38,6 +38,11 @@ resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(getInfo:(NSString *)alias
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
 RCT_EXTERN_METHOD(sendToAddress:(NSString *)alias
 :(NSString *)zatoshi
 :(NSString *)toAddress
