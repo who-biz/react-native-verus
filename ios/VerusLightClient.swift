@@ -819,8 +819,6 @@ class WalletSynchronizer: NSObject {
         confTx.category = "received"
     }
 
-    if tx.isPending { confTx.status = "pending" } else { confTx.status = "confirmed" }
-
 
     if tx.memoCount > 0 {
       let memos = (try? await self.synchronizer.getMemos(for: tx)) ?? []
