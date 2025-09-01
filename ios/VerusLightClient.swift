@@ -334,7 +334,7 @@ class VerusLightClient: RCTEventEmitter {
   }
 
   @objc func sendToAddress(
-    _ alias: String, _ zatoshi: String, _ toAddress: String, _ memo: String, _ seed: String, _ extsk: String,
+    _ alias: String, _ zatoshi: String, _ toAddress: String, _ memo: String, _ extsk: String, _ mnemonicSeed: String,
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
@@ -347,17 +347,21 @@ class VerusLightClient: RCTEventEmitter {
         }
 
         do {
-          let spendingKey = try deriveUnifiedSpendingKey(extsk, seed, wallet.synchronizer.network)
+          print("bp1 seed:\(mnemonicSeed)")
+          let spendingKey = try deriveUnifiedSpendingKey("", mnemonicSeed, wallet.synchronizer.network)
           var sdkMemo: Memo? = nil
+          print("bp2")
           if memo != "" {
             sdkMemo = try Memo(string: memo)
           }
+          print("bp3")
           let broadcastTx = try await wallet.synchronizer.sendToAddress(
             spendingKey: spendingKey,
             zatoshi: Zatoshi(amount!),
             toAddress: Recipient(toAddress, network: wallet.synchronizer.network.networkType),
             memo: sdkMemo
           )
+          print("bp4")
 
           let tx: NSMutableDictionary = ["txId": broadcastTx.rawID.toHexStringTxId()]
           if broadcastTx.raw != nil {
