@@ -27,7 +27,7 @@ struct ConfirmedTx {
       "txid": rawTransactionId,
       "time": blockTimeInSeconds,
       "amount": value,
-      "fee": fee ?? "",
+      "fee": fee,
       "memos": memos ?? [],
     ]
   }
@@ -363,7 +363,7 @@ class VerusLightClient: RCTEventEmitter {
           )
           print("bp4")
 
-          let tx: NSMutableDictionary = ["txId": broadcastTx.rawID.toHexStringTxId()]
+          let tx: NSMutableDictionary = ["txid": broadcastTx.rawID.toHexStringTxId()]
           if broadcastTx.raw != nil {
             tx["raw"] = broadcastTx.raw?.hexEncodedString()
           }
