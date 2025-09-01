@@ -8,6 +8,7 @@ var SynchronizerMap = [String: WalletSynchronizer]()
 
 struct ConfirmedTx {
   var category: String?
+  var status: String?
   var minedHeight: Int
   var toAddress: String?
   //var raw: String?
@@ -18,6 +19,7 @@ struct ConfirmedTx {
   var memos: [String]?
   var dictionary: [String: Any?] {
     return [
+      "status": status,
       "category": category,
       "height": minedHeight,
       "address": toAddress,
@@ -810,6 +812,10 @@ class WalletSynchronizer: NSObject {
         confTx.toAddress = try? await self.synchronizer.getSaplingAddress(accountIndex: Int(0)).stringEncoded
         confTx.category = "received"
     }
+
+    if tx.isPending { confTx.status = "pending" } else { confTx.status = "confirmed" }
+
+
     if tx.memoCount > 0 {
       let memos = (try? await self.synchronizer.getMemos(for: tx)) ?? []
       let textMemos = memos.compactMap {
