@@ -26,7 +26,7 @@ struct ConfirmedTx {
       //"raw": raw,
       "txid": rawTransactionId,
       "time": blockTimeInSeconds,
-      "value": value,
+      "amount": value,
       "fee": fee ?? "",
       "memos": memos ?? [],
     ]
