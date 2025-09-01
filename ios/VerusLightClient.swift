@@ -303,12 +303,18 @@ class VerusLightClient: RCTEventEmitter {
         do {
           let txList = try await wallet.synchronizer.allTransactions()
           var out: [NSDictionary] = []
+          let currentHeight = BlockHeight(wallet.processorState.networkBlockHeight)
 
           for tx in txList {
             if tx.isExpiredUmined ?? false { continue }
 
             do {
-              let confTx = await wallet.parseTx(tx: tx)
+              var confTx = await wallet.parseTx(tx: tx)
+              if tx.isPending(currentHeight: currentHeight) {
+                confTx.status = "pending"
+              } else {
+                confTx.status = "confirmed"
+              }
               out.append(confTx.nsDictionary)
             }
           }
