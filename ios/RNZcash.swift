@@ -84,7 +84,7 @@ class RNZcash: RCTEventEmitter {
 
   // Synchronizer
   @objc func initialize(
-    _ seed: String, _ birthdayHeight: Int, _ alias: String, _ networkName: String,
+    _ seed: String, _ wif: String, _ extsk: String, _ birthdayHeight: Int, _ alias: String, _ networkName: String,
     _ defaultHost: String, _ defaultPort: Int, _ newWallet: Bool,
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
@@ -108,11 +108,17 @@ class RNZcash: RCTEventEmitter {
         do {
           let wallet = try WalletSynchronizer(
             alias: alias, initializer: initializer, emitter: sendToJs)
+
           let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
+          let extskBytes = try Mnemonic.deterministicSeedBytes(from:extsk)
+
           let initMode = newWallet ? WalletInitMode.newWallet : WalletInitMode.existingWallet
 
           _ = try await wallet.synchronizer.prepare(
-            with: seedBytes,
+            //TODO extsk handling here, need to figure out "with/for" syntax
+            transparent_key: [UInt8()],
+            extsk: extskBytes,
+            seed: seedBytes,
             walletBirthday: birthdayHeight,
             for: initMode
           )
@@ -200,7 +206,7 @@ class RNZcash: RCTEventEmitter {
   }
 
   @objc func sendToAddress(
-    _ alias: String, _ zatoshi: String, _ toAddress: String, _ memo: String, _ seed: String,
+    _ alias: String, _ zatoshi: String, _ toAddress: String, _ memo: String, _ seed: String, _ extsk: String,
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
@@ -213,7 +219,7 @@ class RNZcash: RCTEventEmitter {
         }
 
         do {
-          let spendingKey = try deriveUnifiedSpendingKey(seed, wallet.synchronizer.network)
+          let spendingKey = try deriveUnifiedSpendingKey(extsk, seed, wallet.synchronizer.network)
           var sdkMemo: Memo? = nil
           if memo != "" {
             sdkMemo = try Memo(string: memo)
@@ -239,7 +245,7 @@ class RNZcash: RCTEventEmitter {
     }
   }
 
-  @objc func shieldFunds(
+  /*@objc func shieldFunds(
     _ alias: String, _ seed: String, _ memo: String, _ threshold: String,
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
@@ -274,7 +280,7 @@ class RNZcash: RCTEventEmitter {
         reject("shieldFunds", "Wallet does not exist", genericError)
       }
     }
-  }
+  }*/
 
   @objc func rescan(
     _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
@@ -317,31 +323,34 @@ class RNZcash: RCTEventEmitter {
     }
   }
 
-  private func deriveUnifiedSpendingKey(_ seed: String, _ network: ZcashNetwork) throws
+  private func deriveUnifiedSpendingKey(_ extsk: String, _ seed: String, _ network: ZcashNetwork) throws
     -> UnifiedSpendingKey
   {
+    //TODO: handle extsk bech32 decoding, and use Mnemonic.deterministicSeedBytes() to create byte array
+    // then pass to deriveUnifiedSpendingKey
     let derivationTool = DerivationTool(networkType: network.networkType)
     let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
-    let spendingKey = try derivationTool.deriveUnifiedSpendingKey(seed: seedBytes, accountIndex: 0)
+    let extskBytes = try Mnemonic.deterministicSeedBytes(from: extsk)
+      let spendingKey = try derivationTool.deriveUnifiedSpendingKey(transparent_key: [], extsk: extskBytes, seed: seedBytes, accountIndex: 0)
     return spendingKey
   }
 
-  private func deriveUnifiedViewingKey(_ seed: String, _ network: ZcashNetwork) throws
+  private func deriveUnifiedViewingKey(_ extsk: String, _ seed: String, _ network: ZcashNetwork) throws
     -> UnifiedFullViewingKey
   {
-    let spendingKey = try deriveUnifiedSpendingKey(seed, network)
+    let spendingKey = try deriveUnifiedSpendingKey(extsk, seed, network)
     let derivationTool = DerivationTool(networkType: network.networkType)
     let viewingKey = try derivationTool.deriveUnifiedFullViewingKey(from: spendingKey)
     return viewingKey
   }
 
   @objc func deriveViewingKey(
-    _ seed: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
+    _ extsk: String, _ seed: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     do {
       let zcashNetwork = getNetworkParams(network)
-      let viewingKey = try deriveUnifiedViewingKey(seed, zcashNetwork)
+      let viewingKey = try deriveUnifiedViewingKey(extsk, seed, zcashNetwork)
       resolve(viewingKey.stringEncoded)
     } catch {
       reject("DeriveViewingKeyError", "Failed to derive viewing key", error)
@@ -379,6 +388,7 @@ class RNZcash: RCTEventEmitter {
     _ address: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
+    //TODO: this needs modified probably, needed a change in Android SDK
     let derivationTool = getDerivationToolForNetwork(network)
     if derivationTool.isValidUnifiedAddress(address)
       || derivationTool.isValidSaplingAddress(address)
@@ -520,16 +530,36 @@ class WalletSynchronizer: NSObject {
   }
 
   func updateBalanceState(event: SynchronizerState) {
-    let transparentBalance = event.transparentBalance
-    let shieldedBalance = event.shieldedBalance
+    //let transparentBalance = event.transparentBalance
+    //let shieldedBalance = event.shieldedBalance
+      let transparentBalance = event.accountBalance?.unshielded ?? Zatoshi(0)
+      let shieldedBalance = event.accountBalance?.saplingBalance ?? PoolBalance.zero
+      let orchardBalance = event.accountBalance?.orchardBalance ?? PoolBalance.zero
+      let transparentAvailableZatoshi = transparentBalance
+      let transparentTotalZatoshi = transparentBalance
 
-    let transparentAvailableZatoshi = transparentBalance.verified
-    let transparentTotalZatoshi = transparentBalance.total
+      let saplingAvailableZatoshi = shieldedBalance.spendableValue
+      let saplingTotalZatoshi = shieldedBalance.total()
 
-    let saplingAvailableZatoshi = shieldedBalance.verified
-    let saplingTotalZatoshi = shieldedBalance.total
+      //let orchardAvailableZatoshi = orchardBalance.spendableValue
+      //let orchardTotalZatoshi = orchardBalance.total()
 
-    if transparentAvailableZatoshi == self.balances.transparentAvailableZatoshi
+      self.balances = TotalBalances(
+        transparentAvailableZatoshi: transparentAvailableZatoshi,
+        transparentTotalZatoshi: transparentTotalZatoshi,
+        saplingAvailableZatoshi: saplingAvailableZatoshi,
+        saplingTotalZatoshi: saplingTotalZatoshi
+      )
+      let data = NSMutableDictionary(dictionary: self.balances.nsDictionary)
+      data["alias"] = self.alias
+      emit("BalanceEvent", data)
+      //let transparentAvailableZatoshi = transparentBalance.verified
+    //let transparentTotalZatoshi = transparentBalance.total
+
+    //let saplingAvailableZatoshi = shieldedBalance.verified
+    //let saplingTotalZatoshi = shieldedBalance.total
+
+    /*if transparentAvailableZatoshi == self.balances.transparentAvailableZatoshi
       && transparentTotalZatoshi == self.balances.transparentTotalZatoshi
       && saplingAvailableZatoshi == self.balances.saplingAvailableZatoshi
       && saplingTotalZatoshi == self.balances.saplingTotalZatoshi
@@ -546,6 +576,7 @@ class WalletSynchronizer: NSObject {
     let data = NSMutableDictionary(dictionary: self.balances.nsDictionary)
     data["alias"] = self.alias
     emit("BalanceEvent", data)
+     */
   }
 
   func parseTx(tx: ZcashTransaction.Overview) async -> ConfirmedTx {

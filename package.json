@@ -25,9 +25,11 @@
     "/lib/",
     "/LICENSE",
     "/package.json",
-    "/react-native-zcash.podspec",
+    "/react-native-verus.podspec",
     "/README.md",
-    "/src/"
+    "/src/",
+    "/scripts",
+    "/yarn.lock"
   ],
   "scripts": {
     "build": "(cd android && gradle assemble -DheapDumpOnOutOfMemoryError=false)",

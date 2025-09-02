@@ -64,6 +64,7 @@ dependencies {
   // for gradle to find the two dependencies below
   implementation 'com.github.who-biz:verus-android-sdk:2.1.2'
   implementation 'com.github.who-biz:verus-android-sdk-incubator:2.1.2'
+
   //implementation 'com.github.who-biz:verus-android-backend:2.1.2'
   //implementation 'com.github.who-biz:lightwallet-client:2.1.2'
 

@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+
 import android.util.Log
 import java.lang.Error
 
@@ -43,6 +44,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     fun initialize(
         seed: String,
         wif: String,
+        extsk: String,
         birthdayHeight: Int,
         alias: String,
         networkName: String = "VRSC",
@@ -53,17 +55,27 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ) = moduleScope.launch {
         //Log.w("ReactNative", "initializer, before promise");
         promise.wrap {
-            //Log.w("ReactNative", "Initializer, start func")
+            //Log.w("ReactNative", "Initializer, start func, extsk($extsk)")
             val network = networks.getOrDefault(networkName, ZcashNetwork.Mainnet)
             val endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
-            val seedPhrase = SeedPhrase.new(seed)
-            val transparentKey: ByteArray
+            var seedPhrase = byteArrayOf()
+            var extendedSecretKey = byteArrayOf()
+            var transparentKey = byteArrayOf()
+
+            // check presence of data, for each key import method/type
+            // pass through empty array if data is not present
+
+            if (!seed.isNullOrEmpty()) {
+                seedPhrase = SeedPhrase.new(seed).toByteArray()
+            }
+            if(!extsk.isNullOrEmpty()) {
+                extendedSecretKey = SeedPhrase.new(extsk).toByteArray()
+            }
             if (!wif.isNullOrEmpty()) {
                 val decodedWif = wif.decodeBase58WithChecksum()
                 transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
-            } else {
-                transparentKey = byteArrayOf()
             }
+
             //Log.w("ReactNative", "Initializer bp1");
             val initMode = if (newWallet) WalletInitMode.NewWallet else WalletInitMode.ExistingWallet
             if (!synchronizerMap.containsKey(alias)) {
@@ -73,10 +85,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         network,
                         alias,
                         endpoint,
-                        seedPhrase.toByteArray(),
+                        seedPhrase,
                         BlockHeight.new(network, birthdayHeight.toLong()),
                         initMode,
                         transparentKey,
+                        extendedSecretKey
                     ) as SdkSynchronizer
             }
             //Log.w("ReactNative", "Initializer bp2");
@@ -170,15 +183,14 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun getInfo(alias: String, promise: Promise) {
         //Log.w("ReactNative", "getInfo called")
-        val wallet = getWallet(alias)
-        val scope = wallet.coroutineScope
 
-        val birthdayHeight = wallet.latestBirthdayHeight;
-
-        val latestHeight: BlockHeight = wallet.latestHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)
-
-        scope.launch {
+        moduleScope.launch {
             try {
+                val wallet = getWallet(alias)
+                val birthdayHeight = wallet.latestBirthdayHeight;
+
+                val latestHeight: BlockHeight = wallet.latestHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)
+
                 val map = combine(
                     wallet.processorInfo,
                     wallet.progress,
@@ -201,14 +213,14 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 val networkBlockHeight = map["networkHeight"] as BlockHeight
                 val status = map["status"]
 
-                Log.i("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
-                Log.i("ReactNative", "processorInfo: overallSyncRange(${processorInfo.overallSyncRange})")
-                Log.i("ReactNative", "processorInfo: lastScannedHeight(${processorScannedHeight.value})")
-                Log.i("ReactNative", "processorInfo: firstUnenhancedHeight(${firstUnenhancedHeight.value})")
-                Log.w("ReactNative", "progress.toPercentage(): ${progress.toPercentage()}")
-                Log.w("ReactNative", "networkBlockHeight: ${networkBlockHeight.value.toInt()}")
-                Log.w("ReactNative", "latestBlockHeight: ${latestHeight.value.toInt()}")
-                Log.w("ReactNative", "wallet status: ${status.toString().lowercase()}")
+                Log.d("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
+                Log.d("ReactNative", "processorInfo: overallSyncRange(${processorInfo.overallSyncRange})")
+                Log.d("ReactNative", "processorInfo: lastScannedHeight(${processorScannedHeight.value})")
+                Log.d("ReactNative", "processorInfo: firstUnenhancedHeight(${firstUnenhancedHeight.value})")
+                Log.d("ReactNative", "progress.toPercentage(): ${progress.toPercentage()}")
+                Log.d("ReactNative", "networkBlockHeight: ${networkBlockHeight.value.toInt()}")
+                Log.d("ReactNative", "latestBlockHeight: ${latestHeight.value.toInt()}")
+                Log.d("ReactNative", "wallet status: ${status.toString().lowercase()}")
 
                 val resultMap = Arguments.createMap().apply {
                     putInt("percent", progress.toPercentage())
@@ -398,6 +410,69 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
     }
 
+    @ReactMethod
+    fun deriveViewingKey(
+        extsk: String,
+        seed: String,
+        network: String = "VRSC",
+        promise: Promise,
+    ) {
+        //Log.w("ReactNative", "deriveViewingKey called, extsk($extsk)")
+        moduleScope.launch {
+            promise.wrap {
+                var seedPhrase = byteArrayOf()
+                var extendedSecretKey = byteArrayOf()
+                if (!seed.isNullOrEmpty()) {
+                    seedPhrase = SeedPhrase.new(seed).toByteArray()
+                }
+                if (!extsk.isNullOrEmpty()) {
+                    extendedSecretKey = SeedPhrase.new(extsk).toByteArray()
+                }
+                val spendingKey =
+                    DerivationTool.getInstance().deriveUnifiedSpendingKey(
+                        byteArrayOf(),
+                        extendedSecretKey,
+                        seedPhrase,
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                        Account.DEFAULT,
+                    )
+                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
+                val keys =
+                    DerivationTool.getInstance().deriveUnifiedFullViewingKey(
+                        spendingKey,
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                    )
+                //Log.i("ReactNative", "keys: " + keys.encoding);
+                return@wrap keys.encoding
+            }
+        }
+    }
+
+
+    @ReactMethod
+    fun deriveSaplingSpendingKey(
+        seed: String,
+        network: String,
+        promise: Promise,
+    ) {
+        //Log.d("ReactNative", "deriveShieldedSpendingKeyCalled!");
+        moduleScope.launch {
+            promise.wrap {
+                val seedPhrase = SeedPhrase.new(seed)
+                val key =
+                    DerivationTool.getInstance().deriveSaplingSpendingKey(
+                        seedPhrase.toByteArray(),
+                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
+                        Account.DEFAULT,
+                    )
+                //Log.w("ReactNative", "seed: " + seed);
+
+                //Log.i("ReactNative", "key: " + key.copyBytes().toHexString());
+                return@wrap key.copyBytes().toHexString()
+            }
+        }
+    }
+
     //
     // Properties
     //
@@ -472,24 +547,30 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         zatoshi: String,
         toAddress: String,
         memo: String = "",
-        //wif: String,
+        extsk: String,
         seed: String,
         promise: Promise,
     ) {
         val wallet = getWallet(alias)
-        //Log.i("ReactNative", "sendToAddress called!");
+        //Log.w("ReactNative", "sendToAddress called, extsk($extsk)");
         wallet.coroutineScope.launch {
             try {
-                val transparentKey = byteArrayOf()
-                /*val transparentKey: ByteArray
-                if (!wif.isNullOrEmpty()) {
+                var extendedSecretKey = byteArrayOf()
+                var seedPhrase = byteArrayOf()
+                var transparentKey = byteArrayOf()
+
+                if (!seed.isNullOrEmpty()) {
+                    seedPhrase = SeedPhrase.new(seed).toByteArray()
+                }
+                if (!extsk.isNullOrEmpty()) {
+                    extendedSecretKey = SeedPhrase.new(extsk).toByteArray()
+                }
+                /*if (!wif.isNullOrEmpty()) {
                     val decodedWif = wif.decodeBase58WithChecksum()
                     transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
-                } else {
-                    transparentKey = byteArrayOf()
                 }*/
-                val seedPhrase = SeedPhrase.new(seed)
-                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, seedPhrase.toByteArray(), wallet.network, Account(0))
+
+                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, extendedSecretKey, seedPhrase, wallet.network, Account(0))
                 val internalId =
                     wallet.sendToAddress(
                         usk,
@@ -522,6 +603,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         wallet.coroutineScope.launch {
             try {
                 val transparentKey: ByteArray
+                val extsk = byteArrayOf()
                 if (!wif.isNullOrEmpty()) {
                     val decodedWif = wif.decodeBase58WithChecksum()
                     transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
@@ -529,7 +611,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     transparentKey = byteArrayOf()
                 }
                 val seedPhrase = SeedPhrase.new(seed)
-                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
+                val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, extsk, seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
                 val internalId =
                     wallet.shieldFunds(
                         usk,
@@ -545,6 +627,73 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 promise.resolve(parsedTx)
             } catch (t: Throwable) {
                 promise.reject("Err", t)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun deleteWallet(
+        alias: String,
+        network: String,
+        //clearCache: Boolean,
+        //clearDataDb: Boolean,
+        promise: Promise
+    ) {
+        //Log.w("ReactNative", "deleteWallet called!");
+        moduleScope.launch {
+            try {
+                val result = Synchronizer.erase(reactApplicationContext, networks.getOrDefault(network, ZcashNetwork.Mainnet), alias)
+ //               withContext(Dispatchers.Main) {
+                    promise.resolve(result)
+ //               }
+            } catch (e: Exception) {
+ //               withContext(Dispatchers.Main) {
+                    promise.reject("CLEAR_ERROR", "Failed to clear Rust backend", e)
+ //               }
+            }
+        }
+    }
+
+    //
+    // AddressTool
+    //
+
+    @ReactMethod
+    fun bech32Decode(
+        bech32Key: String,
+        promise: Promise,
+    ) {
+        //Log.w("ReactNative", "bech32Decode called!, bech32Key(${bech32Key})");
+        moduleScope.launch {
+            try {
+                val keyBytes = decodeSaplingSpendKey(bech32Key)
+                val result = keyBytes.toHexString()
+                //Log.w("ReactNative", "bech32Decode: ${result}");
+                promise.resolve(result)
+            } catch (e: Exception) {
+                promise.reject("DECODE_ERROR","Failed to decode bech32 spendkey", e)
+            }
+        }
+    }
+
+    //
+    // AddressTool
+    //
+
+    @ReactMethod
+    fun deterministicSeedBytes(
+        seed: String,
+        promise: Promise,
+    ) {
+        //Log.w("ReactNative", "bech32Decode called!, bech32Key(${bech32Key})");
+        moduleScope.launch {
+            try {
+                val keyBytes = SeedPhrase.new(seed).toByteArray()
+                val result = keyBytes.toHexString()
+                //Log.w("ReactNative", "bech32Decode: ${result}");
+                promise.resolve(result)
+            } catch (e: Exception) {
+                promise.reject("SEED_ERROR","Failed to convert mnemonicSeed to bytes", e)
             }
         }
     }
@@ -593,9 +742,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
     }
 
-    //
-    // AddressTool
-    //
+    /*
     @ReactMethod
     fun deriveShieldedAddressFromSeed(
         seed: String,
@@ -611,11 +758,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account(1)
                     )
-                Log.w("ReactNative", "shieldedAddress: " + shieldedAddress);
+                //Log.w("ReactNative", "shieldedAddress: " + shieldedAddress);
                 return@wrap shieldedAddress
             }
         }
     }
+    */
 
     //
     // AddressTool
@@ -623,17 +771,27 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun deriveShieldedAddress(
+        extsk: String,
         seed: String,
         network: String = "VRSC",
         promise: Promise,
     ) {
+        //Log.w("ReactNative", "deriveShieldedAddress called, extsk($extsk)");
         moduleScope.launch {
             promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
+                var seedPhrase = byteArrayOf()
+                var extendedSecretKey = byteArrayOf()
+                if (!seed.isNullOrEmpty()){
+                    seedPhrase = SeedPhrase.new(seed).toByteArray()
+                }
+                if (!extsk.isNullOrEmpty()){
+                    extendedSecretKey = SeedPhrase.new(extsk).toByteArray()
+                }
                 val spendingKey =
                     DerivationTool.getInstance().deriveUnifiedSpendingKey(
                         byteArrayOf(),
-                        seedPhrase.toByteArray(),
+                        extendedSecretKey,
+                        seedPhrase,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
@@ -652,68 +810,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 //Log.w("ReactNative", "viewingKey: " + viewingKey.encoding);
                 //Log.w("ReactNative", "shieldedAddress: " + shieldedAddress);
                 return@wrap shieldedAddress
-            }
-        }
-    }
-
-    //
-    // AddressTool
-    //
-
-    @ReactMethod
-    fun deriveViewingKey(
-        seed: String,
-        network: String = "VRSC",
-        promise: Promise,
-    ) {
-        //Log.d("ReactNative", "deriveViewingKey called!!")
-        moduleScope.launch {
-            promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
-                val spendingKey =
-                    DerivationTool.getInstance().deriveUnifiedSpendingKey(
-                        byteArrayOf(),
-                        seedPhrase.toByteArray(),
-                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                        Account.DEFAULT,
-                    )
-                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
-                val keys =
-                    DerivationTool.getInstance().deriveUnifiedFullViewingKey(
-                        spendingKey,
-                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                    )
-                //Log.i("ReactNative", "keys: " + keys.encoding);
-                return@wrap keys.encoding
-            }
-        }
-    }
-
-
-    //
-    // AddressTool
-    //
-
-    @ReactMethod
-    fun deriveSaplingSpendingKey(
-        seed: String,
-        network: String,
-        promise: Promise,
-    ) {
-        //Log.d("ReactNative", "deriveShieldedSpendingKeyCalled!");
-        moduleScope.launch {
-            promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
-                val key =
-                    DerivationTool.getInstance().deriveSaplingSpendingKey(
-                        seedPhrase.toByteArray(),
-                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                        Account.DEFAULT,
-                    )
-                //Log.w("ReactNative", "seed: " + seed);
-
-                //Log.i("ReactNative", "key: " + key.copyBytes().toHexString());
-                return@wrap key.copyBytes().toHexString()
             }
         }
     }
@@ -869,4 +965,23 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         val saplingBalances: WalletBalance?,
         /*val orchardBalances: WalletBalance?,*/
     )
+
+    private fun decodeSaplingSpendKey(bech32Key: String): ByteArray {
+        //Log.w("ReactNative", "decodeSaplingSpendkey called!")
+        val (hrp, data, encoding) = Bech32.decode(bech32Key)
+
+        //Log.w("ReactNative", "hrp({$hrp}), data(${data}), encoding(${encoding})");
+
+        require(hrp == "secret-extended-key-main"/* || hrp == "secret-extended-key-test"*/) {
+            throw Exception("Invalid HRP: $hrp")
+        }
+
+        val bytes = Bech32.five2eight(data, offset = 0)
+
+        require(bytes.size == 169) {
+            throw Exception("Unexpected decoded key length: ${bytes.size} bytes")
+        }
+
+       return bytes
+    }
 }
