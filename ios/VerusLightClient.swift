@@ -216,7 +216,6 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
- 
   @objc func getInfo(
     _ alias: String,
     resolver resolve: @escaping RCTPromiseResolveBlock,
@@ -225,41 +224,36 @@ class VerusLightClient: RCTEventEmitter {
     Task {
       if let wallet = SynchronizerMap[alias] {
         do {
-
-          let birthdayHeight = 227520
-          let latestHeight = try await wallet.synchronizer.latestHeight() /* ?? BlockHeight(birthdayHeight)*/
+     
+//          let latestHeight = try await wallet.synchronizer.latestHeight()
           let progress = wallet.processorState.scanProgress
           let networkHeight = wallet.processorState.networkBlockHeight
           let status = wallet.status
-            
-          //TODO: needs replaced, currently no method in swiftSDK to get this info for lastScannedHeight
-          // Needs made available as a method from BlockDownloader, through BlockProcessor
-          let processorScannedHeight = try await wallet.synchronizer.latestHeight()/* ?? BlockHeight(birthdayHeight)*/
-
-          //let processorScannedHeight = try await wallet.synchronizer.lastScannedHeight() ?? BlockHeight(birthdayHeight)
-
+        
+          let processorScannedHeight = try await wallet.processorState.lastScannedHeight
+        
           print("processorInfo: lastScannedHeight(\(processorScannedHeight))")
           print("progress.toPercentage(): \(progress)")
           print("networkBlockHeight: \(networkHeight)")
-          print("latestBlockHeight: \(latestHeight)")
+//          print("latestBlockHeight: \(latestHeight)")
           print("wallet status: \(status.description.lowercased())")
-
+      
           let resultMap: [String: Any] = [
             "percent": progress,
             "longestchain": Int(truncatingIfNeeded: networkHeight),
-            "status": status.description.lowercased(),
+            "status": status.description.lowercased(), 
             "blocks": Int(truncatingIfNeeded: processorScannedHeight)
           ]
-
+    
           resolve(resultMap)
         } catch {
           reject("getInfoError", "Failed to getInfo", error)
         }
       } else {
-        reject("getInfoError", "Wallet does not exist", genericError)
+        reject("getInfoError", "Wallet does not exist", genericError) 
       }
     }
-  }
+  } 
 
   @objc func getPrivateBalance(
     _ alias: String,
