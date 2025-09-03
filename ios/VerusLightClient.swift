@@ -73,13 +73,10 @@ struct ProcessorState {
 // Used when calling reject where there isn't an error object
 let genericError = NSError(domain: "", code: 0)
 
-@_silgen_name("init_rust_logging") func init_rust_logging()
-
 @objc(VerusLightClient)
 class VerusLightClient: RCTEventEmitter {
 
   override static func requiresMainQueueSetup() -> Bool {
-    init_rust_logging()  // important: do this before any Rust logging
     return true
   }
     
