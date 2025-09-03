@@ -57,10 +57,12 @@ struct TotalBalances {
 struct ProcessorState {
   var scanProgress: Int
   var networkBlockHeight: Int
+  var lastScannedHeight: Int
   var dictionary: [String: Any] {
     return [
       "scanProgress": scanProgress,
       "networkBlockHeight": networkBlockHeight,
+      "lastScannedHeight": lastScannedHeight
     ]
   }
   var nsDictionary: NSDictionary {
@@ -230,7 +232,8 @@ class VerusLightClient: RCTEventEmitter {
           let networkHeight = wallet.processorState.networkBlockHeight
           let status = wallet.status
         
-          let processorScannedHeight = try await wallet.processorState.lastScannedHeight
+          let processorScannedHeight = wallet.processorState.lastScannedHeight
+
         
           print("processorInfo: lastScannedHeight(\(processorScannedHeight))")
           print("progress.toPercentage(): \(progress)")
@@ -635,7 +638,8 @@ class WalletSynchronizer: NSObject {
     self.restart = false
     self.processorState = ProcessorState(
       scanProgress: 0,
-      networkBlockHeight: 0
+      networkBlockHeight: 0,
+      lastScannedHeight: 0
     )
     self.balances = TotalBalances(
       transparentAvailableZatoshi: Zatoshi(0),
@@ -713,10 +717,11 @@ class WalletSynchronizer: NSObject {
     }
 
     self.processorState = ProcessorState(
-      scanProgress: scanProgress, networkBlockHeight: event.latestBlockHeight)
+      scanProgress: scanProgress, networkBlockHeight: event.latestBlockHeight, lastScannedHeight: event.lastScannedHeight)
     let data: NSDictionary = [
       "alias": self.alias, "scanProgress": self.processorState.scanProgress,
       "networkBlockHeight": self.processorState.networkBlockHeight,
+      "lastScannedHeight": self.processorState.lastScannedHeight
     ]
     emit("UpdateEvent", data)
     updateBalanceState(event: event)
@@ -725,7 +730,8 @@ class WalletSynchronizer: NSObject {
   func initializeProcessorState() {
     self.processorState = ProcessorState(
       scanProgress: 0,
-      networkBlockHeight: 0
+      networkBlockHeight: 0,
+      lastScannedHeight: 0
     )
     self.balances = TotalBalances(
       transparentAvailableZatoshi: Zatoshi(0),
@@ -896,4 +902,5 @@ func generalStorageURLHelper(_ alias: String, _ network: ZcashNetwork) throws ->
       isDirectory: true
     )
 }
+
 
