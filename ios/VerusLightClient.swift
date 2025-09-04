@@ -233,7 +233,7 @@ class VerusLightClient: RCTEventEmitter {
           if status == "synced" {
             scanProgress = 100
           } else {
-            scanProgress = Int(floor(try await wallet.synchronizer.linearScanProgressForNetworkHeight(networkHeight: networkHeight) * 100))
+            scanProgress = Int(floor(try await wallet.synchronizer.linearScanProgressForNetworkHeight(networkHeight: networkHeight) * 1000) / 10)
           }
         
           print("processorInfo: lastScannedHeight(\(processorScannedHeight))")
