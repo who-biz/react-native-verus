@@ -230,7 +230,7 @@ class VerusLightClient: RCTEventEmitter {
           
           let processorScannedHeight = wallet.processorState.lastScannedHeight
           var scanProgress = 0
-          if status == "synced" {
+          if status.description.lowercased() == "synced" {
             scanProgress = 100
           } else {
             scanProgress = Int(floor(try await wallet.synchronizer.linearScanProgressForNetworkHeight(networkHeight: networkHeight) * 1000) / 10)
