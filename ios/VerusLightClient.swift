@@ -224,18 +224,18 @@ class VerusLightClient: RCTEventEmitter {
       if let wallet = SynchronizerMap[alias] {
         do {
      
-//          let latestHeight = try await wallet.synchronizer.latestHeight()
+          let networkHeight = try await wallet.synchronizer.latestHeight()
           let progress = wallet.processorState.scanProgress
-          let networkHeight = wallet.processorState.networkBlockHeight
           let status = wallet.status
         
           let processorScannedHeight = wallet.processorState.lastScannedHeight
+          let scanProgress = try await wallet.synchronizer.linearScanProgressForNetworkHeight(networkHeight: networkHeight)
 
         
           print("processorInfo: lastScannedHeight(\(processorScannedHeight))")
-          print("progress.toPercentage(): \(progress)")
-          print("networkBlockHeight: \(networkHeight)")
-//          print("latestBlockHeight: \(latestHeight)")
+          print("legacyProgress.percentage: \(progress)")
+          print("newProgress.percentage: \(scanProgress)")
+          print("latestBlockHeight: \(networkHeight)")
           print("wallet status: \(status.description.lowercased())")
       
           let resultMap: [String: Any] = [
@@ -899,5 +899,6 @@ func generalStorageURLHelper(_ alias: String, _ network: ZcashNetwork) throws ->
       isDirectory: true
     )
 }
+
 
 
