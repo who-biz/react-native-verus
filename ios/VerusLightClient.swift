@@ -239,7 +239,7 @@ class VerusLightClient: RCTEventEmitter {
           print("wallet status: \(status.description.lowercased())")
       
           let resultMap: [String: Any] = [
-            "percent": progress,
+            "percent": (floor(scanProgress * 1000) / 10),
             "longestchain": Int(truncatingIfNeeded: networkHeight),
             "status": status.description.lowercased(), 
             "blocks": Int(truncatingIfNeeded: processorScannedHeight)
