@@ -239,7 +239,7 @@ class VerusLightClient: RCTEventEmitter {
           print("wallet status: \(status.description.lowercased())")
       
           let resultMap: [String: Any] = [
-            "percent": (floor(scanProgress * 1000) / 10),
+            "percent": Int(floor(scanProgress * 100),
             "longestchain": Int(truncatingIfNeeded: networkHeight),
             "status": status.description.lowercased(), 
             "blocks": Int(truncatingIfNeeded: processorScannedHeight)
@@ -698,7 +698,7 @@ class WalletSynchronizer: NSObject {
 
     switch event.internalSyncStatus {
     case .syncing(let progress):
-      scanProgress = Int(floor(progress * 100))
+      scanProgress = Int(self.linearScanProgressFromNetworkHeight(self.processorState.networkBlockHeight))
     case .synced:
       scanProgress = 100
     case .unprepared, .disconnected, .stopped:
