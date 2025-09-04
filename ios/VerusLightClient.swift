@@ -223,14 +223,18 @@ class VerusLightClient: RCTEventEmitter {
     Task {
       if let wallet = SynchronizerMap[alias] {
         do {
-     
+          
           let networkHeight = try await wallet.synchronizer.latestHeight()
           let progress = wallet.processorState.scanProgress
           let status = wallet.status
-        
+          
           let processorScannedHeight = wallet.processorState.lastScannedHeight
-          let scanProgress = try await wallet.synchronizer.linearScanProgressForNetworkHeight(networkHeight: networkHeight)
-
+          var scanProgress = 0
+          if status == "synced" {
+            scanProgress = 100
+          } else {
+            scanProgress = Int(floor(try await wallet.synchronizer.linearScanProgressForNetworkHeight(networkHeight: networkHeight) * 100))
+          }
         
           print("processorInfo: lastScannedHeight(\(processorScannedHeight))")
           print("legacyProgress.percentage: \(progress)")
@@ -239,7 +243,7 @@ class VerusLightClient: RCTEventEmitter {
           print("wallet status: \(status.description.lowercased())")
       
           let resultMap: [String: Any] = [
-            "percent": Int(floor(scanProgress * 100),
+            "percent": scanProgress,
             "longestchain": Int(truncatingIfNeeded: networkHeight),
             "status": status.description.lowercased(), 
             "blocks": Int(truncatingIfNeeded: processorScannedHeight)
@@ -698,7 +702,7 @@ class WalletSynchronizer: NSObject {
 
     switch event.internalSyncStatus {
     case .syncing(let progress):
-      scanProgress = Int(self.linearScanProgressFromNetworkHeight(self.processorState.networkBlockHeight))
+      scanProgress = Int(floor(progress * 100))
     case .synced:
       scanProgress = 100
     case .unprepared, .disconnected, .stopped:
@@ -899,6 +903,4 @@ func generalStorageURLHelper(_ alias: String, _ network: ZcashNetwork) throws ->
       isDirectory: true
     )
 }
-
-
 
