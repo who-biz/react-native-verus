@@ -183,7 +183,7 @@ class VerusLightClient: RCTEventEmitter {
   }
 
   @objc func deleteWallet(
-    _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
+    _ alias: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     print("deleteWallet() bp1");
