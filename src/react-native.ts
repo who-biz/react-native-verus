@@ -119,8 +119,11 @@ export class Synchronizer {
   }
 
   async stop(): Promise<string> {
+    console.warn("Synchronizer.stop() called!"); 
     this.unsubscribe()
+    console.warn("Synchronizer.stop(): after unsubscribe"); 
     const result = await VerusLightClient.stop(this.alias)
+    console.warn("Synchronizer.stop() before return"); 
     return result
   }
 
@@ -302,8 +305,9 @@ export const deleteWallet = async (
   alias: string, 
   network: string
 ): Promise<boolean> => {
-   console.warn("deleteWallet called in typescript! alias(" + alias + ")");
+   console.warn("deleteWallet called in TS! alias(" + alias + ")");
    const result = await VerusLightClient.deleteWallet(alias, network);
+   console.warn("deleteWallet: before return");
    return result;
 }
 

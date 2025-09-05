@@ -170,12 +170,30 @@ class VerusLightClient: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     if let wallet = SynchronizerMap[alias] {
+      print("stop() bp1");
       wallet.synchronizer.stop()
+      print("stop() bp2");
       wallet.cancellables.forEach { $0.cancel() }
       SynchronizerMap[alias] = nil
+      print("stop() bp3");
       resolve(nil)
     } else {
       reject("StopError", "Wallet does not exist", genericError)
+    }
+  }
+
+  @objc func deleteWallet(
+    _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    print("deleteWallet() bp1");
+    if let wallet = SynchronizerMap[alias] {
+      print("deleteWallet() bp2");
+      let result = wallet.synchronizer.wipe()
+      print("deleteWallet() bp3");
+      resolve(result)
+    } else {
+      reject("DeleteWalletError", "Something went wrong trying to wipe DB", genericError)
     }
   }
 
@@ -903,4 +921,5 @@ func generalStorageURLHelper(_ alias: String, _ network: ZcashNetwork) throws ->
       isDirectory: true
     )
 }
+
 
