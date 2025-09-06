@@ -33,6 +33,11 @@ resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(bech32Decode:(NSString *)bech32String
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
 RCT_EXTERN_METHOD(getLatestNetworkHeight:(NSString *)alias
 resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject

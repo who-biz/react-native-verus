@@ -197,6 +197,21 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
+  @objc func bech32Decode(
+    _ bech32String: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    do {
+      let (hrp, data) = try Bech32.decode(bech32String)
+      print("bech32Decode: \(hrp), \(data))")
+      let hex = data.map { String(format: "%02x", $0) }.joined()
+      resolve(hex)
+    } catch (let error) {
+      reject("bech32DecodeError", "Decoding Bech32 string failed", error)
+    }
+  }
+
   @objc func getLatestNetworkHeight(
     _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
