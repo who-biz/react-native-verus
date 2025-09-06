@@ -73,6 +73,11 @@ struct ProcessorState {
 // Used when calling reject where there isn't an error object
 let genericError = NSError(domain: "", code: 0)
 
+enum HexDataError: Error {
+    case invalidLength
+    case invalidByte(String)
+}
+
 @objc(VerusLightClient)
 class VerusLightClient: RCTEventEmitter {
 
@@ -118,15 +123,15 @@ class VerusLightClient: RCTEventEmitter {
             alias: alias, initializer: initializer, emitter: sendToJs)
 
 
-          var emptyBytes: [UInt8] = []
-          let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
+          let extskBytes = try (extsk.isEmpty ? [] : bytes(from: extsk))
+          let seedBytes = try (seed.isEmpty ? [] : Mnemonic.deterministicSeedBytes(from: seed))
 
           let initMode = newWallet ? WalletInitMode.newWallet : WalletInitMode.existingWallet
 
           _ = try await wallet.synchronizer.prepare(
             //TODO extsk handling here, need to figure out "with/for" syntax
-            transparent_key: emptyBytes,
-            extsk: emptyBytes,
+            transparent_key: [],
+            extsk: extskBytes,
             seed: seedBytes,
             walletBirthday: birthdayHeight,
             for: initMode
@@ -378,8 +383,8 @@ class VerusLightClient: RCTEventEmitter {
         }
 
         do {
-          print("bp1 seed:\(mnemonicSeed)")
-          let spendingKey = try deriveUnifiedSpendingKey("", mnemonicSeed, wallet.synchronizer.network)
+          print("bp1 seed:\(mnemonicSeed), extsk:\(extsk)")
+          let spendingKey = try deriveUnifiedSpendingKey(extsk, mnemonicSeed, wallet.synchronizer.network)
           var sdkMemo: Memo? = nil
           print("bp2")
           if memo != "" {
@@ -476,8 +481,20 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
-
-
+  
+  private func bytes(from hex: String) throws -> [UInt8] {
+      guard hex.count % 2 == 0 else { throw HexDataError.invalidLength }
+      return try stride(from: 0, to: hex.count, by: 2).map { i in
+          let start = hex.index(hex.startIndex, offsetBy: i)
+          let end   = hex.index(start, offsetBy: 2)
+          let byteStr = hex[start..<end]
+          guard let b = UInt8(byteStr, radix: 16) else {
+              throw HexDataError.invalidByte(String(byteStr))
+          }
+          return b
+      }
+  }
+  
   // Derivation Tool
   private func getDerivationToolForNetwork(_ network: String) -> DerivationTool {
     switch network {
@@ -493,8 +510,11 @@ class VerusLightClient: RCTEventEmitter {
   {
     //TODO: handle extsk bech32 decoding, and use Mnemonic.deterministicSeedBytes() to create byte array
     // then pass to deriveUnifiedSpendingKey
+
     let derivationTool = DerivationTool(networkType: network.networkType)
-    let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
+    let seedBytes = try (seed.isEmpty ? [] : Mnemonic.deterministicSeedBytes(from: seed))
+    let extskBytes = try (extsk.isEmpty ? [] : bytes(from: extsk))
+    
     //let extskBytes = try Mnemonic.deterministicSeedBytes(from: extsk)
       let spendingKey = try derivationTool.deriveUnifiedSpendingKey(transparent_key: [], extsk: [], seed: seedBytes, accountIndex: 0)
     return spendingKey
@@ -507,7 +527,7 @@ class VerusLightClient: RCTEventEmitter {
     // then pass to deriveUnifiedSpendingKey
     let derivationTool = DerivationTool(networkType: network.networkType)
     let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
-      let spendingKey = try derivationTool.deriveSaplingSpendingKey(seed: seedBytes, accountIndex: 0)
+    let spendingKey = try derivationTool.deriveSaplingSpendingKey(seed: seedBytes, accountIndex: 0)
     return spendingKey
   }
 
@@ -616,8 +636,8 @@ class VerusLightClient: RCTEventEmitter {
   ) {
     do {
       let zcashNetwork = getNetworkParams(network)
-      let viewingKey = try deriveUnifiedViewingKey("", seed, zcashNetwork)
-        let ufvk = viewingKey.stringEncoded
+      let viewingKey = try deriveUnifiedViewingKey(extsk, seed, zcashNetwork)
+      let ufvk = viewingKey.stringEncoded
       let derivationTool = DerivationTool(networkType: zcashNetwork.networkType)
       let saplingAddress = try derivationTool.deriveShieldedAddress(from: ufvk)
       resolve(saplingAddress)
