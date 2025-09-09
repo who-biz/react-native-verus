@@ -160,46 +160,46 @@ export class Synchronizer {
 //  }
 
   async getInfo(): Promise<InfoResponse> {
-    console.warn("getInfo called!");
+    //console.warn("getInfo called!");
     const result = await VerusLightClient.getInfo(this.alias)
-    console.warn(JSON.stringify(result));
+    //console.warn(JSON.stringify(result));
     return result
   }
 
   async getPrivateBalance(): Promise<PrivateBalanceResponse> {
-    console.warn("getPrivateBalance called!");
+    //console.warn("getPrivateBalance called!");
     const result = await VerusLightClient.getPrivateBalance(this.alias)
     //console.log(JSON.stringify(result));
     return result
   }
 
   async getPrivateTransactions(): Promise<PrivateTransactionsResponse> {
-    console.warn("getPrivateTransactions called!");
+    //console.warn("getPrivateTransactions called!");
     const result = await VerusLightClient.getPrivateTransactions(this.alias)
     //console.log(JSON.stringify(result));
     return result
   }
 
   async deriveUnifiedAddress(): Promise<Addresses> {
-    console.warn("deriveUnifiedAddress called!");
+    //console.warn("deriveUnifiedAddress called!");
     const result = await VerusLightClient.deriveUnifiedAddress(this.alias)
     return result
   }
 
   async deriveSaplingAddress(): Promise<string> {
-    console.warn("deriveSaplingAddress called!");
+    //console.warn("deriveSaplingAddress called!");
     const result = await VerusLightClient.deriveSaplingAddress(this.alias)
     return result
   }
 
   async deriveShieledAddress(): Promise<Addresses> {
-    console.warn("deriveShieldedAddress called!");
+    //console.warn("deriveShieldedAddress called!");
     const result = await VerusLightClient.deriveShieldedAddress(this.alias)
     return result
   }
 
   async getLatestNetworkHeight(alias: string): Promise<number> {
-    console.warn("getLatestNetworkHeight called!");
+    //console.warn("getLatestNetworkHeight called!");
     const result = await VerusLightClient.getLatestNetworkHeight(alias)
     return result
   }
@@ -211,7 +211,7 @@ export class Synchronizer {
   async sendToAddress(
     spendInfo: SpendInfo
   ): Promise<SpendSuccess | SpendFailure> {
-    console.warn("sendToAddress called! mnemonicSeed(" + spendInfo.mnemonicSeed + "), extsk(" + spendInfo.extsk + ")");
+    //console.warn("sendToAddress called! mnemonicSeed(" + spendInfo.mnemonicSeed + "), extsk(" + spendInfo.extsk + ")");
     const result = await VerusLightClient.sendToAddress(
       this.alias,
       spendInfo.zatoshi,
@@ -220,7 +220,7 @@ export class Synchronizer {
       spendInfo.extsk,
       spendInfo.mnemonicSeed
     )
-    console.warn("in sendToAddress, result.txid(" + result.txid + ")");
+    //console.warn("in sendToAddress, result.txid(" + result.txid + ")");
     return result
   }
 
@@ -293,11 +293,11 @@ export const getSynchronizerInstance = (
 export const makeSynchronizer = async (
   initializerConfig: InitializerConfig
 ): Promise<Synchronizer> => {
-  console.warn("before getSynchronizerInstance in makeSynchronizer")
+  //console.warn("before getSynchronizerInstance in makeSynchronizer")
   getSynchronizerInstance(initializerConfig.alias, initializerConfig.networkName);
-  console.warn("before synchronizer.initialize() extsk(" + initializerConfig.extsk + "), seed (" + initializerConfig.mnemonicSeed + ")");
+  //console.warn("before synchronizer.initialize() extsk(" + initializerConfig.extsk + "), seed (" + initializerConfig.mnemonicSeed + ")");
   await synchronizerInstance.initialize(initializerConfig)
-  console.warn("before return synchronizer")
+  //console.warn("before return synchronizer")
   return synchronizerInstance;
 }
 
@@ -311,14 +311,3 @@ export const deleteWallet = async (
    return result;
 }
 
-//export const SdkSynchronizer = Synchronizer.instance;
-
-/*export const getSaplingAddress = async (
-  alias: string,
-  networkName: string
-): Promise<String> => {
-  //console.warn("before calling Synchronizer.getSaplingAddress")
-  const address = await Synchronizer.deriveSaplingAddress()
-  //console.warn("before return saplingAddress: " + address)
-  //return address
-}*/
