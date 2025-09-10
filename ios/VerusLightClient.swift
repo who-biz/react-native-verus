@@ -1,3 +1,4 @@
+
 import Combine
 import Foundation
 import MnemonicSwift
@@ -283,7 +284,7 @@ class VerusLightClient: RCTEventEmitter {
           let resultMap: [String: Any] = [
             "percent": scanProgress,
             "longestchain": Int(truncatingIfNeeded: networkHeight),
-            "status": status.description.lowercased(), 
+            "status": status.description.lowercased(),
             "blocks": Int(truncatingIfNeeded: processorScannedHeight)
           ]
     
@@ -292,10 +293,10 @@ class VerusLightClient: RCTEventEmitter {
           reject("getInfoError", "Failed to getInfo", error)
         }
       } else {
-        reject("getInfoError", "Wallet does not exist", genericError) 
+        reject("getInfoError", "Wallet does not exist", genericError)
       }
     }
-  } 
+  }
 
   @objc func getPrivateBalance(
     _ alias: String,
@@ -920,7 +921,7 @@ func documentsDirectoryHelper() throws -> URL {
 func cacheDbURLHelper(_ alias: String, _ network: ZcashNetwork) throws -> URL {
   try documentsDirectoryHelper()
     .appendingPathComponent(
-      network.constants.defaultDbNamePrefix + alias + ZcashSDK.defaultCacheDbName,
+        network.constants.defaultDbNamePrefix + alias + ZcashSDK.defaultCacheDbName,
       isDirectory: false
     )
 }
@@ -934,11 +935,15 @@ func dataDbURLHelper(_ alias: String, _ network: ZcashNetwork) throws -> URL {
 }
 
 func spendParamsURLHelper(_ alias: String) throws -> URL {
-  try documentsDirectoryHelper().appendingPathComponent(alias + "sapling-spend.params")
+  try documentsDirectoryHelper().appendingPathComponent(
+    alias + "sapling-spend.params"
+  )
 }
 
 func outputParamsURLHelper(_ alias: String) throws -> URL {
-  try documentsDirectoryHelper().appendingPathComponent(alias + "sapling-output.params")
+  try documentsDirectoryHelper().appendingPathComponent(
+    alias + "sapling-output.params"
+  )
 }
 
 func fsBlockDbRootURLHelper(_ alias: String, _ network: ZcashNetwork) throws -> URL {
@@ -956,5 +961,3 @@ func generalStorageURLHelper(_ alias: String, _ network: ZcashNetwork) throws ->
       isDirectory: true
     )
 }
-
-
