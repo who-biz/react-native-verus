@@ -301,12 +301,12 @@ export const makeSynchronizer = async (
   return synchronizerInstance;
 }
 
-export const deleteWallet = async (
+export const stopAndDeleteWallet = async (
   alias: string, 
   network: string
 ): Promise<boolean> => {
    console.warn("deleteWallet called in TS! alias(" + alias + ")");
-   const result = await VerusLightClient.deleteWallet(alias, network);
+   const result = await VerusLightClient.stopAndDeleteWallet(alias, network);
    console.warn("deleteWallet: before return");
    return result;
 }

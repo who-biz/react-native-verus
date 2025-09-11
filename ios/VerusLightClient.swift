@@ -188,14 +188,17 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
-  @objc func deleteWallet(
+  @objc func stopAndDeleteWallet(
     _ alias: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     print("deleteWallet() bp1");
     if let wallet = SynchronizerMap[alias] {
       print("deleteWallet() bp2");
+      wallet.synchronizer.stop()
       let result = wallet.synchronizer.wipe()
+      wallet.cancellables.forEach { $0.cancel() }
+      SynchronizerMap[alias] = nil
       print("deleteWallet() bp3");
       resolve(result)
     } else {

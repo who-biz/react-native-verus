@@ -27,7 +27,7 @@ resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
-RCT_EXTERN_METHOD(deleteWallet:(NSString *)alias
+RCT_EXTERN_METHOD(stopAndDeleteWallet:(NSString *)alias
 :(NSString *) network
 resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
