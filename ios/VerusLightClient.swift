@@ -187,25 +187,33 @@ class VerusLightClient: RCTEventEmitter {
       reject("StopError", "Wallet does not exist", genericError)
     }
   }
+ 
+    @objc func stopAndDeleteWallet(
+      _ alias: String,
+      resolver resolve: @escaping RCTPromiseResolveBlock,
+      rejecter reject: @escaping RCTPromiseRejectBlock
+    ) {
+      guard let wallet = SynchronizerMap[alias] else {
+        reject("DeleteWalletError", "Something went wrong trying to wipe DB", genericError)
+        return
+      }
 
-  @objc func stopAndDeleteWallet(
-    _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
-    rejecter reject: @escaping RCTPromiseRejectBlock
-  ) {
-    print("deleteWallet() bp1");
-    if let wallet = SynchronizerMap[alias] {
-      print("deleteWallet() bp2");
+      let _ = wallet.synchronizer.wipe()
       wallet.synchronizer.stop()
-      print("deleteWallet() bp 3")
-      wallet.cancellables.forEach { $0.cancel() }
-      let result = wallet.synchronizer.wipe()
-      print("deleteWallet() bp4");
-      SynchronizerMap[alias] = nil
-      resolve(result)
-    } else {
-      reject("DeleteWalletError", "Something went wrong trying to wipe DB", genericError)
+
+      let stoppedSub = wallet.synchronizer.stateStream
+        .filter { state in state.syncStatus == .stopped }
+        .prefix(1)
+        .sink { _ in
+            // only deallocate once we've stopped
+            wallet.cancellables.forEach { $0.cancel() }
+            SynchronizerMap[alias] = nil
+        }
+
+      wallet.cancellables.append(stoppedSub)
+
+      resolve(true)
     }
-  }
 
   @objc func bech32Decode(
     _ bech32String: String,
