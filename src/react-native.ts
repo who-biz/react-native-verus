@@ -129,7 +129,7 @@ export class Synchronizer {
 
   async stopAndDeleteWallet(): Promise<boolean> {
      console.warn("deleteWallet called in TS!");
-     const result = await VerusLightClient.stopAndDeleteWallet();
+     const result = await VerusLightClient.stopAndDeleteWallet(this.alias);
      console.warn("deleteWallet: before return");
      return result;
   }
