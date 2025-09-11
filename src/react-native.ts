@@ -127,6 +127,13 @@ export class Synchronizer {
     return result
   }
 
+  async stopAndDeleteWallet(): Promise<boolean> {
+     console.warn("deleteWallet called in TS!");
+     const result = await VerusLightClient.stopAndDeleteWallet();
+     console.warn("deleteWallet: before return");
+     return result;
+  }
+
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
     //console.warn("within initialize func, before await")
     //console.warn("mnemonicSeed: " + initializerConfig.mnemonicSeed);
@@ -299,15 +306,5 @@ export const makeSynchronizer = async (
   await synchronizerInstance.initialize(initializerConfig)
   //console.warn("before return synchronizer")
   return synchronizerInstance;
-}
-
-export const stopAndDeleteWallet = async (
-  alias: string, 
-  network: string
-): Promise<boolean> => {
-   console.warn("deleteWallet called in TS! alias(" + alias + ")");
-   const result = await VerusLightClient.stopAndDeleteWallet(alias, network);
-   console.warn("deleteWallet: before return");
-   return result;
 }
 

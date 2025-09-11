@@ -189,17 +189,18 @@ class VerusLightClient: RCTEventEmitter {
   }
 
   @objc func stopAndDeleteWallet(
-    _ alias: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
+    _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     print("deleteWallet() bp1");
     if let wallet = SynchronizerMap[alias] {
       print("deleteWallet() bp2");
       wallet.synchronizer.stop()
-      let result = wallet.synchronizer.wipe()
+      print("deleteWallet() bp 3")
       wallet.cancellables.forEach { $0.cancel() }
+      let result = wallet.synchronizer.wipe()
+      print("deleteWallet() bp4");
       SynchronizerMap[alias] = nil
-      print("deleteWallet() bp3");
       resolve(result)
     } else {
       reject("DeleteWalletError", "Something went wrong trying to wipe DB", genericError)
@@ -964,3 +965,4 @@ func generalStorageURLHelper(_ alias: String, _ network: ZcashNetwork) throws ->
       isDirectory: true
     )
 }
+
