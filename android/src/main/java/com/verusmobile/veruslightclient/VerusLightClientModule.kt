@@ -873,30 +873,72 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun zGetEncryptionAddress(
-        seed: String,
-        fromid: String,
-        toid: String,
-        network: String = "VRSC",
-        promise: Promise,
+        seed: String?,         // The seed from JS will be a hex string
+        spendingKey: String?,
+        fromId: String?,
+        toId: String?,
+        hdIndex: Int,
+        encryptionIndex: Int,
+        returnSecret: Boolean,
+        promise: Promise
     ) {
-        Log.w("ReactNative", "VerusLightClient.zGetEncryptionAddress() called!! seed($seed), fromid($fromid), toid($toid)");
         moduleScope.launch {
-            promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
-                val encryptionAddress =
-                    DerivationTool.getInstance().getEncryptionAddress(
-                        seedPhrase.toByteArray(),
-                        fromid.toByteArray(),
-                        toid.toByteArray(),
-                        0 /*accountid*/,
-                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                    )
-                Log.w("ReactNative", "zGetEncryptionAddress: encryptionAddress($encryptionAddress)")
-                return@wrap encryptionAddress
+            try {
+                // The SDK's public API expects the seed as a ByteArray, so we must
+                // decode the hex string we receive from JavaScript.
+                val seedBytes = seed?.let { Hex.decode(it) }
+                
+                val channelKeys = DerivationTool.getInstance().getVerusEncryptionAddress(
+                    seed = seedBytes,
+                    spendingKey = spendingKey,
+                    fromId = fromId,
+                    toId = toId,
+                    hdIndex = hdIndex,
+                    encryptionIndex = encryptionIndex,
+                    returnSecret = returnSecret
+                )
+                // We must convert the result to a WritableMap for JavaScript
+                promise.resolve(channelKeys.toWritableMap())
+            } catch (e: Throwable) {
+                promise.reject("GET_ENCRYPTION_ADDRESS_FAILED", e.message ?: "Failed to get encryption address", e)
+            }
+        }
+    }
+    @ReactMethod
+    fun encryptVerusMessage(
+        address: String,
+        message: String,
+        returnSsk: Boolean,
+        promise: Promise
+    ) {
+        moduleScope.launch {
+            try {
+                val payload = DerivationTool.getInstance().encryptVerusMessage(address, message, returnSsk)
+                // We must convert the result to a WritableMap for JavaScript
+                promise.resolve(payload.toWritableMap())
+            } catch (e: Throwable) {
+                promise.reject("ENCRYPT_MESSAGE_FAILED", e.message ?: "Failed to encrypt message", e)
             }
         }
     }
 
+    @ReactMethod
+    fun decryptVerusMessage(
+        fvkHex: String?,
+        epkHex: String?,
+        ciphertextHex: String,
+        sskHex: String?,
+        promise: Promise
+    ) {
+        moduleScope.launch {
+            try {
+                val decryptedMessage = DerivationTool.getInstance().decryptVerusMessage(fvkHex, epkHex, ciphertextHex, sskHex)
+                promise.resolve(decryptedMessage)
+            } catch (e: Throwable) {
+                promise.reject("DECRYPT_MESSAGE_FAILED", e.message ?: "Failed to decrypt message", e)
+            }
+        }
+    }
 
     //
     // AddressTool

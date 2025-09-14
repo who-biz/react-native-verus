@@ -124,3 +124,31 @@ export interface PrivateBalanceResponse {
 export interface PrivateTransactionsResponse {
   transactions: Transaction[]
 }
+
+
+export interface ChannelKeys{
+
+  /* The derived zaddress */
+
+  address: string;
+  
+  /* The hex-encoded fullviewingkey key */
+  fullViewingKey: string;
+
+  /* The hex-encoded spending key */
+  spendingKey: string;
+}
+
+
+export interface EncryptedPayload {
+  
+  /* The hex encoded ephemeral public key from the sender*/
+
+  ephemeralPublicKey: string;
+
+  /* The hex encoded ciphertext of the message */
+  ciphertext: string;
+
+  /* Optional hex encoded symmetric key, only returned if requested */
+  symmetricKey?: string;
+}
