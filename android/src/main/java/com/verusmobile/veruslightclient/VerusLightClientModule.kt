@@ -22,8 +22,11 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+
 import android.util.Log
 import java.lang.Error
+
+
 
 @OptIn(kotlin.ExperimentalStdlibApi::class)
 class VerusLightClient(private val reactContext: ReactApplicationContext) :
@@ -1025,5 +1028,39 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
 
        return bytes
+    }
+
+    /**
+    * Converts a ChannelKeys data class into a WritableMap for React Native.
+    */
+    private fun ChannelKeys.toWritableMap(): WritableMap {
+        val map = Arguments.createMap()
+        map.putString("address", this.address)
+        map.putString("fullViewingKey", this.fullViewingKey)
+        this.spendingKey?.let { map.putString("spendingKey", it) }
+        return map
+    }
+
+    /**
+    * Converts an EncryptedPayload data class into a WritableMap for React Native.
+    */
+    private fun EncryptedPayload.toWritableMap(): WritableMap {
+        val map = Arguments.createMap()
+        map.putString("ephemeralPublicKey", this.ephemeralPublicKey)
+        map.putString("ciphertext", this.ciphertext)
+        this.symmetricKey?.let { map.putString("symmetricKey", it) }
+        return map
+    }
+
+    /**
+    * A simple utility for decoding a hex string into a byte array.
+    */
+    private object Hex {
+        fun decode(hex: String): ByteArray {
+            check(hex.length % 2 == 0) { "Must have an even length" }
+            return hex.chunked(2)
+                .map { it.toInt(16).toByte() }
+                .toByteArray()
+        }
     }
 }
