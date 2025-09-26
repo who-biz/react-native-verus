@@ -632,26 +632,25 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun deleteWallet(
+    fun stopAndDeleteWallet(
         alias: String,
         network: String,
         //clearCache: Boolean,
         //clearDataDb: Boolean,
         promise: Promise
     ) {
-        //Log.w("ReactNative", "deleteWallet called!");
-        moduleScope.launch {
-            try {
-                val result = Synchronizer.erase(reactApplicationContext, networks.getOrDefault(network, ZcashNetwork.Mainnet), alias)
- //               withContext(Dispatchers.Main) {
-                    promise.resolve(result)
- //               }
-            } catch (e: Exception) {
- //               withContext(Dispatchers.Main) {
-                    promise.reject("CLEAR_ERROR", "Failed to clear Rust backend", e)
- //               }
-            }
-        }
+            //Log.w("ReactNative", "deleteWallet called!");
+          moduleScope.launch {
+              try {
+                  val wallet = getWallet(alias)
+                  wallet.close()
+                  synchronizerMap.remove(alias)
+                  val result = Synchronizer.erase(reactApplicationContext, networks.getOrDefault(network, ZcashNetwork.Mainnet), alias)
+                  promise.resolve(result)
+              } catch (e: Exception) {
+                  promise.reject("CLEAR_ERROR", "Failed to clear Rust backend", e)
+              }
+          }
     }
 
     //
