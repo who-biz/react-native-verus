@@ -1036,7 +1036,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     private fun ChannelKeys.toWritableMap(): WritableMap {
         val map = Arguments.createMap()
         map.putString("address", this.address)
-        map.putString("fullViewingKey", this.fullViewingKey)
+        map.putString("fvk", this.fvk)
+        map.putString("fvkHex", this.fvkHex)
+        map.putString("dfvkHex", this.dfvkHex)
+        this.ivk?.let { map.putString("ivk", it) }
         this.spendingKey?.let { map.putString("spendingKey", it) }
         return map
     }
