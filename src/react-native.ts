@@ -19,7 +19,9 @@ import {
   SynchronizerCallbacks,
   Transaction,
   UnifiedViewingKey,
-  UnifiedSpendingKey
+  UnifiedSpendingKey,
+  ChannelKeys,
+  EncryptedPayload
 } from './types'
 export * from './types'
 
@@ -33,17 +35,13 @@ export const Tools = {
   bech32Decode: async (
     bech32Key: string
   ): Promise<String> => {
-    //console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
     const result = await VerusLightClient.bech32Decode(bech32Key)
-    //console.warn("bech32decodedResult: " + result);
     return result
   },
   deterministicSeedBytes: async (
     seed: string
   ): Promise<String> => {
-    //console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
     const result = await VerusLightClient.deterministicSeedBytes(seed);
-    //console.warn("bech32decodedResult: " + result);
     return result
   },
   deriveViewingKey: async (
@@ -51,8 +49,6 @@ export const Tools = {
     seedBytesHex?: string,
     network: Network = 'VRSC'
   ): Promise<UnifiedViewingKey> => {
-    //console.log("deriveShieldedViewingkey called!")
-    //console.warn("typescript: extsk(" + extsk + ")");
     const result = await VerusLightClient.deriveViewingKey(extsk, seedBytesHex, network)
     return result
   },
@@ -60,7 +56,6 @@ export const Tools = {
     seedBytesHex: string,
     network: Network = 'VRSC'
   ): Promise<UnifiedSpendingKey> => {
-    //console.log("deriveShieldedSpendkey called!")
     const result = await VerusLightClient.deriveSaplingSpendingKey(seedBytesHex, network)
     return result
   },
@@ -69,20 +64,9 @@ export const Tools = {
     seedBytesHex?: string,
     network: Network = 'VRSC'
   ): Promise<String> => {
-    //console.warn("deriveShieldedAddress called! extsk(" + extsk + ")")
     const result = await VerusLightClient.deriveShieldedAddress(extsk, seedBytesHex, network)
     return result
   },
-  /*
-  deriveShieldedAddressFromSeed: async (
-    seedBytesHex: string,
-    network: Network = 'VRSC'
-  ): Promise<String> => {
-    //console.log("deriveShieldedAddressFromSeed called!")
-    const result = await VerusLightClient.deriveShieldedAddressFromSeed(seedBytesHex, network)
-    return result
-  },
-*/
   getBirthdayHeight: async (host: string, port: number): Promise<number> => {
     const result = await VerusLightClient.getBirthdayHeight(host, port)
     return result
@@ -91,7 +75,6 @@ export const Tools = {
     address: string,
     network: Network = 'VRSC'
   ): Promise<boolean> => {
-    //TODO: this is broken
     const result = await VerusLightClient.isValidAddress(address, network)
     return result
   },
@@ -112,17 +95,83 @@ export const Tools = {
     const result = await VerusLightClient.generateSymmetricKey(recipient, network)
     return result
   },
-  zGetEncryptionAddress: async (
-    seed: string,
-    fromid: string,
-    toid: string,
-    network: Network = 'VRSC'
-  ): Promise<String> => {
-    console.warn("zGetEncryptionAddress called!, seed(" + seed + "), fromid(" + fromid + "), toid(" + toid + ")");
-    const result = await VerusLightClient.zGetEncryptionAddress(seed, fromid, toid, network);
-    return result
-  }
-}
+
+
+  /**
+   * REPLACES the old zGetEncryptionAddress.
+   * Derives a deterministic z-address for encrypted messaging between two parties.
+   * @param {string | null} seed The user's wallet seed as a hex string. Can be null if spendingKey is provided.
+   * @param {string | null} spendingKey The user's extended spending key. Can be null if seed is provided.
+   * @param {string | null} fromId A unique identifier for the sender (e.g., a hex-encoded VerusID). Can be null.
+   * @param {string | null} toId A unique identifier for the recipient (e.g., a hex-encoded VerusID). Can be null.
+   * @param {number} hdIndex The HD account index to use if deriving from a seed. Defaults to 0.
+   * @param {number} encryptionIndex The index for the final encryption key derivation. Defaults to 0.
+   * @param {boolean} returnSecret If true, the derived extended spending key will be included in the result. Defaults to false.
+   * @returns {Promise<{address: string, fullViewingKey: string, spendingKey?: string}>} A promise that resolves with a ChannelKeys object.
+   */
+  async getVerusEncryptionAddress(
+    seed: string | null,
+    spendingKey: string | null,
+    fromId: string | null,
+    toId: string | null,
+    hdIndex: number = 0,
+    encryptionIndex: number = 0,
+    returnSecret: boolean = false
+  ): Promise<ChannelKeys> {
+    // Note: Make sure the 'ChannelKeys' type is defined in your types.ts file
+    // export interface ChannelKeys { address: string; fullViewingKey: string; spendingKey?: string; }
+    return VerusLightClient.zGetEncryptionAddress(
+      seed,
+      spendingKey,
+      fromId,
+      toId,
+      hdIndex,
+      encryptionIndex,
+      returnSecret
+    );
+  },
+
+  /**
+   * ADDED function.
+   * Encrypts a message for a given z-address.
+   * @param {string} address The recipient's z-address.
+   * @param {string} message The plaintext message to encrypt.
+   * @param {boolean} returnSsk If true, the symmetric key used for encryption will be returned. Defaults to false.
+   * @returns {Promise<{ephemeralPublicKey: string, ciphertext: string, symmetricKey?: string}>} A promise that resolves with an EncryptedPayload object.
+   */
+  async encryptVerusMessage(
+    address: string,
+    message: string,
+    returnSsk: boolean = false
+  ): Promise<EncryptedPayload> {
+    // Note: Make sure the 'EncryptedPayload' type is defined in your types.ts file
+    // export interface EncryptedPayload { ephemeralPublicKey: string; ciphertext: string; symmetricKey?: string; }
+    return VerusLightClient.encryptVerusMessage(address, message, returnSsk);
+  },
+
+  /**
+   * ADDED function.
+   * Decrypts a Verus-specific encrypted message.
+   * @param {string | null} fvkHex The recipient's hex-encoded full viewing key. Not needed if sskHex is provided.
+   * @param {string | null} epkHex The sender's hex-encoded ephemeral public key. Not needed if sskHex is provided.
+   * @param {string} ciphertextHex The hex-encoded encrypted message.
+   * @param {string | null} sskHex The hex-encoded symmetric session key. If provided, fvkHex and epkHex are ignored.
+   * @returns {Promise<string>} A promise that resolves with the decrypted plaintext message.
+   */
+   async decryptVerusMessage(
+    fvkHex: string | null,
+    epkHex: string | null,
+    ciphertextHex: string,
+    sskHex: string | null
+  ): Promise<string> {
+    return VerusLightClient.decryptVerusMessage(
+      fvkHex,
+      epkHex,
+      ciphertextHex,
+      sskHex
+    );
+  },
+};
 
 export class Synchronizer {
   eventEmitter: NativeEventEmitter
