@@ -33,17 +33,17 @@ export const Tools = {
   bech32Decode: async (
     bech32Key: string
   ): Promise<String> => {
-    console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
+    //console.warn("bech32 decode called in typescript! bech32Key(" + bech32Key + ")");
     const result = await VerusLightClient.bech32Decode(bech32Key)
-    console.warn("bech32decodedResult: " + result);
+    //console.warn("bech32decodedResult: " + result);
     return result
   },
   deterministicSeedBytes: async (
     seed: string
   ): Promise<String> => {
-    console.warn("bech32 decode called in typescript! bech32Key(" + seed + ")");
+    console.warn("deterministicSeedBytes called in typescript! seed(" + seed + ")");
     const result = await VerusLightClient.deterministicSeedBytes(seed);
-    console.warn("bech32decodedResult: " + result);
+    console.warn("deterministicSeedBytes result: " + result);
     return result
   },
   deriveViewingKey: async (
@@ -51,8 +51,8 @@ export const Tools = {
     seedBytesHex?: string,
     network: Network = 'VRSC'
   ): Promise<UnifiedViewingKey> => {
-    console.warn("deriveViewingkey called!")
-    console.warn("typescript: extsk(" + extsk + "), seed (" + seedBytesHex + ")");
+    //console.warn("deriveViewingkey called!")
+    //console.warn("typescript: extsk(" + extsk + "), seed (" + seedBytesHex + ")");
     const result = await VerusLightClient.deriveViewingKey(extsk, seedBytesHex, network)
     return result
   },
@@ -60,7 +60,7 @@ export const Tools = {
     seedBytesHex: string,
     network: Network = 'VRSC'
   ): Promise<String> => {
-    console.warn("deriveShieldedSpendkey called!")
+    //console.warn("deriveShieldedSpendkey called!")
     const result = await VerusLightClient.deriveSaplingSpendingKey(seedBytesHex, network)
     return result
   },
@@ -68,7 +68,7 @@ export const Tools = {
     seedBytesHex: string,
     network: Network = 'VRSC'
   ): Promise<UnifiedSpendingKey> => {
-    console.warn("deriveUnifiedSpendkey called!")
+    //console.warn("deriveUnifiedSpendkey called!")
     const result = await VerusLightClient.deriveUnifiedSpendingKey(seedBytesHex, network)
     return result
   },
@@ -77,20 +77,10 @@ export const Tools = {
     seedBytesHex?: string,
     network: Network = 'VRSC'
   ): Promise<String> => {
-    console.warn("deriveShieldedAddress called! extsk(" + extsk + "), seed (" + seedBytesHex + ")")
+    //console.warn("deriveShieldedAddress called! extsk(" + extsk + "), seed (" + seedBytesHex + ")")
     const result = await VerusLightClient.deriveShieldedAddress(extsk, seedBytesHex, network)
     return result
   },
-  /*
-  deriveShieldedAddressFromSeed: async (
-    seedBytesHex: string,
-    network: Network = 'VRSC'
-  ): Promise<String> => {
-    //console.log("deriveShieldedAddressFromSeed called!")
-    const result = await VerusLightClient.deriveShieldedAddressFromSeed(seedBytesHex, network)
-    return result
-  },
-*/
   getBirthdayHeight: async (host: string, port: number): Promise<number> => {
     const result = await VerusLightClient.getBirthdayHeight(host, port)
     return result
@@ -99,7 +89,7 @@ export const Tools = {
     address: string,
     network: Network = 'VRSC'
   ): Promise<boolean> => {
-    console.warn("isValidAddress called!");
+    //console.warn("isValidAddress called!");
     const result = await VerusLightClient.isValidAddress(address, network)
     return result
   }
@@ -119,18 +109,16 @@ export class Synchronizer {
   }
 
   async stop(): Promise<string> {
-    console.warn("Synchronizer.stop() called!"); 
+    //console.warn("Synchronizer.stop() called!"); 
     this.unsubscribe()
-    console.warn("Synchronizer.stop(): after unsubscribe"); 
     const result = await VerusLightClient.stop(this.alias)
-    console.warn("Synchronizer.stop() before return"); 
     return result
   }
 
   async stopAndDeleteWallet(): Promise<boolean> {
-     console.warn("stopAndDeleteWallet called in TS!");
+     //console.warn("stopAndDeleteWallet called in TS!");
      const result = await VerusLightClient.stopAndDeleteWallet(this.alias);
-     console.warn("deleteWallet: before return");
+     //console.warn("deleteWallet: before return");
      return result;
   }
 
@@ -159,12 +147,6 @@ export class Synchronizer {
     )
     //console.warn("within initialize func, after await")
   }
-
-//  private static _instance = new Synchronizer(this.alias, this.network);
-
-//  static get instance() {
-//    return this._instance;
-//  }
 
   async getInfo(): Promise<InfoResponse> {
     //console.warn("getInfo called!");
