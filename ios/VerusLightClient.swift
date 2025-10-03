@@ -529,7 +529,7 @@ class VerusLightClient: RCTEventEmitter {
     let extskBytes = try (extsk.isEmpty ? [] : bytes(from: extsk))
     
     //let extskBytes = try Mnemonic.deterministicSeedBytes(from: extsk)
-      let spendingKey = try derivationTool.deriveUnifiedSpendingKey(transparent_key: [], extsk: [], seed: seedBytes, accountIndex: 0)
+      let spendingKey = try derivationTool.deriveUnifiedSpendingKey(transparent_key: [], extsk: extskBytes, seed: seedBytes, accountIndex: 0)
     return spendingKey
   }
 
