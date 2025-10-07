@@ -176,12 +176,9 @@ class VerusLightClient: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     if let wallet = SynchronizerMap[alias] {
-      print("stop() bp1");
       wallet.synchronizer.stop()
-      print("stop() bp2");
       wallet.cancellables.forEach { $0.cancel() }
       SynchronizerMap[alias] = nil
-      print("stop() bp3");
       resolve(nil)
     } else {
       reject("StopError", "Wallet does not exist", genericError)
@@ -222,7 +219,6 @@ class VerusLightClient: RCTEventEmitter {
   ) {
     do {
       let (hrp, data) = try Bech32.decode(bech32String)
-      print("bech32Decode: \(hrp), \(data))")
       let hex = data.map { String(format: "%02x", $0) }.joined()
       resolve(hex)
     } catch (let error) {
@@ -276,7 +272,6 @@ class VerusLightClient: RCTEventEmitter {
         do {
           
           let networkHeight = try await wallet.synchronizer.latestHeight()
-          let progress = wallet.processorState.scanProgress
           let status = wallet.status
           
           let processorScannedHeight = wallet.processorState.lastScannedHeight
@@ -287,12 +282,6 @@ class VerusLightClient: RCTEventEmitter {
             scanProgress = Int(floor(try await wallet.synchronizer.linearScanProgressForNetworkHeight(networkHeight: networkHeight) * 1000) / 10)
           }
         
-          print("processorInfo: lastScannedHeight(\(processorScannedHeight))")
-          print("legacyProgress.percentage: \(progress)")
-          print("newProgress.percentage: \(scanProgress)")
-          print("latestBlockHeight: \(networkHeight)")
-          print("wallet status: \(status.description.lowercased())")
-      
           let resultMap: [String: Any] = [
             "percent": scanProgress,
             "longestchain": Int(truncatingIfNeeded: networkHeight),
@@ -321,10 +310,6 @@ class VerusLightClient: RCTEventEmitter {
           let saplingAvailable = wallet.balances.saplingAvailableZatoshi.amount
           let saplingTotal = wallet.balances.saplingTotalZatoshi.amount
           let saplingPending = saplingTotal - saplingAvailable
-
-          print("saplingBalanceAvailable(Zatoshi): \(saplingAvailable)")
-          print("saplingBalanceTotal(Zatoshi): \(saplingTotal)")
-          print("saplingBalancePending(Zatoshi): \(saplingPending)")
 
           let resultMap: [String: Any] = [
             "confirmed": String(saplingAvailable),
@@ -368,7 +353,6 @@ class VerusLightClient: RCTEventEmitter {
             }
           }
 
-          print("transactionsArray: \(out)")
           let resultMap: [String: Any] = [
             "transactions": NSArray(array: out)
           ]
@@ -396,21 +380,17 @@ class VerusLightClient: RCTEventEmitter {
         }
 
         do {
-          print("bp1 seed:\(mnemonicSeed), extsk:\(extsk)")
           let spendingKey = try deriveUnifiedSpendingKey(extsk, mnemonicSeed, wallet.synchronizer.network)
           var sdkMemo: Memo? = nil
-          print("bp2")
           if memo != "" {
             sdkMemo = try Memo(string: memo)
           }
-          print("bp3")
           let broadcastTx = try await wallet.synchronizer.sendToAddress(
             spendingKey: spendingKey,
             zatoshi: Zatoshi(amount!),
             toAddress: Recipient(toAddress, network: wallet.synchronizer.network.networkType),
             memo: sdkMemo
           )
-          print("bp4")
 
           let tx: NSMutableDictionary = ["txid": broadcastTx.rawID.toHexStringTxId()]
           if broadcastTx.raw != nil {
@@ -560,7 +540,6 @@ class VerusLightClient: RCTEventEmitter {
     do {
       let zcashNetwork = getNetworkParams(network)
       let viewingKey = try deriveUnifiedViewingKey(extsk, seed, zcashNetwork)
-      print("Viewing key: " + viewingKey.stringEncoded);
       resolve(viewingKey.stringEncoded)
     } catch {
       reject("DeriveViewingKeyError", "Failed to derive viewing key", error)
@@ -575,7 +554,6 @@ class VerusLightClient: RCTEventEmitter {
       let zcashNetwork = getNetworkParams(network)
       let spendingKey = try deriveUnifiedSpendingKey(extsk, seed, zcashNetwork)
         let hex = spendingKey.bytes.map { String(format: "%02x", $0) }.joined()
-        print("Spending key: " + hex);
       resolve(spendingKey)
     } catch {
       reject("DeriveSpendingKeyError", "Failed to derive spending key", error)
@@ -590,7 +568,6 @@ class VerusLightClient: RCTEventEmitter {
       let zcashNetwork = getNetworkParams(network)
       let spendingKey = try deriveSaplingSpendingKey(seed, zcashNetwork)
       let hex = spendingKey.bytes.map { String(format: "%02x", $0) }.joined()
-      print("Spending key: " + hex);
       resolve(hex)
     } catch {
       reject("DeriveSpendingKeyError", "Failed to derive spending key", error)

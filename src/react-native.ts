@@ -41,9 +41,9 @@ export const Tools = {
   deterministicSeedBytes: async (
     seed: string
   ): Promise<String> => {
-    console.warn("deterministicSeedBytes called in typescript! seed(" + seed + ")");
+    //console.warn("deterministicSeedBytes called in typescript! seed(" + seed + ")");
     const result = await VerusLightClient.deterministicSeedBytes(seed);
-    console.warn("deterministicSeedBytes result: " + result);
+    //console.warn("deterministicSeedBytes result: " + result);
     return result
   },
   deriveViewingKey: async (

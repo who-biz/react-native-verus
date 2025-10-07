@@ -213,14 +213,14 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 val networkBlockHeight = map["networkHeight"] as BlockHeight
                 val status = map["status"]
 
-                Log.d("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
-                Log.d("ReactNative", "processorInfo: overallSyncRange(${processorInfo.overallSyncRange})")
-                Log.d("ReactNative", "processorInfo: lastScannedHeight(${processorScannedHeight.value})")
-                Log.d("ReactNative", "processorInfo: firstUnenhancedHeight(${firstUnenhancedHeight.value})")
-                Log.d("ReactNative", "progress.toPercentage(): ${progress.toPercentage()}")
-                Log.d("ReactNative", "networkBlockHeight: ${networkBlockHeight.value.toInt()}")
-                Log.d("ReactNative", "latestBlockHeight: ${latestHeight.value.toInt()}")
-                Log.d("ReactNative", "wallet status: ${status.toString().lowercase()}")
+                //Log.d("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
+                //Log.d("ReactNative", "processorInfo: overallSyncRange(${processorInfo.overallSyncRange})")
+                //Log.d("ReactNative", "processorInfo: lastScannedHeight(${processorScannedHeight.value})")
+                //Log.d("ReactNative", "processorInfo: firstUnenhancedHeight(${firstUnenhancedHeight.value})")
+                //Log.d("ReactNative", "progress.toPercentage(): ${progress.toPercentage()}")
+                //Log.d("ReactNative", "networkBlockHeight: ${networkBlockHeight.value.toInt()}")
+                //Log.d("ReactNative", "latestBlockHeight: ${latestHeight.value.toInt()}")
+                //Log.d("ReactNative", "wallet status: ${status.toString().lowercase()}")
 
                 val resultMap = Arguments.createMap().apply {
                     putInt("percent", progress.toPercentage())
