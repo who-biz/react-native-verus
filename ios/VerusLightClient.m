@@ -131,6 +131,11 @@ resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(deterministicSeedBytes:(NSString *)seed
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
 // Events
 RCT_EXTERN_METHOD(supportedEvents)
 

@@ -675,6 +675,19 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
+  @objc func deterministicSeedBytes(
+    _ seed: String, resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    do {
+      let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
+      let hexString = seedBytes.map { String(format: "%02x", $0) }.joined()
+      resolve(hexString)
+    } catch {
+      reject("DeterministicSeedBytesError", "Failed to calculate deterministicSeedBytes from mnemonic", error)
+    }
+  }
+
   // Events
   public func sendToJs(name: String, data: Any) {
     self.sendEvent(withName: name, body: data)
