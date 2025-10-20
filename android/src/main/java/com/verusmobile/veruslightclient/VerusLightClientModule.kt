@@ -22,8 +22,11 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+
 import android.util.Log
 import java.lang.Error
+
+
 
 @OptIn(kotlin.ExperimentalStdlibApi::class)
 class VerusLightClient(private val reactContext: ReactApplicationContext) :
@@ -873,30 +876,79 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun zGetEncryptionAddress(
-        seed: String,
-        fromid: String,
-        toid: String,
-        network: String = "VRSC",
-        promise: Promise,
+        seed: String?,         // The seed from JS will be a hex string
+        spendingKey: String?,
+        fromId: String?,
+        toId: String?,
+        hdIndex: Int,
+        encryptionIndex: Int,
+        returnSecret: Boolean,
+        promise: Promise
     ) {
-        Log.w("ReactNative", "VerusLightClient.zGetEncryptionAddress() called!! seed($seed), fromid($fromid), toid($toid)");
         moduleScope.launch {
-            promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
-                val encryptionAddress =
-                    DerivationTool.getInstance().getEncryptionAddress(
-                        seedPhrase.toByteArray(),
-                        fromid.toByteArray(),
-                        toid.toByteArray(),
-                        0 /*accountid*/,
-                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                    )
-                Log.w("ReactNative", "zGetEncryptionAddress: encryptionAddress($encryptionAddress)")
-                return@wrap encryptionAddress
+            try {
+                // The SDK's public API expects the seed as a ByteArray, so we must
+                // decode the hex string we receive from JavaScript.
+
+                val seedBytes = byteArrayOf()
+                if (!seed.isNullOrEmpty()){
+                    seedBytes = SeedPhrase.new(seed).toByteArray()
+                }
+                // Biz note: this constuctor also handles hex strings, so conform to prior calling conventions,
+                // and use it. Also I assume you are checking for null or empty spending key on deeper level?
+                // We should convert it to a byte array using Kotlin Tools.Bech32Decode(). But we can handle that later
+                
+                val channelKeys = DerivationTool.getInstance().getVerusEncryptionAddress(
+                    seed = seedBytes,
+                    spendingKey = spendingKey,
+                    fromId = fromId,
+                    toId = toId,
+                    hdIndex = hdIndex,
+                    encryptionIndex = encryptionIndex,
+                    returnSecret = returnSecret
+                )
+                // We must convert the result to a WritableMap for JavaScript
+                promise.resolve(channelKeys.toWritableMap())
+            } catch (e: Throwable) {
+                promise.reject("GET_ENCRYPTION_ADDRESS_FAILED", e.message ?: "Failed to get encryption address", e)
+            }
+        }
+    }
+    @ReactMethod
+    fun encryptVerusMessage(
+        address: String,
+        message: String,
+        returnSsk: Boolean,
+        promise: Promise
+    ) {
+        moduleScope.launch {
+            try {
+                val payload = DerivationTool.getInstance().encryptVerusMessage(address, message, returnSsk)
+                // We must convert the result to a WritableMap for JavaScript
+                promise.resolve(payload.toWritableMap())
+            } catch (e: Throwable) {
+                promise.reject("ENCRYPT_MESSAGE_FAILED", e.message ?: "Failed to encrypt message", e)
             }
         }
     }
 
+    @ReactMethod
+    fun decryptVerusMessage(
+        fvkHex: String?,
+        epkHex: String?,
+        ciphertextHex: String,
+        sskHex: String?,
+        promise: Promise
+    ) {
+        moduleScope.launch {
+            try {
+                val decryptedMessage = DerivationTool.getInstance().decryptVerusMessage(fvkHex, epkHex, ciphertextHex, sskHex)
+                promise.resolve(decryptedMessage)
+            } catch (e: Throwable) {
+                promise.reject("DECRYPT_MESSAGE_FAILED", e.message ?: "Failed to decrypt message", e)
+            }
+        }
+    }
 
     //
     // AddressTool
@@ -983,5 +1035,30 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
 
        return bytes
+    }
+
+    /**
+    * Converts a ChannelKeys data class into a WritableMap for React Native.
+    */
+    private fun ChannelKeys.toWritableMap(): WritableMap {
+        val map = Arguments.createMap()
+        map.putString("address", this.address)
+        map.putString("fvk", this.fvk)
+        map.putString("fvkHex", this.fvkHex)
+        map.putString("dfvkHex", this.dfvkHex)
+        this.ivk?.let { map.putString("ivk", it) }
+        this.spendingKey?.let { map.putString("spendingKey", it) }
+        return map
+    }
+
+    /**
+    * Converts an EncryptedPayload data class into a WritableMap for React Native.
+    */
+    private fun EncryptedPayload.toWritableMap(): WritableMap {
+        val map = Arguments.createMap()
+        map.putString("ephemeralPublicKey", this.ephemeralPublicKey)
+        map.putString("ciphertext", this.ciphertext)
+        this.symmetricKey?.let { map.putString("symmetricKey", it) }
+        return map
     }
 }
