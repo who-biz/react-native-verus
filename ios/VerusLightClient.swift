@@ -173,6 +173,13 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
+
+  func isExpectedCancellation(_ error: Error) -> Bool {
+    if error is CancellationError { return true }
+    let msg = error.localizedDescription.lowercased()
+    return msg.contains("rpc was cancelled") || msg.contains("cancelled (1)")
+  }
+
   @objc func stop(
     _ alias: String,
     resolver resolve: @escaping RCTPromiseResolveBlock,
@@ -184,18 +191,19 @@ class VerusLightClient: RCTEventEmitter {
         wallet.cancellables.forEach { $0.cancel() }
         SynchronizerMap[alias] = nil
         resolve(nil)
-      } catch is CancellationError {
-        wallet.cancellables.forEach { $0.cancel() }
-        SynchronizerMap[alias] = nil
-        resolve(nil)
       } catch {
-        reject("StopError", "Wallet failed to stop: \(error.localizedDescription)", error)
+        if isExpectedCancellation(error) {
+          wallet.cancellables.forEach { $0.cancel() }
+          SynchronizerMap[alias] = nil
+          resolve(nil)
+        } else {
+          reject("StopError", "Wallet failed to stop: \(error.localizedDescription)", error)
+        }
       }
     } else {
       reject("StopError", "Wallet does not exist", genericError)
     }
-  }
- 
+  } 
     @objc func stopAndDeleteWallet(
       _ alias: String,
       resolver resolve: @escaping RCTPromiseResolveBlock,
