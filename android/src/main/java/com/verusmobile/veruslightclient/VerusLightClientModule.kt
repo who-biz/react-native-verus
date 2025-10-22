@@ -890,7 +890,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 // The SDK's public API expects the seed as a ByteArray, so we must
                 // decode the hex string we receive from JavaScript.
 
-                val seedBytes = byteArrayOf()
+                var seedBytes = byteArrayOf()
                 if (!seed.isNullOrEmpty()){
                     seedBytes = SeedPhrase.new(seed).toByteArray()
                 }
