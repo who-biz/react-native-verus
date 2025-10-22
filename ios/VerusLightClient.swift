@@ -174,14 +174,23 @@ class VerusLightClient: RCTEventEmitter {
   }
 
   @objc func stop(
-    _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
+    _ alias: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     if let wallet = SynchronizerMap[alias] {
-      wallet.synchronizer.stop()
-      wallet.cancellables.forEach { $0.cancel() }
-      SynchronizerMap[alias] = nil
-      resolve(nil)
+      do {
+        try wallet.synchronizer.stop()
+        wallet.cancellables.forEach { $0.cancel() }
+        SynchronizerMap[alias] = nil
+        resolve(nil)
+      } catch is CancellationError {
+        wallet.cancellables.forEach { $0.cancel() }
+        SynchronizerMap[alias] = nil
+        resolve(nil)
+      } catch {
+        reject("StopError", "Wallet failed to stop: \(error.localizedDescription)", error)
+      }
     } else {
       reject("StopError", "Wallet does not exist", genericError)
     }
