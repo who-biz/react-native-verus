@@ -129,6 +129,8 @@ class VerusLightClient: RCTEventEmitter {
 
           let initMode = newWallet ? WalletInitMode.newWallet : WalletInitMode.existingWallet
 
+          clearLegacyDBs(networkName, alias)
+
           _ = try await wallet.synchronizer.prepare(
             //TODO extsk handling here, need to figure out "with/for" syntax
             transparent_key: [],
@@ -964,3 +966,36 @@ func generalStorageURLHelper(_ alias: String, _ network: ZcashNetwork) throws ->
     )
 }
 
+func clearLegacyDBs(_ networkName: String, _ alias: String) {
+  let fm = FileManager.default
+  do {
+    let docs = try documentsDirectoryHelper()
+    let contents = (try? fm.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil)) ?? []
+
+    // Legacy pattern: <NETWORK>_<network>_<alias>_<suffix>
+    let networkPrefix = networkName.uppercased()
+    let networkLower = networkName.lowercased()
+
+    let legacyTargets = [
+      "\(networkPrefix)_\(networkLower)_\(alias)_pending.db",
+      "\(networkPrefix)_\(networkLower)_\(alias)_fs_cache",
+      "\(networkPrefix)_\(networkLower)_\(alias)_caches.db",
+      "\(networkPrefix)_\(networkLower)_\(alias)_data.db"
+    ]
+
+    for url in contents {
+      guard legacyTargets.contains(url.lastPathComponent) else { continue }
+
+      if fm.fileExists(atPath: url.path) {
+        do {
+          try fm.removeItem(at: url)
+          NSLog("clearLegacyDBs: Removed legacy file \(url.lastPathComponent)")
+        } catch {
+          NSLog("clearLegacyDBs: Could not remove \(url.lastPathComponent): \(error.localizedDescription)")
+        }
+      }
+    }
+  } catch {
+    NSLog("clearLegacyDBs: Unable to enumerate Documents directory: \(error.localizedDescription)")
+  }
+}
