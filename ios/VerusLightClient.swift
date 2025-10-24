@@ -180,8 +180,14 @@ class VerusLightClient: RCTEventEmitter {
   ) {
     let wallet = SynchronizerMap[alias]
       wallet?.synchronizer.stop()
-      wallet?.cancellables.forEach { $0.cancel() }
-      SynchronizerMap[alias] = nil
+      let stoppedSub = wallet?.synchronizer.stateStream
+        .filter { state in state.syncStatus == .stopped }
+        .prefix(1)
+        .sink { _ in
+            // only deallocate once we've stopped
+            wallet?.cancellables.forEach { $0.cancel() }
+            SynchronizerMap[alias] = nil
+        }
       resolve(nil)
   }
 
