@@ -95,10 +95,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             //Log.w("ReactNative", "Initializer bp1");
             val initMode = if (newWallet) WalletInitMode.NewWallet else WalletInitMode.ExistingWallet
 
-            val job = CompletableDeferred<Unit>()
-            initializationJobs[alias] = job
-
-             val sync =
+            val sync =
                     Synchronizer.new(
                         reactApplicationContext,
                         network,
@@ -306,10 +303,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun getPrivateTransactions(alias: String, promise: Promise) {
         //Log.w("ReactNative", "getPrivateTransactions called")
-        val wallet = getWallet(alias)
-        val scope = wallet.coroutineScope
-
         try {
+            awaitWallet(alias) 
+            val wallet = getWallet(alias)
+            val scope = wallet.coroutineScope
+
             scope.launch {
                 try {
                     val txList = wallet.transactions.first()
