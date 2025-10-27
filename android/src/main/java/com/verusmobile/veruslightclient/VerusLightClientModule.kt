@@ -353,9 +353,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
                 wallet.coroutineScope.coroutineContext.cancelChildren()
 
-                 withTimeout(10_000) {
-                     wallet.closeFlow().first()
-                 }
+                withTimeout(15_000) {
+                    wallet.close()
+                    wallet.status.filter { it == Synchronizer.Status.STOPPED }.first()
+                }
 
                 synchronizerMap.remove(alias)
                 initializationJobs[alias]?.completeExceptionally(WalletClosedException(alias))
