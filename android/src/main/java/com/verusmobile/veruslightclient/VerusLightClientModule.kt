@@ -21,9 +21,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
 
 import android.util.Log
 import java.lang.Error
+
+
+private val initializationJobs = mutableMapOf<String, CompletableDeferred<Unit>>()
+
+private suspend fun awaitWallet(alias: String) {
+    initializationJobs[alias]?.await()
+}
 
 @OptIn(kotlin.ExperimentalStdlibApi::class)
 class VerusLightClient(private val reactContext: ReactApplicationContext) :
@@ -54,6 +64,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         promise: Promise,
     ) = moduleScope.launch {
         //Log.w("ReactNative", "initializer, before promise");
+
+        val job = initializationJobs[alias] ?: CompletableDeferred<Unit>().also {
+            // per alias latch
+            initializationJobs[alias] = it
+        }
+
         promise.wrap {
             //Log.w("ReactNative", "Initializer, start func, extsk($extsk)")
             val network = networks.getOrDefault(networkName, ZcashNetwork.Mainnet)
@@ -78,8 +94,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
             //Log.w("ReactNative", "Initializer bp1");
             val initMode = if (newWallet) WalletInitMode.NewWallet else WalletInitMode.ExistingWallet
-            if (!synchronizerMap.containsKey(alias)) {
-                synchronizerMap[alias] =
+
+            val job = CompletableDeferred<Unit>()
+            initializationJobs[alias] = job
+
+             val sync =
                     Synchronizer.new(
                         reactApplicationContext,
                         network,
@@ -91,10 +110,19 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         transparentKey,
                         extendedSecretKey
                     ) as SdkSynchronizer
+
+            synchronizerMap[alias] = sync
+            val scope = sync.coroutineScope
+            scope.launch {
+                sync.status
+                  .filter { it == Synchronizer.Status.SYNCING || it == Synchronizer.Status.SYNCED }
+                  .first()
+                job.complete(Unit)
+                //Log.i("ReactNative", "Synchronizer $alias initialized and ready.")
             }
+
             //Log.w("ReactNative", "Initializer bp2");
             val wallet = getWallet(alias)
-            val scope = wallet.coroutineScope
             combine(wallet.progress, wallet.networkHeight) { progress, networkHeight ->
                 return@combine mapOf("progress" to progress, "networkHeight" to networkHeight)
             }.collectWith(scope) { map ->
@@ -186,6 +214,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
         moduleScope.launch {
             try {
+                awaitWallet(alias) 
+
                 val wallet = getWallet(alias)
                 val birthdayHeight = wallet.latestBirthdayHeight;
 
@@ -241,11 +271,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun getPrivateBalance(alias: String, promise: Promise) {
         //Log.w("ReactNative", "getPrivateBalance called")
-        val wallet = getWallet(alias)
-        val scope = wallet.coroutineScope
 
-        scope.launch {
+        moduleScope.launch {
             try {
+                awaitWallet(alias) 
+                val wallet = getWallet(alias)
+
                 val saplingBalances = wallet.saplingBalances.firstOrNull()
                 val saplingAvailableZatoshi = saplingBalances?.available ?: Zatoshi(0L)
                 val saplingTotalZatoshi = saplingBalances?.total ?: Zatoshi(0L)
@@ -320,11 +351,24 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         alias: String,
         promise: Promise,
     ) {
-        promise.wrap {
-            val wallet = getWallet(alias)
-            wallet.close()
-            synchronizerMap.remove(alias)
-            return@wrap null
+        moduleScope.launch(Dispatchers.IO) {
+            try {
+                val wallet = getWallet(alias)
+                withTimeout(10_000) {
+                    wallet.closeFlow().first()
+                }
+                synchronizerMap.remove(alias)
+                initializationJobs.remove(alias)
+                promise.resolve(null)
+            } catch (e: TimeoutCancellationException) {
+                Log.w("ReactNative", "Timeout waiting for synchronizer $alias to stop — forcing cleanup.")
+                synchronizerMap.remove(alias)
+                initializationJobs.remove(alias)
+                promise.resolve(null)
+            } catch (t: Throwable) {
+                Log.e("ReactNative", "Error stopping synchronizer $alias", t)
+                promise.reject("STOP_ERROR", t.localizedMessage, t)
+            }
         }
     }
 
