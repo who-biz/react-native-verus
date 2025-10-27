@@ -24,6 +24,8 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
@@ -40,6 +42,8 @@ private suspend fun awaitWalletReady(alias: String) {
     val job = initializationJobs[alias] ?: throw WalletClosedException(alias)
     job.await()
 }
+
+private val collectorScopes = mutableMapOf<String, CoroutineScope>()
 
 @OptIn(kotlin.ExperimentalStdlibApi::class)
 class VerusLightClient(private val reactContext: ReactApplicationContext) :
@@ -110,9 +114,17 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             ) as SdkSynchronizer
 
             synchronizerMap[alias] = sync
-            val scope = sync.coroutineScope
 
-            scope.launch {
+            collectorScopes.remove(alias)?.let { scope ->
+                (scope.coroutineContext[Job])?.cancelChildren()
+            }
+
+            val collectorScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+            collectorScopes[alias] = collectorScope
+
+            val syncScope = sync.coroutineScope
+
+            syncScope.launch {
                 sync.status
                     .filter { it == Synchronizer.Status.SYNCING || it == Synchronizer.Status.SYNCED }
                     .first()
@@ -125,7 +137,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
             val wallet = getWallet(alias)
 
-            scope.launch {
+            collectorScope.launch {
                 combine(wallet.progress, wallet.networkHeight) { progress, networkHeight ->
                     mapOf("progress" to progress, "networkHeight" to networkHeight)
                 }.collect { map ->
@@ -141,7 +153,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 }
             }
 
-            scope.launch {
+            collectorScope.launch {
                 wallet.status.collect { status ->
                     sendEvent("StatusEvent") { args ->
                         args.putString("alias", alias)
@@ -150,12 +162,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 }
             }
 
-            scope.launch {
+            collectorScope.launch {
                 wallet.transactions.collect { txList ->
                     val nativeArray = Arguments.createArray()
                     txList.filter { tx -> tx.transactionState != TransactionState.Expired }
                         .map { tx ->
-                            scope.async {
+                            collectorScope.async {
                                 val parsedTx = parseTx(wallet, tx)
                                 nativeArray.pushMap(parsedTx)
                             }
@@ -168,7 +180,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 }
             }
 
-            scope.launch {
+            collectorScope.launch {
                 combine(wallet.transparentBalance, wallet.saplingBalances) { transparent, sapling ->
                     Balances(transparentBalance = transparent, saplingBalances = sapling)
                 }.collect { balances ->
@@ -341,41 +353,34 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun stop(alias: String, promise: Promise) {
+    fun stop(
+        alias: String,
+        promise: Promise,
+    ) {
         moduleScope.launch(Dispatchers.IO) {
             try {
-                val wallet = synchronizerMap[alias] ?: run {
-                    initializationJobs[alias]?.completeExceptionally(WalletClosedException(alias))
-                    initializationJobs.remove(alias)
-                    promise.resolve(null)
-                    return@launch
+                val wallet = getWallet(alias)
+
+                collectorScopes.remove(alias)?.let { scope ->
+                    (scope.coroutineContext[Job])?.cancelChildren()
                 }
 
-                wallet.coroutineScope.coroutineContext.cancelChildren()
-
-                withTimeout(15_000) {
-                    wallet.close()
-                    wallet.status.filter { it == Synchronizer.Status.STOPPED }.first()
-                }
+                wallet.closeFlow().firstOrNull()
+                wallet.status.filter { it == Synchronizer.Status.STOPPED }.first()
 
                 synchronizerMap.remove(alias)
-                initializationJobs[alias]?.completeExceptionally(WalletClosedException(alias))
+                initializationJobs[alias]?.completeExceptionally(Exception("Wallet closed"))
                 initializationJobs.remove(alias)
 
-                promise.resolve(null)
-            } catch (e: TimeoutCancellationException) {
-                Log.w("ReactNative", "Timeout stopping $alias — forcing cleanup.")
-                synchronizerMap.remove(alias)
-                initializationJobs[alias]?.completeExceptionally(WalletClosedException(alias))
-                initializationJobs.remove(alias)
-                promise.resolve(null)
+                Log.i("ReactNative", "Synchronizer $alias stopped and cleaned up.")
+                promise.resolve("STOPPED")
             } catch (t: Throwable) {
                 Log.e("ReactNative", "Error stopping synchronizer $alias", t)
                 promise.reject("STOP_ERROR", t.localizedMessage, t)
             }
         }
     }
-
+    
     //TODO: consider adding boolean argument to conditionally include rawTxData
     private suspend fun parseTx(
         wallet: SdkSynchronizer,
