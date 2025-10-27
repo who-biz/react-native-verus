@@ -27,7 +27,7 @@ const { VerusLightClient } = NativeModules
 
 type Callback = (...args: any[]) => any
 
-let synchronizerInstance: Synchronizer;
+let synchronizerInstance: Synchronizer | null = null;
 
 export const Tools = {
   bech32Decode: async (
@@ -109,17 +109,21 @@ export class Synchronizer {
   }
 
   async stop(): Promise<string> {
-    //console.warn("Synchronizer.stop() called!"); 
     this.unsubscribe()
     const result = await VerusLightClient.stop(this.alias)
+    if (synchronizerInstance && synchronizerInstance.alias === this.alias) {
+      synchronizerInstance = null
+    }
     return result
   }
 
   async stopAndDeleteWallet(): Promise<boolean> {
-     //console.warn("stopAndDeleteWallet called in TS!");
-     const result = await VerusLightClient.stopAndDeleteWallet(this.alias);
-     //console.warn("deleteWallet: before return");
-     return result;
+    this.unsubscribe()
+    const result = await VerusLightClient.stopAndDeleteWallet(this.alias)
+    if (synchronizerInstance && synchronizerInstance.alias === this.alias) {
+      synchronizerInstance = null
+    }
+    return result
   }
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
@@ -133,6 +137,13 @@ export class Synchronizer {
     //console.warn("host: " + initializerConfig.defaultHost);
     //console.warn("port: " + initializerConfig.defaultPort);
     //console.warn("newWallet: " + initializerConfig.newWallet);
+
+    if (
+      this.alias !== initializerConfig.alias ||
+      this.network !== initializerConfig.networkName
+    ) {
+      this.setIdentity(initializerConfig.alias, initializerConfig.networkName)
+    }
 
     await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
@@ -187,9 +198,8 @@ export class Synchronizer {
     return result
   }
 
-  async getLatestNetworkHeight(alias: string): Promise<number> {
-    //console.warn("getLatestNetworkHeight called!");
-    const result = await VerusLightClient.getLatestNetworkHeight(alias)
+  async getLatestNetworkHeight(): Promise<number> {
+    const result = await VerusLightClient.getLatestNetworkHeight(this.alias)
     return result
   }
 
@@ -262,6 +272,12 @@ export class Synchronizer {
     )
   }
 
+  setIdentity(alias: string, network: string) {
+    this.unsubscribe()
+    this.alias = alias
+    this.network = network
+  }
+
   unsubscribe(): void {
     this.subscriptions.forEach(subscription => {
       subscription.remove()
@@ -273,20 +289,26 @@ export const getSynchronizerInstance = (
   alias: string,
   network: string
 ): Synchronizer => {
-  if (!synchronizerInstance) { 
-    synchronizerInstance = new Synchronizer(alias, network);
+  if (!synchronizerInstance) {
+    synchronizerInstance = new Synchronizer(alias, network)
+  } else if (
+    synchronizerInstance.alias !== alias ||
+    synchronizerInstance.network !== network
+  ) {
+    synchronizerInstance.setIdentity(alias, network)
   }
-  return synchronizerInstance;
+
+  return synchronizerInstance
 }
 
 export const makeSynchronizer = async (
   initializerConfig: InitializerConfig
 ): Promise<Synchronizer> => {
-  //console.warn("before getSynchronizerInstance in makeSynchronizer")
-  getSynchronizerInstance(initializerConfig.alias, initializerConfig.networkName);
-  //console.warn("before synchronizer.initialize() extsk(" + initializerConfig.extsk + "), seed (" + initializerConfig.mnemonicSeed + ")");
-  await synchronizerInstance.initialize(initializerConfig)
-  //console.warn("before return synchronizer")
-  return synchronizerInstance;
+  const sync = getSynchronizerInstance(
+    initializerConfig.alias,
+    initializerConfig.networkName
+  )
+  await sync.initialize(initializerConfig)
+  return sync
 }
 
