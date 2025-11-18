@@ -6,7 +6,7 @@ import React
 
 var SynchronizerMap = [String: WalletSynchronizer]()
 
-struct ConfirmedTx {
+struct TxData {
   var category: String?
   var status: String?
   var minedHeight: Int
@@ -347,13 +347,13 @@ class VerusLightClient: RCTEventEmitter {
             if tx.isExpiredUmined ?? false { continue }
 
             do {
-              var confTx = await wallet.parseTx(tx: tx)
+              var txData = await wallet.parseTx(tx: tx)
               if tx.isPending(currentHeight: currentHeight) {
-                confTx.status = "pending"
+                txData.status = "pending"
               } else {
-                confTx.status = "confirmed"
+                txData.status = "confirmed"
               }
-              out.append(confTx.nsDictionary)
+              out.append(txData.nsDictionary)
             }
           }
 
@@ -433,11 +433,11 @@ class VerusLightClient: RCTEventEmitter {
             shieldingThreshold: Zatoshi(shieldingThreshold)
           )
 
-          var confTx = await wallet.parseTx(tx: tx)
+          var txData = await wallet.parseTx(tx: tx)
 
           // Hack: Memos aren't ready to be queried right after broadcast
-          confTx.memos = [memo]
-          resolve(confTx.nsDictionary)
+          txData.memos = [memo]
+          resolve(txData.nsDictionary)
         } catch {
           reject("shieldFunds", "Failed to shield funds", genericError)
         }
@@ -834,21 +834,21 @@ class WalletSynchronizer: NSObject {
       emit("BalanceEvent", data)
   }
 
-  func parseTx(tx: ZcashTransaction.Overview) async -> ConfirmedTx {
-    var confTx = ConfirmedTx(
+  func parseTx(tx: ZcashTransaction.Overview) async -> TxData {
+    var txData = TxData(
       minedHeight: tx.minedHeight ?? 0,
       rawTransactionId: (tx.rawID.toHexStringTxId()),
       blockTimeInSeconds: Int(tx.blockTime ?? 0),
       value: String(describing: abs(tx.value.amount))
     )
     /*if tx.raw != nil {
-      confTx.raw = tx.raw!.hexEncodedString()
+      txData.raw = tx.raw!.hexEncodedString()
     }*/
     if tx.fee != nil {
-      confTx.fee = String(describing: abs(tx.fee!.amount))
+      txData.fee = String(describing: abs(tx.fee!.amount))
     }
     if tx.isSentTransaction {
-      confTx.category = "sent"
+      txData.category = "sent"
       let recipients = await self.synchronizer.getRecipients(for: tx)
       if recipients.count > 0 {
         let addresses = recipients.compactMap {
@@ -859,12 +859,12 @@ class WalletSynchronizer: NSObject {
           }
         }
         if addresses.count > 0 {
-          confTx.toAddress = addresses.first!.stringEncoded
+          txData.toAddress = addresses.first!.stringEncoded
         }
       }
     } else {
-        confTx.toAddress = try? await self.synchronizer.getSaplingAddress(accountIndex: Int(0)).stringEncoded
-        confTx.category = "received"
+        txData.toAddress = try? await self.synchronizer.getSaplingAddress(accountIndex: Int(0)).stringEncoded
+        txData.category = "received"
     }
 
 
@@ -881,10 +881,10 @@ class WalletSynchronizer: NSObject {
           seen.insert(trimmed)
           return trimmed
         }
-        confTx.memos = unique*/
-      confTx.memos = textMemos
+        txData.memos = unique*/
+      txData.memos = textMemos
     }
-    return confTx
+    return txData
   }
 
   func emitTxs(transactions: [ZcashTransaction.Overview]) {
@@ -892,8 +892,8 @@ class WalletSynchronizer: NSObject {
       var out: [NSDictionary] = []
       for tx in transactions {
         if tx.isExpiredUmined ?? false { continue }
-        let confTx = await parseTx(tx: tx)
-        out.append(confTx.nsDictionary)
+        let txData = await parseTx(tx: tx)
+        out.append(txData.nsDictionary)
       }
 
       let data: NSDictionary = ["alias": self.alias, "transactions": NSArray(array: out)]
