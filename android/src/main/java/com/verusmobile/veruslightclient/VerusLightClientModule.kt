@@ -45,7 +45,11 @@ private suspend fun awaitWalletReady(alias: String) {
 
 private val collectorScopes = mutableMapOf<String, CoroutineScope>()
 
-@OptIn(kotlin.ExperimentalStdlibApi::class)
+// Uncomment the OptIn below if you want to use 'byteArray.toHexString()' outside of deterministicSeedBytes function
+// i.e. in logging. This function was not promoted to stable in Kotlin Standard until Kotlin 2.2. Alternatively, you can
+// OptIn on a per-function basis
+
+//@OptIn(kotlin.ExperimentalStdlibApi::class)
 class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
     /**
@@ -98,7 +102,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
             }
 
-            //Log.w("ReactNative", "Initializer bp1");
             val initMode = if (newWallet) WalletInitMode.NewWallet else WalletInitMode.ExistingWallet
 
             val sync = Synchronizer.new(
@@ -205,8 +208,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun getInfo(alias: String, promise: Promise) {
-        //Log.w("ReactNative", "getInfo called")
-
         moduleScope.launch {
             try {
                 if (!synchronizerMap.containsKey(alias)) {
@@ -272,8 +273,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun getPrivateBalance(alias: String, promise: Promise) {
-        //Log.w("ReactNative", "getPrivateBalance called")
-
         moduleScope.launch {
             try {
                 if (!synchronizerMap.containsKey(alias)) {
@@ -386,10 +385,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         wallet: SdkSynchronizer,
         tx: TransactionOverview,
     ): WritableMap {
-        //Log.e("ReactNative", "parseTx called!")
         val map = Arguments.createMap()
         try {
-            //Log.d("ReactNative", "TransactionOverview: " + tx.toString())
             map.putString("amount", tx.netValue.value.toString())
 
             tx.feePaid?.let {
@@ -427,7 +424,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             } else {
                 map.putString("category", "received")
                 map.putString("address", wallet.getSaplingAddress(Account(0)))
-                //TODO: probably a more graceful way to handle "address" above
+                //TODO: this needs changed if we have additional account indices at some point
             }
 
             if (tx.memoCount > 0) {
@@ -470,7 +467,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
-        //Log.w("ReactNative", "deriveViewingKey called, extsk($extsk)")
         moduleScope.launch {
             promise.wrap {
                 var seedPhrase = byteArrayOf()
@@ -489,13 +485,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
-                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
                 val keys =
                     DerivationTool.getInstance().deriveUnifiedFullViewingKey(
                         spendingKey,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                //Log.i("ReactNative", "keys: " + keys.encoding);
                 return@wrap keys.encoding
             }
         }
@@ -508,7 +502,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String,
         promise: Promise,
     ) {
-        //Log.d("ReactNative", "deriveShieldedSpendingKeyCalled!");
         moduleScope.launch {
             promise.wrap {
                 val seedPhrase = SeedPhrase.new(seed)
@@ -518,9 +511,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
-                //Log.w("ReactNative", "seed: " + seed);
-
-                //Log.i("ReactNative", "key: " + key.copyBytes().toHexString());
                 return@wrap key.copyBytes().toHexString()
             }
         }
@@ -605,7 +595,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         promise: Promise,
     ) {
         val wallet = getWallet(alias)
-        //Log.w("ReactNative", "sendToAddress called, extsk($extsk)");
         wallet.coroutineScope.launch {
             try {
                 var extendedSecretKey = byteArrayOf()
@@ -633,7 +622,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     )
                 val tx = wallet.coroutineScope.async { wallet.transactions.first().first() }.await()
                 val map = Arguments.createMap()
-                //Log.i("ReactNative", "sendToAddress: txid(${tx.rawId.byteArray.toHexReversed()}");
                 map.putString("txid", tx.rawId.byteArray.toHexReversed())
                 if (tx.raw != null) map.putString("raw", tx.raw?.byteArray?.toHex())
                 promise.resolve(map)
@@ -689,7 +677,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         alias: String,
         promise: Promise
     ) {
-            //Log.w("ReactNative", "deleteWallet called!");
           moduleScope.launch {
               try {
                   val wallet = getWallet(alias)
@@ -713,12 +700,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         bech32Key: String,
         promise: Promise,
     ) {
-        //Log.w("ReactNative", "bech32Decode called!, bech32Key(${bech32Key})");
         moduleScope.launch {
             try {
                 val keyBytes = decodeSaplingSpendKey(bech32Key)
                 val result = keyBytes.toHexString()
-                //Log.w("ReactNative", "bech32Decode: ${result}");
                 promise.resolve(result)
             } catch (e: Exception) {
                 promise.reject("DECODE_ERROR","Failed to decode bech32 spendkey", e)
@@ -730,17 +715,16 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     // AddressTool
     //
 
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
     @ReactMethod
     fun deterministicSeedBytes(
         seed: String,
         promise: Promise,
     ) {
-        //Log.w("ReactNative", "bech32Decode called!, bech32Key(${bech32Key})");
         moduleScope.launch {
             try {
                 val keyBytes = SeedPhrase.new(seed).toByteArray()
                 val result = keyBytes.toHexString()
-                //Log.w("ReactNative", "bech32Decode: ${result}");
                 promise.resolve(result)
             } catch (e: Exception) {
                 promise.reject("SEED_ERROR","Failed to convert mnemonicSeed to bytes", e)
@@ -792,29 +776,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
     }
 
-    /*
-    @ReactMethod
-    fun deriveShieldedAddressFromSeed(
-        seed: String,
-        network: String = "VRSC",
-        promise: Promise,
-    ) {
-        moduleScope.launch {
-            promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
-                val shieldedAddress =
-                    DerivationTool.getInstance().deriveShieldedAddress(
-                        seedPhrase.toByteArray(),
-                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                        Account(1)
-                    )
-                //Log.w("ReactNative", "shieldedAddress: " + shieldedAddress);
-                return@wrap shieldedAddress
-            }
-        }
-    }
-    */
-
     //
     // AddressTool
     //
@@ -825,7 +786,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
-        //Log.w("ReactNative", "deriveShieldedAddress called, extsk($extsk)");
         moduleScope.launch {
             promise.wrap {
                 var seedPhrase = byteArrayOf()
@@ -844,7 +804,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
-                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
                 val viewingKey =
                     DerivationTool.getInstance().deriveUnifiedFullViewingKey(
                         spendingKey,
@@ -932,10 +891,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     )
 
     private fun decodeSaplingSpendKey(bech32Key: String): ByteArray {
-        //Log.w("ReactNative", "decodeSaplingSpendkey called!")
         val (hrp, data, encoding) = Bech32.decode(bech32Key)
-
-        //Log.w("ReactNative", "hrp({$hrp}), data(${data}), encoding(${encoding})");
 
         require(hrp == "secret-extended-key-main"/* || hrp == "secret-extended-key-test"*/) {
             throw Exception("Invalid HRP: $hrp")
