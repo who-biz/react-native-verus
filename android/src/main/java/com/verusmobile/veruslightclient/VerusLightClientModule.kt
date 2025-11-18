@@ -130,8 +130,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             syncScope.launch {
                 sync.status
                     .filter {
-                        it == Synchronizer.State.DISCONNECTED ||
-                        it == Synchronizer.State.INITIALIZING ||
+                        it == Synchronizer.Status.DISCONNECTED ||
+                        it == Synchronizer.Status.INITIALIZING ||
                         it == Synchronizer.Status.SYNCING ||
                         it == Synchronizer.Status.SYNCED
                     }
@@ -501,6 +501,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     }
 
 
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
     @ReactMethod
     fun deriveSaplingSpendingKey(
         seed: String,
@@ -700,6 +701,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     // AddressTool
     //
 
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
     @ReactMethod
     fun bech32Decode(
         bech32Key: String,
