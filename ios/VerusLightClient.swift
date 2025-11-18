@@ -1,4 +1,3 @@
-
 import Combine
 import Foundation
 import MnemonicSwift
@@ -132,7 +131,6 @@ class VerusLightClient: RCTEventEmitter {
           clearLegacyDBs(networkName, alias)
 
           _ = try await wallet.synchronizer.prepare(
-            //TODO extsk handling here, need to figure out "with/for" syntax
             transparent_key: [],
             extsk: extskBytes,
             seed: seedBytes,
@@ -507,23 +505,20 @@ class VerusLightClient: RCTEventEmitter {
   private func deriveUnifiedSpendingKey(_ extsk: String, _ seed: String, _ network: ZcashNetwork) throws
     -> UnifiedSpendingKey
   {
-    //TODO: handle extsk bech32 decoding, and use Mnemonic.deterministicSeedBytes() to create byte array
-    // then pass to deriveUnifiedSpendingKey
+    //TODO: move extskBytes calculation into Mnemonic.deterministicSeedBytes() to create byte array
+    // then pass to deriveUnifiedSpendingKey, i.e. remove 'bytes()' function. Not urgent.
 
     let derivationTool = DerivationTool(networkType: network.networkType)
     let seedBytes = try (seed.isEmpty ? [] : Mnemonic.deterministicSeedBytes(from: seed))
     let extskBytes = try (extsk.isEmpty ? [] : bytes(from: extsk))
     
-    //let extskBytes = try Mnemonic.deterministicSeedBytes(from: extsk)
-      let spendingKey = try derivationTool.deriveUnifiedSpendingKey(transparent_key: [], extsk: extskBytes, seed: seedBytes, accountIndex: 0)
+    let spendingKey = try derivationTool.deriveUnifiedSpendingKey(transparent_key: [], extsk: extskBytes, seed: seedBytes, accountIndex: 0)
     return spendingKey
   }
 
   private func deriveSaplingSpendingKey(_ seed: String, _ network: ZcashNetwork) throws
     -> SaplingSpendingKey
   {
-    //TODO: handle extsk bech32 decoding, and use Mnemonic.deterministicSeedBytes() to create byte array
-    // then pass to deriveUnifiedSpendingKey
     let derivationTool = DerivationTool(networkType: network.networkType)
     let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
     let spendingKey = try derivationTool.deriveSaplingSpendingKey(seed: seedBytes, accountIndex: 0)
@@ -580,7 +575,12 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
-  @objc func deriveUnifiedAddress(
+  //
+  // AddressTool
+  // State-driven, fetches unified address from a running synchronizer
+  //
+
+  @objc func getUnifiedAddress(
     _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
@@ -599,15 +599,20 @@ class VerusLightClient: RCTEventEmitter {
           resolve(addresses)
           return
         } catch {
-          reject("deriveUnifiedAddress", "Failed to derive unified address", error)
+          reject("getUnifiedAddress", "Failed to derive unified address", error)
         }
       } else {
-        reject("deriveUnifiedAddress", "Wallet does not exist", genericError)
+        reject("getUnifiedAddress", "Wallet does not exist", genericError)
       }
     }
   }
 
-  @objc func deriveSaplingAddress(
+  //
+  // AddressTool
+  // State-driven, fetches sapling address from a running synchronizer
+  //
+
+  @objc func getSaplingAddress(
     _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
@@ -618,13 +623,18 @@ class VerusLightClient: RCTEventEmitter {
           resolve(saplingAddress.stringEncoded)
           return
         } catch {
-          reject("deriveSaplingAddress", "Failed to derive sapling address", error)
+          reject("getSaplingAddress", "Failed to derive sapling address", error)
         }
       } else {
-        reject("deriveSaplingAddress", "Wallet does not exist", genericError)
+        reject("getSaplingAddress", "Wallet does not exist", genericError)
       }
     }
   }
+
+  //
+  // AddressTool
+  // Stateless, derives a sapling address without a running synchronizer
+  //
 
   @objc func deriveShieldedAddress(
     _ extsk: String, _ seed: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
@@ -804,8 +814,6 @@ class WalletSynchronizer: NSObject {
   }
 
   func updateBalanceState(event: SynchronizerState) {
-    //let transparentBalance = event.transparentBalance
-    //let shieldedBalance = event.shieldedBalance
       let transparentBalance = event.accountBalance?.unshielded ?? Zatoshi(0)
       let shieldedBalance = event.accountBalance?.saplingBalance ?? PoolBalance.zero
       let orchardBalance = event.accountBalance?.orchardBalance ?? PoolBalance.zero
@@ -814,9 +822,6 @@ class WalletSynchronizer: NSObject {
 
       let saplingAvailableZatoshi = shieldedBalance.spendableValue
       let saplingTotalZatoshi = shieldedBalance.total()
-
-      //let orchardAvailableZatoshi = orchardBalance.spendableValue
-      //let orchardTotalZatoshi = orchardBalance.total()
 
       self.balances = TotalBalances(
         transparentAvailableZatoshi: transparentAvailableZatoshi,
@@ -827,30 +832,6 @@ class WalletSynchronizer: NSObject {
       let data = NSMutableDictionary(dictionary: self.balances.nsDictionary)
       data["alias"] = self.alias
       emit("BalanceEvent", data)
-      //let transparentAvailableZatoshi = transparentBalance.verified
-    //let transparentTotalZatoshi = transparentBalance.total
-
-    //let saplingAvailableZatoshi = shieldedBalance.verified
-    //let saplingTotalZatoshi = shieldedBalance.total
-
-    /*if transparentAvailableZatoshi == self.balances.transparentAvailableZatoshi
-      && transparentTotalZatoshi == self.balances.transparentTotalZatoshi
-      && saplingAvailableZatoshi == self.balances.saplingAvailableZatoshi
-      && saplingTotalZatoshi == self.balances.saplingTotalZatoshi
-    {
-      return
-    }
-
-    self.balances = TotalBalances(
-      transparentAvailableZatoshi: transparentAvailableZatoshi,
-      transparentTotalZatoshi: transparentTotalZatoshi,
-      saplingAvailableZatoshi: saplingAvailableZatoshi,
-      saplingTotalZatoshi: saplingTotalZatoshi
-    )
-    let data = NSMutableDictionary(dictionary: self.balances.nsDictionary)
-    data["alias"] = self.alias
-    emit("BalanceEvent", data)
-     */
   }
 
   func parseTx(tx: ZcashTransaction.Overview) async -> ConfirmedTx {
@@ -892,6 +873,7 @@ class WalletSynchronizer: NSObject {
       let textMemos = memos.compactMap {
         return $0.toString()
       }
+       //TODO: look into 2 memo copies (?)
        /* var seen = Set<String>()
         let unique = textMemos.compactMap { memo -> String? in
           let trimmed = memo.trimmingCharacters(in: .whitespacesAndNewlines)

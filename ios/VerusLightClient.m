@@ -115,12 +115,12 @@ rejecter:(RCTPromiseRejectBlock)reject
 )
 
 
-RCT_EXTERN_METHOD(deriveUnifiedAddress:(NSString *)alias
+RCT_EXTERN_METHOD(getUnifiedAddress:(NSString *)alias
 resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
-RCT_EXTERN_METHOD(deriveSaplingAddress:(NSString *)alias
+RCT_EXTERN_METHOD(getSaplingAddress:(NSString *)alias
 resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
