@@ -734,10 +734,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     //
     // AddressTool
+    // State-based, fetches Unified address from synchronizer instance
     //
 
     @ReactMethod
-    fun deriveUnifiedAddress(
+    fun getUnifiedAddress(
         alias: String,
         promise: Promise,
     ) {
@@ -759,10 +760,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     //
     // AddressTool
+    // State-based, fetches Unified address from synchronizer instance
     //
 
     @ReactMethod
-    fun deriveSaplingAddress(
+    fun getSaplingAddress(
         alias: String,
         promise: Promise,
     ) {
@@ -778,7 +780,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     //
     // AddressTool
+    // Stateless, derives Address from viewing key
     //
+
     @ReactMethod
     fun deriveShieldedAddress(
         extsk: String,

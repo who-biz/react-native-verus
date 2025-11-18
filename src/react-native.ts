@@ -153,12 +153,12 @@ export class Synchronizer {
   }
 
   async getUnifiedAddress(): Promise<Addresses> {
-    const result = await VerusLightClient.deriveUnifiedAddress(this.alias)
+    const result = await VerusLightClient.getUnifiedAddress(this.alias)
     return result
   }
 
   async getSaplingAddress(): Promise<string> {
-    const result = await VerusLightClient.deriveSaplingAddress(this.alias)
+    const result = await VerusLightClient.getSaplingAddress(this.alias)
     return result
   }
 
