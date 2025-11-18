@@ -129,7 +129,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
             syncScope.launch {
                 sync.status
-                    .filter { it == Synchronizer.Status.SYNCING || it == Synchronizer.Status.SYNCED }
+                    .filter {
+                        it == Synchronizer.State.DISCONNECTED ||
+                        it == Synchronizer.State.INITIALIZING ||
+                        it == Synchronizer.Status.SYNCING ||
+                        it == Synchronizer.Status.SYNCED
+                    }
                     .first()
                 if (!ready.isCompleted) ready.complete(Unit)
                 Log.i("ReactNative", "Synchronizer $alias initialized and ready.")
