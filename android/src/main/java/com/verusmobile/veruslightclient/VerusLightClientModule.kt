@@ -116,6 +116,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 extendedSecretKey
             ) as SdkSynchronizer
 
+            // zero our intermediate variables
+            seedPhrase.fill(0)
+            extendedSecretKey.fill(0)
+            transparentKey.fill(0)
+
             synchronizerMap[alias] = sync
 
             collectorScopes.remove(alias)?.let { scope ->
@@ -490,6 +495,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
+
+                // zero our intermediate variables
+                seedPhrase.fill(0)
+                extendedSecretKey.fill(0)
+
                 val keys =
                     DerivationTool.getInstance().deriveUnifiedFullViewingKey(
                         spendingKey,
@@ -517,6 +527,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
+                // zero our intermediate variable
+                seedPhrase.fill(0)
+
                 return@wrap key.copyBytes().toHexString()
             }
         }
@@ -619,6 +632,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 }*/
 
                 val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, extendedSecretKey, seedPhrase, wallet.network, Account(0))
+
+                // zero our intermediate variables
+                seedPhrase.fill(0)
+                extendedSecretKey.fill(0)
+                transparentKey.fill(0)
+
                 val internalId =
                     wallet.sendToAddress(
                         usk,
@@ -664,6 +683,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         usk,
                         memo,
                     )
+
+                //TODO: if we use this function eventually, we should zeroize our intermediate variables here too
+
                 val tx = wallet.coroutineScope.async { wallet.transactions.first().first() }.await()
                 val parsedTx = parseTx(wallet, tx)
 
@@ -815,6 +837,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
+
+                // zero our intermediate variables
+                seedPhrase.fill(0)
+                extendedSecretKey.fill(0)
+
                 val viewingKey =
                     DerivationTool.getInstance().deriveUnifiedFullViewingKey(
                         spendingKey,
