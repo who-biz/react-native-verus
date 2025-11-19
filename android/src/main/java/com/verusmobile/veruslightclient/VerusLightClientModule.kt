@@ -520,17 +520,19 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ) {
         moduleScope.launch {
             promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed).toByteArray()
+                Log.w("ReactNative", "deriveSaplingSpendingKey called!")
                 val key =
                     DerivationTool.getInstance().deriveSaplingSpendingKey(
-                        seedPhrase,
+                        SeedPhrase.new(seed).toByteArray(),
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
-                // zero our intermediate variable
-                seedPhrase.fill(0)
 
-                return@wrap key.copyBytes().toHexString()
+                val result = Arguments.createMap().apply {
+                    putInt("account", key.account.value)
+                    putString("extsk", key.copyBytes().toHexString())
+                }
+                return@wrap result
             }
         }
     }
