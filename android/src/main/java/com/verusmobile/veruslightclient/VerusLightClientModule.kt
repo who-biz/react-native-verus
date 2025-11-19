@@ -520,10 +520,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ) {
         moduleScope.launch {
             promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
+                val seedPhrase = SeedPhrase.new(seed).toByteArray()
                 val key =
                     DerivationTool.getInstance().deriveSaplingSpendingKey(
-                        seedPhrase.toByteArray(),
+                        seedPhrase,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
