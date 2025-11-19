@@ -41,11 +41,6 @@ export interface UnifiedViewingKey {
   extpub: string
 }
 
-export interface UnifiedSpendingKey {
-  account: string
-  usk: string
-}
-
 export interface SaplingSpendingKey {
   account: string
   extsk: string

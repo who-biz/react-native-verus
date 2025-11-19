@@ -12,6 +12,7 @@ import {
   Network,
   PrivateBalanceResponse,
   PrivateTransactionsResponse,
+  SaplingSpendingKey,
   ShieldFundsInfo,
   SpendFailure,
   SpendInfo,
@@ -19,7 +20,6 @@ import {
   SynchronizerCallbacks,
   Transaction,
   UnifiedViewingKey,
-  UnifiedSpendingKey
 } from './types'
 export * from './types'
 
@@ -53,15 +53,8 @@ export const Tools = {
   deriveSaplingSpendingKey: async (
     seedBytesHex: string,
     network: Network = 'VRSC'
-  ): Promise<String> => {
+  ): Promise<SaplingSpendingKey> => {
     const result = await VerusLightClient.deriveSaplingSpendingKey(seedBytesHex, network)
-    return result
-  },
-  deriveUnifiedSpendingKey: async (
-    seedBytesHex: string,
-    network: Network = 'VRSC'
-  ): Promise<UnifiedSpendingKey> => {
-    const result = await VerusLightClient.deriveUnifiedSpendingKey(seedBytesHex, network)
     return result
   },
   deriveShieldedAddress: async (

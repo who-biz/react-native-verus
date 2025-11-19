@@ -502,20 +502,6 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
-  private func deriveUnifiedSpendingKey(_ extsk: String, _ seed: String, _ network: ZcashNetwork) throws
-    -> UnifiedSpendingKey
-  {
-    //TODO: move extskBytes calculation into Mnemonic.deterministicSeedBytes() to create byte array
-    // then pass to deriveUnifiedSpendingKey, i.e. remove 'bytes()' function. Not urgent.
-
-    let derivationTool = DerivationTool(networkType: network.networkType)
-    let seedBytes = try (seed.isEmpty ? [] : Mnemonic.deterministicSeedBytes(from: seed))
-    let extskBytes = try (extsk.isEmpty ? [] : bytes(from: extsk))
-    
-    let spendingKey = try derivationTool.deriveUnifiedSpendingKey(transparent_key: [], extsk: extskBytes, seed: seedBytes, accountIndex: 0)
-    return spendingKey
-  }
-
   private func deriveSaplingSpendingKey(_ seed: String, _ network: ZcashNetwork) throws
     -> SaplingSpendingKey
   {
