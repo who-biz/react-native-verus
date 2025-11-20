@@ -540,7 +540,6 @@ class VerusLightClient: RCTEventEmitter {
     do {
       let zcashNetwork = getNetworkParams(network)
       let spendingKey = try deriveUnifiedSpendingKey(extsk, seed, zcashNetwork)
-        let hex = spendingKey.bytes.map { String(format: "%02x", $0) }.joined()
       resolve(spendingKey)
     } catch {
       reject("DeriveSpendingKeyError", "Failed to derive spending key", error)
@@ -554,8 +553,11 @@ class VerusLightClient: RCTEventEmitter {
     do {
       let zcashNetwork = getNetworkParams(network)
       let spendingKey = try deriveSaplingSpendingKey(seed, zcashNetwork)
-      let hex = spendingKey.bytes.map { String(format: "%02x", $0) }.joined()
-      resolve(hex)
+      let result: [String: Any] = [
+          "account": String(key.account.value),
+          "extsk": key.copyBytes().map { String(format: "%02x", $0) }.joined()
+      ]
+      resolve(result)
     } catch {
       reject("DeriveSpendingKeyError", "Failed to derive spending key", error)
     }
