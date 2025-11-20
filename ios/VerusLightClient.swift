@@ -502,6 +502,20 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
+  private func deriveUnifiedSpendingKey(_ extsk: String, _ seed: String, _ network: ZcashNetwork) throws
+    -> UnifiedSpendingKey
+  {
+    //TODO: move extskBytes calculation into Mnemonic.deterministicSeedBytes() to create byte array
+    // then pass to deriveUnifiedSpendingKey, i.e. remove 'bytes()' function. Not urgent.
+
+    let derivationTool = DerivationTool(networkType: network.networkType)
+    let seedBytes = try (seed.isEmpty ? [] : Mnemonic.deterministicSeedBytes(from: seed))
+    let extskBytes = try (extsk.isEmpty ? [] : bytes(from: extsk))
+    
+    let spendingKey = try derivationTool.deriveUnifiedSpendingKey(transparent_key: [], extsk: extskBytes, seed: seedBytes, accountIndex: 0)
+    return spendingKey
+  }
+
   private func deriveSaplingSpendingKey(_ seed: String, _ network: ZcashNetwork) throws
     -> SaplingSpendingKey
   {
@@ -533,19 +547,6 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
-  @objc func deriveUnifiedSpendingKey(
-    _ extsk: String, _ seed: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
-    rejecter reject: @escaping RCTPromiseRejectBlock
-  ) {
-    do {
-      let zcashNetwork = getNetworkParams(network)
-      let spendingKey = try deriveUnifiedSpendingKey(extsk, seed, zcashNetwork)
-      resolve(spendingKey)
-    } catch {
-      reject("DeriveSpendingKeyError", "Failed to derive spending key", error)
-    }
-  }
-
   @objc func deriveSaplingSpendingKey(
     _ seed: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
@@ -554,8 +555,9 @@ class VerusLightClient: RCTEventEmitter {
       let zcashNetwork = getNetworkParams(network)
       let spendingKey = try deriveSaplingSpendingKey(seed, zcashNetwork)
       let result: [String: Any] = [
-          "account": String(key.account.value),
-          "extsk": key.copyBytes().map { String(format: "%02x", $0) }.joined()
+          //TODO: safe integer conversion. typescript expects an int here, and account below is a swift Uint32
+          "account": String(spendingKey.account),
+          "extsk": spendingKey.bytes.map { String(format: "%02x", $0) }.joined()
       ]
       resolve(result)
     } catch {
