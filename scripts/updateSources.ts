@@ -26,7 +26,7 @@ function downloadSources(): void {
     'ZcashLightClientKit',
     'https://github.com/who-biz/verus-swift-wallet-sdk.git',
     // 2.0.3:
-    'verus'
+    'master'
   )
   getRepo(
     'zcash-light-client-ffi',
