@@ -29,6 +29,8 @@ import kotlinx.coroutines.Job
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlin.math.roundToInt
+import kotlin.math.min
 
 import android.util.Log
 import java.lang.Error
@@ -236,8 +238,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
                 val map = combine(
                     wallet.processorInfo,
-                    wallet.progress,
-                    wallet.networkHeight,
+                    //wallet.progress,
+                    //wallet.networkHeight,
                     wallet.status
                 ) { processorInfo, /*progress, networkHeight,*/ status ->
                     mapOf(
