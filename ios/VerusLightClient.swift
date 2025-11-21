@@ -288,9 +288,9 @@ class VerusLightClient: RCTEventEmitter {
         
           let resultMap: [String: Any] = [
             "percent": scanProgress,
-            "longestchain": Int(truncatingIfNeeded: networkHeight),
+            "longestchain": String(networkHeight),
             "status": status.description.lowercased(),
-            "blocks": Int(truncatingIfNeeded: processorScannedHeight)
+            "blocks": String(processorScannedHeight)
           ]
     
           resolve(resultMap)
