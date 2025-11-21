@@ -177,14 +177,18 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
             collectorScope.launch {
                 wallet.transactions.collect { txList ->
-                    val nativeArray = Arguments.createArray()
-                    txList.filter { tx -> tx.transactionState != TransactionState.Expired }
+                    val parsedMaps = txList
+                        .filter { tx -> tx.transactionState != TransactionState.Expired }
                         .map { tx ->
-                            collectorScope.async {
-                                val parsedTx = parseTx(wallet, tx)
-                                nativeArray.pushMap(parsedTx)
+                            async {
+                                parseTx(wallet, tx)
                             }
-                        }.awaitAll()
+                        }
+                        .awaitAll()
+                    val nativeArray = Arguments.createArray()
+                    parsedMaps.forEach { map ->
+                        nativeArray.pushMap(map)
+                    }
 
                     sendEvent("TransactionEvent") { args ->
                         args.putString("alias", alias)
