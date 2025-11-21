@@ -1,7 +1,7 @@
 {
-  "name": "react-native-zcash",
+  "name": "react-native-verus",
   "version": "0.6.10",
-  "description": "Zcash library for React Native",
+  "description": "Verus library for React Native",
   "homepage": "https://github.com/EdgeApp/react-native-zcash",
   "repository": {
     "type": "git",
@@ -15,7 +15,7 @@
     "Matthew Piché <matthew@edge.app>",
     "Kevin Gorham <kevin.gorham@z.cash>"
   ],
-  "main": "lib/rnzcash.rn.js",
+  "main": "lib/veruslightclient.rn.js",
   "types": "lib/src/react-native.d.ts",
   "files": [
     "/android/build.gradle",
@@ -25,14 +25,16 @@
     "/lib/",
     "/LICENSE",
     "/package.json",
-    "/react-native-zcash.podspec",
+    "/react-native-verus.podspec",
     "/README.md",
-    "/src/"
+    "/src/",
+    "/scripts",
+    "/yarn.lock"
   ],
   "scripts": {
     "build": "(cd android && gradle assemble -DheapDumpOnOutOfMemoryError=false)",
     "fix-kotlin": "ktlint --format 'android/src/**/*.kt'",
-    "fix-swift": "swift-format format -i ios/RNZcash.swift",
+    "fix-swift": "swift-format format -i ios/VerusLightClient.swift",
     "fix": "npm run lint -- --fix",
     "lint": "eslint .",
     "precommit": "lint-staged && npm run prepare",
@@ -54,8 +56,8 @@
     "@babel/preset-env": "^7.9.6",
     "@babel/preset-typescript": "^7.9.0",
     "@grpc/grpc-js": "^1.8.20",
-    "@types/node": "^14.0.5",
-    "@types/react-native": "^0.62.11",
+    "@types/node": "^16.14.1",
+    "@types/react-native": "^0.68.5",
     "@typescript-eslint/eslint-plugin": "^2.34.0",
     "@typescript-eslint/parser": "^3.0.1",
     "babel-eslint": "^10.1.0",
@@ -78,9 +80,9 @@
     "rollup-plugin-flow-entry": "^0.3.4",
     "rollup-plugin-node-resolve": "^5.2.0",
     "sucrase": "^3.15.0",
-    "typescript": "^3.9.3"
+    "typescript": "4.8.4"
   },
   "peerDependencies": {
-    "react-native": ">=0.47.0 <1.0.0"
+    "react-native": "^0.68.5"
   }
 }

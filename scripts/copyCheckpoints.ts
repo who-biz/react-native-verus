@@ -7,7 +7,7 @@ export async function copyCheckpoints(disklet: Disklet): Promise<void> {
   console.log('Copying checkpoints...')
   const fromDisklet = navigateDisklet(
     disklet,
-    'android/src/main/assets/co.electriccoin.zcash/checkpoint/mainnet'
+    'android/src/main/assets/co.electriccoin.zcash/checkpoint/vrsc'
   )
   const toDisklet = navigateDisklet(
     disklet,

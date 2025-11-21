@@ -7,39 +7,73 @@ import {
 
 import {
   Addresses,
+  InfoResponse,
   InitializerConfig,
   Network,
+  PrivateBalanceResponse,
+  PrivateTransactionsResponse,
+  SaplingSpendingKey,
   ShieldFundsInfo,
   SpendFailure,
   SpendInfo,
   SpendSuccess,
   SynchronizerCallbacks,
   Transaction,
-  UnifiedViewingKey
+  UnifiedViewingKey,
 } from './types'
 export * from './types'
 
-const { RNZcash } = NativeModules
+const { VerusLightClient } = NativeModules
 
 type Callback = (...args: any[]) => any
 
+let synchronizerInstance: Synchronizer | null = null;
+
 export const Tools = {
+  bech32Decode: async (
+    bech32Key: string
+  ): Promise<String> => {
+    const result = await VerusLightClient.bech32Decode(bech32Key)
+    return result
+  },
+  deterministicSeedBytes: async (
+    seed: string
+  ): Promise<String> => {
+    const result = await VerusLightClient.deterministicSeedBytes(seed);
+    return result
+  },
   deriveViewingKey: async (
-    seedBytesHex: string,
-    network: Network
+    extsk?: string,
+    seedBytesHex?: string,
+    network: Network = 'VRSC'
   ): Promise<UnifiedViewingKey> => {
-    const result = await RNZcash.deriveViewingKey(seedBytesHex, network)
+    const result = await VerusLightClient.deriveViewingKey(extsk, seedBytesHex, network)
+    return result
+  },
+  deriveSaplingSpendingKey: async (
+    seedBytesHex: string,
+    network: Network = 'VRSC'
+  ): Promise<SaplingSpendingKey> => {
+    const result = await VerusLightClient.deriveSaplingSpendingKey(seedBytesHex, network)
+    return result
+  },
+  deriveShieldedAddress: async (
+    extsk?: string,
+    seedBytesHex?: string,
+    network: Network = 'VRSC'
+  ): Promise<String> => {
+    const result = await VerusLightClient.deriveShieldedAddress(extsk, seedBytesHex, network)
     return result
   },
   getBirthdayHeight: async (host: string, port: number): Promise<number> => {
-    const result = await RNZcash.getBirthdayHeight(host, port)
+    const result = await VerusLightClient.getBirthdayHeight(host, port)
     return result
   },
   isValidAddress: async (
     address: string,
-    network: Network = 'mainnet'
+    network: Network = 'VRSC'
   ): Promise<boolean> => {
-    const result = await RNZcash.isValidAddress(address, network)
+    const result = await VerusLightClient.isValidAddress(address, network)
     return result
   }
 }
@@ -48,10 +82,10 @@ export class Synchronizer {
   eventEmitter: NativeEventEmitter
   subscriptions: EventSubscription[]
   alias: string
-  network: Network
+  network: string
 
-  constructor(alias: string, network: Network) {
-    this.eventEmitter = new NativeEventEmitter(RNZcash)
+  constructor(alias: string, network: string) {
+    this.eventEmitter = new NativeEventEmitter(VerusLightClient)
     this.subscriptions = []
     this.alias = alias
     this.network = network
@@ -59,13 +93,34 @@ export class Synchronizer {
 
   async stop(): Promise<string> {
     this.unsubscribe()
-    const result = await RNZcash.stop(this.alias)
+    const result = await VerusLightClient.stop(this.alias)
+    if (synchronizerInstance && synchronizerInstance.alias === this.alias) {
+      synchronizerInstance = null
+    }
+    return result
+  }
+
+  async stopAndDeleteWallet(): Promise<boolean> {
+    this.unsubscribe()
+    const result = await VerusLightClient.stopAndDeleteWallet(this.alias)
+    if (synchronizerInstance && synchronizerInstance.alias === this.alias) {
+      synchronizerInstance = null
+    }
     return result
   }
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
-    await RNZcash.initialize(
+    if (
+      this.alias !== initializerConfig.alias ||
+      this.network !== initializerConfig.networkName
+    ) {
+      this.setIdentity(initializerConfig.alias, initializerConfig.networkName)
+    }
+
+    await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
+      initializerConfig.wif,
+      initializerConfig.extsk,
       initializerConfig.birthdayHeight,
       initializerConfig.alias,
       initializerConfig.networkName,
@@ -75,35 +130,56 @@ export class Synchronizer {
     )
   }
 
-  async deriveUnifiedAddress(): Promise<Addresses> {
-    const result = await RNZcash.deriveUnifiedAddress(this.alias)
+  async getInfo(): Promise<InfoResponse> {
+    const result = await VerusLightClient.getInfo(this.alias)
     return result
   }
 
-  async getLatestNetworkHeight(alias: string): Promise<number> {
-    const result = await RNZcash.getLatestNetworkHeight(alias)
+  async getPrivateBalance(): Promise<PrivateBalanceResponse> {
+    const result = await VerusLightClient.getPrivateBalance(this.alias)
+    return result
+  }
+
+  async getPrivateTransactions(): Promise<PrivateTransactionsResponse> {
+    const result = await VerusLightClient.getPrivateTransactions(this.alias)
+    return result
+  }
+
+  async getUnifiedAddress(): Promise<Addresses> {
+    const result = await VerusLightClient.getUnifiedAddress(this.alias)
+    return result
+  }
+
+  async getSaplingAddress(): Promise<string> {
+    const result = await VerusLightClient.getSaplingAddress(this.alias)
+    return result
+  }
+
+  async getLatestNetworkHeight(): Promise<number> {
+    const result = await VerusLightClient.getLatestNetworkHeight(this.alias)
     return result
   }
 
   async rescan(): Promise<void> {
-    await RNZcash.rescan(this.alias)
+    await VerusLightClient.rescan(this.alias)
   }
 
   async sendToAddress(
     spendInfo: SpendInfo
   ): Promise<SpendSuccess | SpendFailure> {
-    const result = await RNZcash.sendToAddress(
+    const result = await VerusLightClient.sendToAddress(
       this.alias,
       spendInfo.zatoshi,
       spendInfo.toAddress,
       spendInfo.memo,
+      spendInfo.extsk,
       spendInfo.mnemonicSeed
     )
     return result
   }
 
   async shieldFunds(shieldFundsInfo: ShieldFundsInfo): Promise<Transaction> {
-    const result = await RNZcash.shieldFunds(
+    const result = await VerusLightClient.shieldFunds(
       this.alias,
       shieldFundsInfo.seed,
       shieldFundsInfo.memo,
@@ -151,6 +227,12 @@ export class Synchronizer {
     )
   }
 
+  setIdentity(alias: string, network: string) {
+    this.unsubscribe()
+    this.alias = alias
+    this.network = network
+  }
+
   unsubscribe(): void {
     this.subscriptions.forEach(subscription => {
       subscription.remove()
@@ -158,13 +240,30 @@ export class Synchronizer {
   }
 }
 
+export const getSynchronizerInstance = (
+  alias: string,
+  network: string
+): Synchronizer => {
+  if (!synchronizerInstance) {
+    synchronizerInstance = new Synchronizer(alias, network)
+  } else if (
+    synchronizerInstance.alias !== alias ||
+    synchronizerInstance.network !== network
+  ) {
+    synchronizerInstance.setIdentity(alias, network)
+  }
+
+  return synchronizerInstance
+}
+
 export const makeSynchronizer = async (
   initializerConfig: InitializerConfig
 ): Promise<Synchronizer> => {
-  const synchronizer = new Synchronizer(
+  const sync = getSynchronizerInstance(
     initializerConfig.alias,
     initializerConfig.networkName
   )
-  await synchronizer.initialize(initializerConfig)
-  return synchronizer
+  await sync.initialize(initializerConfig)
+  return sync
 }
+
