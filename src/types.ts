@@ -110,8 +110,8 @@ export interface Addresses {
 
 export interface InfoResponse {
   percent: number
-  longestchain: number
-  blocks: number
+  longestchain: string
+  blocks: string
   status: string
 }
 

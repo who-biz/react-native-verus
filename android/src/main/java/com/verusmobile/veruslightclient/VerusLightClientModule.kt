@@ -228,13 +228,10 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     promise.reject("WALLET_CLOSED", "Wallet not initialized for alias: $alias")
                     return@launch
                 }
-
                 awaitWalletReady(alias) // throws WalletClosedException if closed
 
                 val wallet = getWallet(alias)
-
                 val birthdayHeight = wallet.latestBirthdayHeight;
-
                 val latestHeight: BlockHeight = wallet.latestHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)
 
                 val map = combine(
@@ -242,21 +239,20 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     wallet.progress,
                     wallet.networkHeight,
                     wallet.status
-                ) { processorInfo, progress, networkHeight, status ->
+                ) { processorInfo, /*progress, networkHeight,*/ status ->
                     mapOf(
                         "processorInfo" to processorInfo,
-                        "progress" to progress,
-                        "networkHeight" to (networkHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)),
+                        //"progress" to progress,
+                        //"networkHeight" to (networkHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)),
                         "status" to status
                     )
                 }.first()
 
                 val processorInfo = map["processorInfo"] as CompactBlockProcessor.ProcessorInfo
                 val processorNetworkHeight = processorInfo.networkBlockHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
-                val firstUnenhancedHeight = processorInfo.firstUnenhancedHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
                 val processorScannedHeight = processorInfo.lastScannedHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
-                val progress = map["progress"] as PercentDecimal
-                val networkBlockHeight = map["networkHeight"] as BlockHeight
+                //val progress = map["progress"] as PercentDecimal
+                //val networkBlockHeight = map["networkHeight"] as BlockHeight
                 val status = map["status"]
 
                 //Log.d("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
@@ -268,11 +264,29 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 //Log.d("ReactNative", "latestBlockHeight: ${latestHeight.value.toInt()}")
                 //Log.d("ReactNative", "wallet status: ${status.toString().lowercase()}")
 
+                val walletBirthday = birthdayHeight.value.toLong()
+                val scannedHeight = processorScannedHeight.value.toLong()
+                val networkHeight = processorNetworkHeight.value.toLong()
+
+                val progressDouble: Double =
+                    if (scannedHeight <= walletBirthday || networkHeight <= walletBirthday) {
+                        0.0
+                    } else {
+                        val ratio =
+                            (scannedHeight).toDouble() /
+                                    (networkHeight).toDouble()
+                        val pct = (ratio * 10000.0).roundToInt() / 100.0
+                        // clamp to 100.00
+                        min(pct, 100.00)
+                    }
+
+                //Log.d("ReactNative", "progressDouble: ${progressDouble}")
+
                 val resultMap = Arguments.createMap().apply {
-                    putInt("percent", progress.toPercentage())
-                    putInt("longestchain", networkBlockHeight.value.toInt())
+                    putDouble("percent", progressDouble)
+                    putString("longestchain", networkHeight.toString())
                     putString("status", status.toString().lowercase())
-                    putInt("blocks", processorScannedHeight.value.toInt())
+                    putString("blocks", scannedHeight.toString())
                 }
 
                 promise.resolve(resultMap)
