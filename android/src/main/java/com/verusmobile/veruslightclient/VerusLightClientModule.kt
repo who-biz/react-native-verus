@@ -540,7 +540,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ) {
         moduleScope.launch {
             promise.wrap {
-                Log.w("ReactNative", "deriveSaplingSpendingKey called!")
                 val key =
                     DerivationTool.getInstance().deriveSaplingSpendingKey(
                         SeedPhrase.new(seed).toByteArray(),
