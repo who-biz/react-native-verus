@@ -9,8 +9,14 @@
     "module": "es2015",
     "moduleResolution": "node",
     "target": "es2015",
-
-    "strict": true
+    "types": [],
+    "sourceMap": true,
+    "strict": true,
+    "paths": {
+      "*": ["./types/*"]
+    },
+    "skipLibCheck": true,
+    "noImplicitAny": true
   },
   "exclude": ["node_modules", "lib"]
 }

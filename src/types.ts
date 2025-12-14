@@ -1,10 +1,12 @@
-export type Network = 'mainnet' | 'testnet'
+export type Network = 'mainnet' | 'testnet' | 'VRSC'
 
 export interface InitializerConfig {
-  networkName: Network
+  networkName: string
   defaultHost: string
   defaultPort: number
-  mnemonicSeed: string
+  mnemonicSeed?: string
+  extsk?: string
+  wif?: string
   alias: string
   birthdayHeight: number
   newWallet: boolean
@@ -14,7 +16,8 @@ export interface SpendInfo {
   zatoshi: string
   toAddress: string
   memo?: string
-  mnemonicSeed: string
+  extsk?: string
+  mnemonicSeed?: string
 }
 
 export interface ShieldFundsInfo {
@@ -24,8 +27,8 @@ export interface ShieldFundsInfo {
 }
 
 export interface SpendSuccess {
-  txId: string
-  raw: string
+  txid: string
+  raw?: string
 }
 
 export interface SpendFailure {
@@ -36,6 +39,11 @@ export interface SpendFailure {
 export interface UnifiedViewingKey {
   extfvk: string
   extpub: string
+}
+
+export interface SaplingSpendingKey {
+  account: string
+  extsk: string
 }
 
 export interface BalanceEvent {
@@ -98,4 +106,21 @@ export interface Addresses {
   unifiedAddress: string
   saplingAddress: string
   transparentAddress: string
+}
+
+export interface InfoResponse {
+  percent: number
+  longestchain: string
+  blocks: string
+  status: string
+}
+
+export interface PrivateBalanceResponse {
+  confirmed: string
+  total: string
+  pending: string
+}
+
+export interface PrivateTransactionsResponse {
+  transactions: Transaction[]
 }
