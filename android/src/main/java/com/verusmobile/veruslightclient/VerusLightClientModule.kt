@@ -74,8 +74,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         birthdayHeight: Int,
         alias: String,
         networkName: String = "VRSC",
-        defaultHost: String = "lwdlegacy.blur.cash",
-        defaultPort: Int = 443,
+        defaultHost: String = "lightwallet.verus.services",
+        defaultPort: Int = 8120,
         newWallet: Boolean,
         promise: Promise,
     ) = moduleScope.launch {
