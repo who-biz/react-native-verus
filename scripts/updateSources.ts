@@ -24,14 +24,16 @@ async function main(): Promise<void> {
 function downloadSources(): void {
   getRepo(
     'ZcashLightClientKit',
-    'https://github.com/who-biz/verus-swift-wallet-sdk.git',
+    'https://github.com/VerusCoin/verus-swift-wallet-sdk.git',
     // 2.0.3:
+    // below can, and should be changed to a precise commit before prod
     'master'
   )
   getRepo(
     'zcash-light-client-ffi',
-    'https://github.com/who-biz/verus-lightclient-ffi.git',
+    'https://github.com/VerusCoin/verus-lightclient-ffi.git',
     // 0.4.0:
+    // below can, and should be changed to a precise commit before prod
     'master'
   )
 }
