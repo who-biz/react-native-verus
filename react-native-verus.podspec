@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
 
   s.platform     = :ios, "13.0"
   s.source = {
-    :git => "https://github.com/who-biz/react-native-verus.git",
+    :git => "https://github.com/VerusCoin/react-native-verus.git",
     :tag => "v#{s.version}"
   }
 
