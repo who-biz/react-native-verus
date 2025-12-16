@@ -12,6 +12,7 @@ import {
   Network,
   PrivateBalanceResponse,
   PrivateTransactionsResponse,
+  SaplingSpendingKey,
   ShieldFundsInfo,
   SpendFailure,
   SpendInfo,
@@ -29,7 +30,7 @@ const { VerusLightClient } = NativeModules
 
 type Callback = (...args: any[]) => any
 
-let synchronizerInstance: Synchronizer;
+let synchronizerInstance: Synchronizer | null = null;
 
 export const Tools = {
   bech32Decode: async (
@@ -55,7 +56,7 @@ export const Tools = {
   deriveSaplingSpendingKey: async (
     seedBytesHex: string,
     network: Network = 'VRSC'
-  ): Promise<UnifiedSpendingKey> => {
+  ): Promise<SaplingSpendingKey> => {
     const result = await VerusLightClient.deriveSaplingSpendingKey(seedBytesHex, network)
     return result
   },
@@ -189,20 +190,28 @@ export class Synchronizer {
   async stop(): Promise<string> {
     this.unsubscribe()
     const result = await VerusLightClient.stop(this.alias)
+    if (synchronizerInstance && synchronizerInstance.alias === this.alias) {
+      synchronizerInstance = null
+    }
+    return result
+  }
+
+  async stopAndDeleteWallet(): Promise<boolean> {
+    this.unsubscribe()
+    const result = await VerusLightClient.stopAndDeleteWallet(this.alias)
+    if (synchronizerInstance && synchronizerInstance.alias === this.alias) {
+      synchronizerInstance = null
+    }
     return result
   }
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
-    //console.warn("within initialize func, before await")
-    //console.warn("mnemonicSeed: " + initializerConfig.mnemonicSeed);
-    //console.warn("wif: " + initializerConfig.wif);
-    //console.warn("extsk: " + initializerConfig.extsk);
-    //console.warn("birthday: " + initializerConfig.birthdayHeight);
-    //console.warn("alias: " + initializerConfig.alias);
-    //console.warn("networkName: " + initializerConfig.networkName);
-    //console.warn("host: " + initializerConfig.defaultHost);
-    //console.warn("port: " + initializerConfig.defaultPort);
-    //console.warn("newWallet: " + initializerConfig.newWallet);
+    if (
+      this.alias !== initializerConfig.alias ||
+      this.network !== initializerConfig.networkName
+    ) {
+      this.setIdentity(initializerConfig.alias, initializerConfig.networkName)
+    }
 
     await VerusLightClient.initialize(
       initializerConfig.mnemonicSeed,
@@ -215,50 +224,35 @@ export class Synchronizer {
       initializerConfig.defaultPort,
       initializerConfig.newWallet
     )
-    //console.warn("within initialize func, after await")
   }
-
-//  private static _instance = new Synchronizer(this.alias, this.network);
-
-//  static get instance() {
-//    return this._instance;
-//  }
 
   async getInfo(): Promise<InfoResponse> {
     const result = await VerusLightClient.getInfo(this.alias)
-    //console.log(JSON.stringify(result));
     return result
   }
 
   async getPrivateBalance(): Promise<PrivateBalanceResponse> {
     const result = await VerusLightClient.getPrivateBalance(this.alias)
-    //console.log(JSON.stringify(result));
     return result
   }
 
   async getPrivateTransactions(): Promise<PrivateTransactionsResponse> {
     const result = await VerusLightClient.getPrivateTransactions(this.alias)
-    //console.log(JSON.stringify(result));
     return result
   }
 
-  async deriveUnifiedAddress(): Promise<Addresses> {
-    const result = await VerusLightClient.deriveUnifiedAddress(this.alias)
+  async getUnifiedAddress(): Promise<Addresses> {
+    const result = await VerusLightClient.getUnifiedAddress(this.alias)
     return result
   }
 
-  async deriveSaplingAddress(): Promise<string> {
-    const result = await VerusLightClient.deriveSaplingAddress(this.alias)
+  async getSaplingAddress(): Promise<string> {
+    const result = await VerusLightClient.getSaplingAddress(this.alias)
     return result
   }
 
-  async deriveShieledAddress(): Promise<Addresses> {
-    const result = await VerusLightClient.deriveShieldedAddress(this.alias)
-    return result
-  }
-
-  async getLatestNetworkHeight(alias: string): Promise<number> {
-    const result = await VerusLightClient.getLatestNetworkHeight(alias)
+  async getLatestNetworkHeight(): Promise<number> {
+    const result = await VerusLightClient.getLatestNetworkHeight(this.alias)
     return result
   }
 
@@ -269,7 +263,6 @@ export class Synchronizer {
   async sendToAddress(
     spendInfo: SpendInfo
   ): Promise<SpendSuccess | SpendFailure> {
-    //console.warn("mnemonicSeed(" + spendInfo.mnemonicSeed + "), extsk(" + spendInfo.extsk + ")");
     const result = await VerusLightClient.sendToAddress(
       this.alias,
       spendInfo.zatoshi,
@@ -278,7 +271,6 @@ export class Synchronizer {
       spendInfo.extsk,
       spendInfo.mnemonicSeed
     )
-    //console.warn("in sendToAddress, result.txid(" + result.txid + ")");
     return result
   }
 
@@ -331,6 +323,12 @@ export class Synchronizer {
     )
   }
 
+  setIdentity(alias: string, network: string) {
+    this.unsubscribe()
+    this.alias = alias
+    this.network = network
+  }
+
   unsubscribe(): void {
     this.subscriptions.forEach(subscription => {
       subscription.remove()
@@ -342,40 +340,26 @@ export const getSynchronizerInstance = (
   alias: string,
   network: string
 ): Synchronizer => {
-  if (!synchronizerInstance) { 
-    synchronizerInstance = new Synchronizer(alias, network);
+  if (!synchronizerInstance) {
+    synchronizerInstance = new Synchronizer(alias, network)
+  } else if (
+    synchronizerInstance.alias !== alias ||
+    synchronizerInstance.network !== network
+  ) {
+    synchronizerInstance.setIdentity(alias, network)
   }
-  return synchronizerInstance;
+
+  return synchronizerInstance
 }
 
 export const makeSynchronizer = async (
   initializerConfig: InitializerConfig
 ): Promise<Synchronizer> => {
-  //console.warn("before getSynchronizerInstance in makeSynchronizer")
-  getSynchronizerInstance(initializerConfig.alias, initializerConfig.networkName);
-  //console.warn("before synchronizer.initialize() extsk(" + initializerConfig.extsk + ")")
-  await synchronizerInstance.initialize(initializerConfig)
-  //console.warn("before return synchronizer")
-  return synchronizerInstance;
+  const sync = getSynchronizerInstance(
+    initializerConfig.alias,
+    initializerConfig.networkName
+  )
+  await sync.initialize(initializerConfig)
+  return sync
 }
 
-export const deleteWallet = async (
-  alias: string, 
-  network: string
-): Promise<boolean> => {
-   //console.warn("deleteWallet called in typescript! alias(" + alias + ")");
-   const result = await VerusLightClient.deleteWallet(alias, network);
-   return result;
-}
-
-//export const SdkSynchronizer = Synchronizer.instance;
-
-/*export const getSaplingAddress = async (
-  alias: string,
-  networkName: string
-): Promise<String> => {
-  //console.warn("before calling Synchronizer.getSaplingAddress")
-  const address = await Synchronizer.deriveSaplingAddress()
-  //console.warn("before return saplingAddress: " + address)
-  //return address
-}*/

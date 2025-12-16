@@ -34,7 +34,7 @@
   "scripts": {
     "build": "(cd android && gradle assemble -DheapDumpOnOutOfMemoryError=false)",
     "fix-kotlin": "ktlint --format 'android/src/**/*.kt'",
-    "fix-swift": "swift-format format -i ios/RNZcash.swift",
+    "fix-swift": "swift-format format -i ios/VerusLightClient.swift",
     "fix": "npm run lint -- --fix",
     "lint": "eslint .",
     "precommit": "lint-staged && npm run prepare",

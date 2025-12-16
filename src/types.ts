@@ -41,9 +41,9 @@ export interface UnifiedViewingKey {
   extpub: string
 }
 
-export interface UnifiedSpendingKey {
+export interface SaplingSpendingKey {
   account: string
-  usk: string
+  extsk: string
 }
 
 export interface BalanceEvent {
@@ -110,8 +110,8 @@ export interface Addresses {
 
 export interface InfoResponse {
   percent: number
-  longestchain: number
-  blocks: number
+  longestchain: string
+  blocks: string
   status: string
 }
 

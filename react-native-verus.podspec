@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
 
   s.platform     = :ios, "13.0"
   s.source = {
-    :git => "https://github.com/who-biz/react-native-zcash.git",
+    :git => "https://github.com/VerusCoin/react-native-verus.git",
     :tag => "v#{s.version}"
   }
 
@@ -47,8 +47,8 @@ Pod::Spec.new do |s|
 
   s.source_files =
     "ios/react-native-verus-Bridging-Header.h",
-    "ios/RNZcash.m",
-    "ios/RNZcash.swift",
+    "ios/VerusLightClient.m",
+    "ios/VerusLightClient.swift",
     "ios/zcashlc.h",
     "ios/ZCashLightClientKit/**/*.swift"
   s.resource_bundles = {

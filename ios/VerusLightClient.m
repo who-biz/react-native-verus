@@ -1,7 +1,7 @@
 #import <React/RCTBridgeModule.h>
 #import <React/RCTEventEmitter.h>
 
-@interface RCT_EXTERN_MODULE(RNZcash, RCTEventEmitter<RCTBridgeModule>)
+@interface RCT_EXTERN_MODULE(VerusLightClient, RCTEventEmitter<RCTBridgeModule>)
 
 // Synchronizer
 RCT_EXTERN_METHOD(initialize:(NSString *)seed
@@ -27,6 +27,16 @@ resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(stopAndDeleteWallet:(NSString *)alias
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(bech32Decode:(NSString *)bech32String
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
 RCT_EXTERN_METHOD(getLatestNetworkHeight:(NSString *)alias
 resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
@@ -38,11 +48,27 @@ resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(getInfo:(NSString *)alias
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(getPrivateBalance:(NSString *)alias
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(getPrivateTransactions:(NSString *)alias
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
 RCT_EXTERN_METHOD(sendToAddress:(NSString *)alias
 :(NSString *)zatoshi
 :(NSString *)toAddress
 :(NSString *)memo
-:(NSString *)spendingKey
+:(NSString *)extsk
+:(NSString *)mnemonicSeed
 resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
@@ -68,7 +94,33 @@ resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
-RCT_EXTERN_METHOD(deriveUnifiedAddress:(NSString *)alias
+RCT_EXTERN_METHOD(deriveUnifiedSpendingKey:(NSString *)extsk
+:(NSString *)seed
+:(NSString *)network
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(deriveSaplingSpendingKey:(NSString *)seed
+:(NSString *)network
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(deriveShieldedAddress:(NSString *)extsk
+:(NSString *)seed
+:(NSString *)network
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
+
+RCT_EXTERN_METHOD(getUnifiedAddress:(NSString *)alias
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(getSaplingAddress:(NSString *)alias
 resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
@@ -79,7 +131,13 @@ resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(deterministicSeedBytes:(NSString *)seed
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
 // Events
 RCT_EXTERN_METHOD(supportedEvents)
 
 @end
+

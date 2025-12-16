@@ -19,16 +19,40 @@ import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEm
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlin.math.roundToInt
+import kotlin.math.min
 
 
 import android.util.Log
 import java.lang.Error
 
 
+private val initializationJobs = ConcurrentHashMap<String, CompletableDeferred<Unit>>()
 
-@OptIn(kotlin.ExperimentalStdlibApi::class)
+private class WalletClosedException(val alias: String) : IllegalStateException("Wallet closed or never initialized for alias: $alias")
+
+private suspend fun awaitWalletReady(alias: String) {
+    val job = initializationJobs[alias] ?: throw WalletClosedException(alias)
+    job.await()
+}
+
+private val collectorScopes = mutableMapOf<String, CoroutineScope>()
+
+// Uncomment the OptIn below if you want to use 'byteArray.toHexString()' outside of deterministicSeedBytes function
+// i.e. in logging. This function was not promoted to stable in Kotlin Standard until Kotlin 2.2. Alternatively, you can
+// OptIn on a per-function basis
+
+//@OptIn(kotlin.ExperimentalStdlibApi::class)
 class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
     /**
@@ -51,14 +75,16 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         birthdayHeight: Int,
         alias: String,
         networkName: String = "VRSC",
-        defaultHost: String = "lwdlegacy.blur.cash",
-        defaultPort: Int = 443,
+        defaultHost: String = "lightwallet.verus.services",
+        defaultPort: Int = 8120,
         newWallet: Boolean,
         promise: Promise,
     ) = moduleScope.launch {
-        //Log.w("ReactNative", "initializer, before promise");
-        promise.wrap {
-            //Log.w("ReactNative", "Initializer, start func, extsk($extsk)")
+        try {
+            val ready = CompletableDeferred<Unit>()
+            initializationJobs[alias]?.cancel() // cancel stale latch if any
+            initializationJobs[alias] = ready
+
             val network = networks.getOrDefault(networkName, ZcashNetwork.Mainnet)
             val endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
             var seedPhrase = byteArrayOf()
@@ -79,161 +105,196 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 transparentKey = decodedWif.copyOfRange(1, decodedWif.size)
             }
 
-            //Log.w("ReactNative", "Initializer bp1");
             val initMode = if (newWallet) WalletInitMode.NewWallet else WalletInitMode.ExistingWallet
-            if (!synchronizerMap.containsKey(alias)) {
-                synchronizerMap[alias] =
-                    Synchronizer.new(
-                        reactApplicationContext,
-                        network,
-                        alias,
-                        endpoint,
-                        seedPhrase,
-                        BlockHeight.new(network, birthdayHeight.toLong()),
-                        initMode,
-                        transparentKey,
-                        extendedSecretKey
-                    ) as SdkSynchronizer
+
+            val sync = Synchronizer.new(
+                reactApplicationContext,
+                network,
+                alias,
+                endpoint,
+                seedPhrase,
+                BlockHeight.new(network, birthdayHeight.toLong()),
+                initMode,
+                transparentKey,
+                extendedSecretKey
+            ) as SdkSynchronizer
+
+            // zero our intermediate variables
+            seedPhrase.fill(0)
+            extendedSecretKey.fill(0)
+            transparentKey.fill(0)
+
+            synchronizerMap[alias] = sync
+
+            collectorScopes.remove(alias)?.let { scope ->
+                (scope.coroutineContext[Job])?.cancelChildren()
             }
-            //Log.w("ReactNative", "Initializer bp2");
+
+            val collectorScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+            collectorScopes[alias] = collectorScope
+
+            val syncScope = sync.coroutineScope
+
+            syncScope.launch {
+                sync.status
+                    .filter {
+                        it == Synchronizer.Status.DISCONNECTED ||
+                        it == Synchronizer.Status.INITIALIZING ||
+                        it == Synchronizer.Status.SYNCING ||
+                        it == Synchronizer.Status.SYNCED
+                    }
+                    .first()
+                if (!ready.isCompleted) ready.complete(Unit)
+                Log.i("ReactNative", "Synchronizer $alias initialized and ready.")
+            }
+
+            ready.await()
+            promise.resolve(true)
+
             val wallet = getWallet(alias)
-            val scope = wallet.coroutineScope
-            combine(wallet.progress, wallet.networkHeight) { progress, networkHeight ->
-                return@combine mapOf("progress" to progress, "networkHeight" to networkHeight)
-            }.collectWith(scope) { map ->
-                val progress = map["progress"] as PercentDecimal
-                var networkBlockHeight = map["networkHeight"] as BlockHeight?
-                if (networkBlockHeight == null) networkBlockHeight = BlockHeight.new(wallet.network, birthdayHeight.toLong())
 
-                sendEvent("UpdateEvent") { args ->
-                    args.putString("alias", alias)
-                    args.putInt(
-                        "scanProgress",
-                        progress.toPercentage(),
-                    )
-                    args.putInt("networkBlockHeight", networkBlockHeight.value.toInt())
-                }
-            }
-            wallet.status.collectWith(scope) { status ->
-                sendEvent("StatusEvent") { args ->
-                    args.putString("alias", alias)
-                    args.putString("name", status.toString())
-                }
-            }
-            //Log.w("ReactNative", "Initializer bp3");
-            wallet.transactions.collectWith(scope) { txList ->
-                scope.launch {
-                    val nativeArray = Arguments.createArray()
-                    txList.filter { tx -> tx.transactionState != TransactionState.Expired }.map { tx ->
-                        launch {
-                            val parsedTx = parseTx(wallet, tx)
-                            nativeArray.pushMap(parsedTx)
-                        }
-                    }.forEach { it.join() }
+            collectorScope.launch {
+                combine(wallet.progress, wallet.networkHeight) { progress, networkHeight ->
+                    mapOf("progress" to progress, "networkHeight" to networkHeight)
+                }.collect { map ->
+                    val progress = map["progress"] as PercentDecimal
+                    val networkBlockHeight = (map["networkHeight"] as? BlockHeight)
+                        ?: BlockHeight.new(wallet.network, birthdayHeight.toLong())
 
-                    sendEvent("TransactionEvent") { args ->
+                    sendEvent("UpdateEvent") { args ->
                         args.putString("alias", alias)
-                        args.putArray(
-                            "transactions",
-                            nativeArray,
-                        )
+                        args.putInt("scanProgress", progress.toPercentage())
+                        args.putInt("networkBlockHeight", networkBlockHeight.value.toInt())
                     }
                 }
             }
-            //Log.w("ReactNative", "Initializer bp4");
-            combine(
-                wallet.transparentBalance,
-                wallet.saplingBalances,
-                /*wallet.orchardBalances,*/
-            ) { transparentBalance: Zatoshi?, saplingBalances: WalletBalance? /*, orchardBalances: WalletBalance?*/ ->
-                return@combine Balances(
-                    transparentBalance = transparentBalance,
-                    saplingBalances = saplingBalances,
-                    /*orchardBalances = orchardBalances,*/
-                )
-            }.collectWith(scope) { map ->
-                val transparentBalance = map.transparentBalance
-                val saplingBalances = map.saplingBalances
-                /*val orchardBalances = map.orchardBalances*/
 
-                val transparentAvailableZatoshi = transparentBalance ?: Zatoshi(0L)
-                val transparentTotalZatoshi = transparentBalance ?: Zatoshi(0L)
-
-                val saplingAvailableZatoshi = saplingBalances?.available ?: Zatoshi(0L)
-                val saplingTotalZatoshi = saplingBalances?.total ?: Zatoshi(0L)
-
-                /*val orchardAvailableZatoshi = orchardBalances?.available ?: Zatoshi(0L)
-                val orchardTotalZatoshi = orchardBalances?.total ?: Zatoshi(0L)*/
-
-                //Log.w("ReactNative", "Initializer bp5");
-
-                sendEvent("BalanceEvent") { args ->
-                    args.putString("alias", alias)
-                    args.putString("transparentAvailableZatoshi", transparentAvailableZatoshi.value.toString())
-                    args.putString("transparentTotalZatoshi", transparentTotalZatoshi.value.toString())
-                    args.putString("saplingAvailableZatoshi", saplingAvailableZatoshi.value.toString())
-                    args.putString("saplingTotalZatoshi", saplingTotalZatoshi.value.toString())
-                    /*
-                    args.putString("orchardAvailableZatoshi", orchardAvailableZatoshi.value.toString())
-                    args.putString("orchardTotalZatoshi", orchardTotalZatoshi.value.toString())
-                    */
+            collectorScope.launch {
+                wallet.status.collect { status ->
+                    sendEvent("StatusEvent") { args ->
+                        args.putString("alias", alias)
+                        args.putString("name", status.toString())
+                    }
                 }
             }
-            return@wrap null
+
+            collectorScope.launch {
+                wallet.transactions.collect { txList ->
+                    val parsedMaps = txList
+                        .filter { tx -> tx.transactionState != TransactionState.Expired }
+                        .map { tx ->
+                            async {
+                                parseTx(wallet, tx)
+                            }
+                        }
+                        .awaitAll()
+                    val nativeArray = Arguments.createArray()
+                    parsedMaps.forEach { map ->
+                        nativeArray.pushMap(map)
+                    }
+
+                    sendEvent("TransactionEvent") { args ->
+                        args.putString("alias", alias)
+                        args.putArray("transactions", nativeArray)
+                    }
+                }
+            }
+
+            collectorScope.launch {
+                combine(wallet.transparentBalance, wallet.saplingBalances) { transparent, sapling ->
+                    Balances(transparentBalance = transparent, saplingBalances = sapling)
+                }.collect { balances ->
+                    val tAvail = balances.transparentBalance ?: Zatoshi(0L)
+                    val sAvail = balances.saplingBalances?.available ?: Zatoshi(0L)
+                    val sTotal = balances.saplingBalances?.total ?: Zatoshi(0L)
+
+                    sendEvent("BalanceEvent") { args ->
+                        args.putString("alias", alias)
+                        args.putString("transparentAvailableZatoshi", tAvail.value.toString())
+                        args.putString("saplingAvailableZatoshi", sAvail.value.toString())
+                        args.putString("saplingTotalZatoshi", sTotal.value.toString())
+                    }
+                }
+            }
+
+        } catch (t: Throwable) {
+            Log.e("ReactNative", "Error initializing wallet $alias", t)
+            promise.reject("INIT_ERROR", t.localizedMessage, t)
         }
     }
 
     @ReactMethod
     fun getInfo(alias: String, promise: Promise) {
-        //Log.w("ReactNative", "getInfo called")
-
         moduleScope.launch {
             try {
+                if (!synchronizerMap.containsKey(alias)) {
+                    promise.reject("WALLET_CLOSED", "Wallet not initialized for alias: $alias")
+                    return@launch
+                }
+                awaitWalletReady(alias) // throws WalletClosedException if closed
+
                 val wallet = getWallet(alias)
                 val birthdayHeight = wallet.latestBirthdayHeight;
-
                 val latestHeight: BlockHeight = wallet.latestHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)
 
                 val map = combine(
                     wallet.processorInfo,
-                    wallet.progress,
-                    wallet.networkHeight,
+                    //wallet.progress,
+                    //wallet.networkHeight,
                     wallet.status
-                ) { processorInfo, progress, networkHeight, status ->
+                ) { processorInfo, /*progress, networkHeight,*/ status ->
                     mapOf(
                         "processorInfo" to processorInfo,
-                        "progress" to progress,
-                        "networkHeight" to (networkHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)),
+                        //"progress" to progress,
+                        //"networkHeight" to (networkHeight ?: BlockHeight.new(wallet.network, birthdayHeight.value)),
                         "status" to status
                     )
                 }.first()
 
                 val processorInfo = map["processorInfo"] as CompactBlockProcessor.ProcessorInfo
                 val processorNetworkHeight = processorInfo.networkBlockHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
-                val firstUnenhancedHeight = processorInfo.firstUnenhancedHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
                 val processorScannedHeight = processorInfo.lastScannedHeight?: BlockHeight.new(wallet.network, birthdayHeight.value)
-                val progress = map["progress"] as PercentDecimal
-                val networkBlockHeight = map["networkHeight"] as BlockHeight
+                //val progress = map["progress"] as PercentDecimal
+                //val networkBlockHeight = map["networkHeight"] as BlockHeight
                 val status = map["status"]
 
-                Log.d("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
-                Log.d("ReactNative", "processorInfo: overallSyncRange(${processorInfo.overallSyncRange})")
-                Log.d("ReactNative", "processorInfo: lastScannedHeight(${processorScannedHeight.value})")
-                Log.d("ReactNative", "processorInfo: firstUnenhancedHeight(${firstUnenhancedHeight.value})")
-                Log.d("ReactNative", "progress.toPercentage(): ${progress.toPercentage()}")
-                Log.d("ReactNative", "networkBlockHeight: ${networkBlockHeight.value.toInt()}")
-                Log.d("ReactNative", "latestBlockHeight: ${latestHeight.value.toInt()}")
-                Log.d("ReactNative", "wallet status: ${status.toString().lowercase()}")
+                //Log.d("ReactNative", "processorInfo: networkHeight(${processorNetworkHeight.value})")
+                //Log.d("ReactNative", "processorInfo: overallSyncRange(${processorInfo.overallSyncRange})")
+                //Log.d("ReactNative", "processorInfo: lastScannedHeight(${processorScannedHeight.value})")
+                //Log.d("ReactNative", "processorInfo: firstUnenhancedHeight(${firstUnenhancedHeight.value})")
+                //Log.d("ReactNative", "progress.toPercentage(): ${progress.toPercentage()}")
+                //Log.d("ReactNative", "networkBlockHeight: ${networkBlockHeight.value.toInt()}")
+                //Log.d("ReactNative", "latestBlockHeight: ${latestHeight.value.toInt()}")
+                //Log.d("ReactNative", "wallet status: ${status.toString().lowercase()}")
+
+                val walletBirthday = birthdayHeight.value.toLong()
+                val scannedHeight = processorScannedHeight.value.toLong()
+                val networkHeight = processorNetworkHeight.value.toLong()
+
+                val progressDouble: Double =
+                    if (scannedHeight <= walletBirthday || networkHeight <= walletBirthday) {
+                        0.0
+                    } else {
+                        val ratio =
+                            (scannedHeight).toDouble() /
+                                    (networkHeight).toDouble()
+                        val pct = (ratio * 10000.0).roundToInt() / 100.0
+                        // clamp to 100.00
+                        min(pct, 100.00)
+                    }
+
+                //Log.d("ReactNative", "progressDouble: ${progressDouble}")
 
                 val resultMap = Arguments.createMap().apply {
-                    putInt("percent", progress.toPercentage())
-                    putInt("longestchain", networkBlockHeight.value.toInt())
+                    putDouble("percent", progressDouble)
+                    putString("longestchain", networkHeight.toString())
                     putString("status", status.toString().lowercase())
-                    putInt("blocks", processorScannedHeight.value.toInt())
+                    putString("blocks", scannedHeight.toString())
                 }
 
                 promise.resolve(resultMap)
-
+            } catch (e: WalletClosedException) {
+                 promise.reject("WALLET_CLOSED", e.message, e)
             } catch (e: Exception) {
                 Log.e("ReactNative", "getInfo failed", e)
                 promise.reject("GET_INFO_FAILED", e.message, e)
@@ -243,12 +304,17 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun getPrivateBalance(alias: String, promise: Promise) {
-        //Log.w("ReactNative", "getPrivateBalance called")
-        val wallet = getWallet(alias)
-        val scope = wallet.coroutineScope
-
-        scope.launch {
+        moduleScope.launch {
             try {
+                if (!synchronizerMap.containsKey(alias)) {
+                    promise.reject("WALLET_CLOSED", "Wallet not initialized for alias: $alias")
+                    return@launch
+                }
+
+                awaitWalletReady(alias)
+
+                val wallet = getWallet(alias)
+
                 val saplingBalances = wallet.saplingBalances.firstOrNull()
                 val saplingAvailableZatoshi = saplingBalances?.available ?: Zatoshi(0L)
                 val saplingTotalZatoshi = saplingBalances?.total ?: Zatoshi(0L)
@@ -268,6 +334,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
                 promise.resolve(map)
 
+            } catch (e: WalletClosedException) {
+                 promise.reject("WALLET_CLOSED", e.message, e)
             } catch (e: Exception) {
                 Log.e("ReactNative", "getPrivateBalance failed", e)
                 promise.reject("GET_PRIVATE_BALANCE_FAILED", e.message, e)
@@ -277,44 +345,40 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun getPrivateTransactions(alias: String, promise: Promise) {
-        //Log.w("ReactNative", "getPrivateTransactions called")
-        val wallet = getWallet(alias)
-        val scope = wallet.coroutineScope
+        moduleScope.launch {
+            try {
+                if (!synchronizerMap.containsKey(alias)) {
+                    promise.reject("WALLET_CLOSED", "Wallet not initialized for alias: $alias")
+                    return@launch
+                }
 
-        try {
-            scope.launch {
-                try {
-                    val txList = wallet.transactions.first()
-                    val nativeArray = Arguments.createArray()
+                awaitWalletReady(alias)
 
-                    for (tx in txList) {
-                        if (tx.transactionState != TransactionState.Expired) {
-                            try {
-                                val parsedTx = parseTx(wallet, tx)
-                                //Log.d("ReactNative", "Parsed TX Map: ${parsedTx.toString()}")
+                val wallet = getWallet(alias)
 
-                                nativeArray.pushMap(parsedTx)
-                            } catch (t: Throwable) {
-                                // It's okay if recipient can't be fetched (e.g. shielding tx) )
-                            }
+                val txList = wallet.transactions.first()
+                val nativeArray = Arguments.createArray()
+
+                for (tx in txList) {
+                    if (tx.transactionState != TransactionState.Expired) {
+                        try {
+                            val parsedTx = parseTx(wallet, tx)
+                            nativeArray.pushMap(parsedTx)
+                        } catch (t: Throwable) {
+                            Log.w("ReactNative", "Could not parse TX: ${t.localizedMessage}")
                         }
                     }
-
-                    //Log.e("ReactNative", "transactionsArray: $nativeArray")
-
-                    val result = Arguments.createMap().apply {
-                        putArray("transactions", nativeArray)
-                    }
-
-                    promise.resolve(result)
-                } catch (e: Exception) {
-                    Log.e("ReactNative", "Error while collecting transactions", e)
-                    promise.reject("GET_PRIVATE_TRANSACTIONS_FAILED", e.message, e)
                 }
+                val result = Arguments.createMap().apply {
+                    putArray("transactions", nativeArray)
+                }
+                promise.resolve(result)
+            } catch (e: WalletClosedException) {
+                 promise.reject("WALLET_CLOSED", e.message, e)
+            } catch (e: Exception) {
+                Log.e("ReactNative", "getPrivateTransactions failed", e)
+                promise.reject("GET_PRIVATE_TRANSACTIONS_FAILED", e.message, e)
             }
-        } catch (e: Exception) {
-            Log.e("ReactNative", "getPrivateTransactions failed", e)
-            promise.reject("GET_PRIVATE_TRANSACTIONS_FAILED", e.message, e)
         }
     }
 
@@ -323,23 +387,37 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         alias: String,
         promise: Promise,
     ) {
-        promise.wrap {
-            val wallet = getWallet(alias)
-            wallet.close()
-            synchronizerMap.remove(alias)
-            return@wrap null
+        moduleScope.launch(Dispatchers.IO) {
+            try {
+                val wallet = getWallet(alias)
+
+                collectorScopes.remove(alias)?.let { scope ->
+                    (scope.coroutineContext[Job])?.cancelChildren()
+                }
+
+                wallet.closeFlow().firstOrNull()
+                wallet.status.filter { it == Synchronizer.Status.STOPPED }.first()
+
+                synchronizerMap.remove(alias)
+                initializationJobs[alias]?.completeExceptionally(Exception("Wallet closed"))
+                initializationJobs.remove(alias)
+
+                Log.i("ReactNative", "Synchronizer $alias stopped and cleaned up.")
+                promise.resolve("STOPPED")
+            } catch (t: Throwable) {
+                Log.e("ReactNative", "Error stopping synchronizer $alias", t)
+                promise.reject("STOP_ERROR", t.localizedMessage, t)
+            }
         }
     }
-
+    
     //TODO: consider adding boolean argument to conditionally include rawTxData
     private suspend fun parseTx(
         wallet: SdkSynchronizer,
         tx: TransactionOverview,
     ): WritableMap {
-        //Log.e("ReactNative", "parseTx called!")
         val map = Arguments.createMap()
         try {
-            //Log.d("ReactNative", "TransactionOverview: " + tx.toString())
             map.putString("amount", tx.netValue.value.toString())
 
             tx.feePaid?.let {
@@ -377,7 +455,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             } else {
                 map.putString("category", "received")
                 map.putString("address", wallet.getSaplingAddress(Account(0)))
-                //TODO: probably a more graceful way to handle "address" above
+                //TODO: this needs changed if we have additional account indices at some point
             }
 
             if (tx.memoCount > 0) {
@@ -420,7 +498,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
-        //Log.w("ReactNative", "deriveViewingKey called, extsk($extsk)")
         moduleScope.launch {
             promise.wrap {
                 var seedPhrase = byteArrayOf()
@@ -439,39 +516,43 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
-                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
+
+                // zero our intermediate variables
+                seedPhrase.fill(0)
+                extendedSecretKey.fill(0)
+
                 val keys =
                     DerivationTool.getInstance().deriveUnifiedFullViewingKey(
                         spendingKey,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                //Log.i("ReactNative", "keys: " + keys.encoding);
                 return@wrap keys.encoding
             }
         }
     }
 
 
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
     @ReactMethod
     fun deriveSaplingSpendingKey(
         seed: String,
         network: String,
         promise: Promise,
     ) {
-        //Log.d("ReactNative", "deriveShieldedSpendingKeyCalled!");
         moduleScope.launch {
             promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
                 val key =
                     DerivationTool.getInstance().deriveSaplingSpendingKey(
-                        seedPhrase.toByteArray(),
+                        SeedPhrase.new(seed).toByteArray(),
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
-                //Log.w("ReactNative", "seed: " + seed);
 
-                //Log.i("ReactNative", "key: " + key.copyBytes().toHexString());
-                return@wrap key.copyBytes().toHexString()
+                val result = Arguments.createMap().apply {
+                    putInt("account", key.account.value)
+                    putString("extsk", key.copyBytes().toHexString())
+                }
+                return@wrap result
             }
         }
     }
@@ -555,7 +636,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         promise: Promise,
     ) {
         val wallet = getWallet(alias)
-        //Log.w("ReactNative", "sendToAddress called, extsk($extsk)");
         wallet.coroutineScope.launch {
             try {
                 var extendedSecretKey = byteArrayOf()
@@ -574,6 +654,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 }*/
 
                 val usk = DerivationTool.getInstance().deriveUnifiedSpendingKey(transparentKey, extendedSecretKey, seedPhrase, wallet.network, Account(0))
+
+                // zero our intermediate variables
+                seedPhrase.fill(0)
+                extendedSecretKey.fill(0)
+                transparentKey.fill(0)
+
                 val internalId =
                     wallet.sendToAddress(
                         usk,
@@ -583,7 +669,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                     )
                 val tx = wallet.coroutineScope.async { wallet.transactions.first().first() }.await()
                 val map = Arguments.createMap()
-                //Log.i("ReactNative", "sendToAddress: txid(${tx.rawId.byteArray.toHexReversed()}");
                 map.putString("txid", tx.rawId.byteArray.toHexReversed())
                 if (tx.raw != null) map.putString("raw", tx.raw?.byteArray?.toHex())
                 promise.resolve(map)
@@ -620,6 +705,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         usk,
                         memo,
                     )
+
+                //TODO: if we use this function eventually, we should zeroize our intermediate variables here too
+
                 val tx = wallet.coroutineScope.async { wallet.transactions.first().first() }.await()
                 val parsedTx = parseTx(wallet, tx)
 
@@ -635,43 +723,38 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun deleteWallet(
+    fun stopAndDeleteWallet(
         alias: String,
-        network: String,
-        //clearCache: Boolean,
-        //clearDataDb: Boolean,
         promise: Promise
     ) {
-        //Log.w("ReactNative", "deleteWallet called!");
-        moduleScope.launch {
-            try {
-                val result = Synchronizer.erase(reactApplicationContext, networks.getOrDefault(network, ZcashNetwork.Mainnet), alias)
- //               withContext(Dispatchers.Main) {
-                    promise.resolve(result)
- //               }
-            } catch (e: Exception) {
- //               withContext(Dispatchers.Main) {
-                    promise.reject("CLEAR_ERROR", "Failed to clear Rust backend", e)
- //               }
-            }
-        }
+          moduleScope.launch {
+              try {
+                  val wallet = getWallet(alias)
+                  wallet.close()
+                  synchronizerMap.remove(alias)
+                  val network = "VRSC"
+                  val result = Synchronizer.erase(reactApplicationContext, networks.getOrDefault(network, ZcashNetwork.Mainnet), alias)
+                  promise.resolve(result)
+              } catch (e: Exception) {
+                  promise.reject("CLEAR_ERROR", "Failed to clear Rust backend", e)
+              }
+          }
     }
 
     //
     // AddressTool
     //
 
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
     @ReactMethod
     fun bech32Decode(
         bech32Key: String,
         promise: Promise,
     ) {
-        //Log.w("ReactNative", "bech32Decode called!, bech32Key(${bech32Key})");
         moduleScope.launch {
             try {
                 val keyBytes = decodeSaplingSpendKey(bech32Key)
                 val result = keyBytes.toHexString()
-                //Log.w("ReactNative", "bech32Decode: ${result}");
                 promise.resolve(result)
             } catch (e: Exception) {
                 promise.reject("DECODE_ERROR","Failed to decode bech32 spendkey", e)
@@ -683,17 +766,16 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     // AddressTool
     //
 
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
     @ReactMethod
     fun deterministicSeedBytes(
         seed: String,
         promise: Promise,
     ) {
-        //Log.w("ReactNative", "bech32Decode called!, bech32Key(${bech32Key})");
         moduleScope.launch {
             try {
                 val keyBytes = SeedPhrase.new(seed).toByteArray()
                 val result = keyBytes.toHexString()
-                //Log.w("ReactNative", "bech32Decode: ${result}");
                 promise.resolve(result)
             } catch (e: Exception) {
                 promise.reject("SEED_ERROR","Failed to convert mnemonicSeed to bytes", e)
@@ -703,10 +785,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     //
     // AddressTool
+    // State-based, fetches Unified address from synchronizer instance
     //
 
     @ReactMethod
-    fun deriveUnifiedAddress(
+    fun getUnifiedAddress(
         alias: String,
         promise: Promise,
     ) {
@@ -728,10 +811,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     //
     // AddressTool
+    // State-based, fetches Unified address from synchronizer instance
     //
 
     @ReactMethod
-    fun deriveSaplingAddress(
+    fun getSaplingAddress(
         alias: String,
         promise: Promise,
     ) {
@@ -745,31 +829,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
     }
 
-    /*
-    @ReactMethod
-    fun deriveShieldedAddressFromSeed(
-        seed: String,
-        network: String = "VRSC",
-        promise: Promise,
-    ) {
-        moduleScope.launch {
-            promise.wrap {
-                val seedPhrase = SeedPhrase.new(seed)
-                val shieldedAddress =
-                    DerivationTool.getInstance().deriveShieldedAddress(
-                        seedPhrase.toByteArray(),
-                        networks.getOrDefault(network, ZcashNetwork.Mainnet),
-                        Account(1)
-                    )
-                //Log.w("ReactNative", "shieldedAddress: " + shieldedAddress);
-                return@wrap shieldedAddress
-            }
-        }
-    }
-    */
-
     //
     // AddressTool
+    // Stateless, derives Address from viewing key
     //
 
     @ReactMethod
@@ -779,7 +841,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
-        //Log.w("ReactNative", "deriveShieldedAddress called, extsk($extsk)");
         moduleScope.launch {
             promise.wrap {
                 var seedPhrase = byteArrayOf()
@@ -798,7 +859,11 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                         Account.DEFAULT,
                     )
-                //Log.w("ReactNative", spendingKey.copyBytes().toHexString())
+
+                // zero our intermediate variables
+                seedPhrase.fill(0)
+                extendedSecretKey.fill(0)
+
                 val viewingKey =
                     DerivationTool.getInstance().deriveUnifiedFullViewingKey(
                         spendingKey,
@@ -1019,10 +1084,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     )
 
     private fun decodeSaplingSpendKey(bech32Key: String): ByteArray {
-        //Log.w("ReactNative", "decodeSaplingSpendkey called!")
         val (hrp, data, encoding) = Bech32.decode(bech32Key)
-
-        //Log.w("ReactNative", "hrp({$hrp}), data(${data}), encoding(${encoding})");
 
         require(hrp == "secret-extended-key-main"/* || hrp == "secret-extended-key-test"*/) {
             throw Exception("Invalid HRP: $hrp")
