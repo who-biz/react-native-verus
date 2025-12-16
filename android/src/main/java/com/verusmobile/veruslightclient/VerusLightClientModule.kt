@@ -956,14 +956,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 // The SDK's public API expects the seed as a ByteArray, so we must
                 // decode the hex string we receive from JavaScript.
 
-                var seedBytes = byteArrayOf()
-                if (!seed.isNullOrEmpty()){
-                    seedBytes = SeedPhrase.new(seed).toByteArray()
-                }
-                // Biz note: this constuctor also handles hex strings, so conform to prior calling conventions,
-                // and use it. Also I assume you are checking for null or empty spending key on deeper level?
-                // We should convert it to a byte array using Kotlin Tools.Bech32Decode(). But we can handle that later
-                
+                val seedBytes = seed?.let { Hex.decode(it) }
+
                 val channelKeys = DerivationTool.getInstance().getVerusEncryptionAddress(
                     seed = seedBytes,
                     spendingKey = spendingKey,
@@ -980,6 +974,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
             }
         }
     }
+
     @ReactMethod
     fun encryptVerusMessage(
         address: String,
@@ -1123,5 +1118,14 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         map.putString("ciphertext", this.ciphertext)
         this.symmetricKey?.let { map.putString("symmetricKey", it) }
         return map
+    }
+
+    private object Hex {
+        fun decode(hex: String): ByteArray {
+            check(hex.length % 2 == 0) { "Must have an even length" }
+            return hex.chunked(2)
+                .map { it.toInt(16).toByte() }
+                .toByteArray()
+        }
     }
 }
