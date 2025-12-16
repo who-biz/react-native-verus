@@ -124,3 +124,39 @@ export interface PrivateBalanceResponse {
 export interface PrivateTransactionsResponse {
   transactions: Transaction[]
 }
+
+
+export interface ChannelKeys{
+
+    /** The public Sapling z-address for this channel (bech32 format). */
+    address: string
+
+    /** The bech32-encoded Extended Full Viewing Key. */
+    fvk: string
+
+    /** The hex-encoded Extended Full Viewing Key (169 bytes). */
+    fvkHex: string
+
+    /** 🔑 The hex-encoded Diversifiable Full Viewing Key (128 bytes). This is required for decryption. */
+    dfvkHex: string
+
+    /** The hex-encoded Incoming Viewing Key. */
+    ivk?: string
+
+    /** The optional bech32-encoded spending key. */
+    spendingKey?: string
+}
+
+
+export interface EncryptedPayload {
+  
+    /* The hex encoded ephemeral public key from the sender*/
+
+    ephemeralPublicKey: string;
+
+    /* The hex encoded ciphertext of the message */
+    ciphertext: string;
+
+    /* Optional hex encoded symmetric key, only returned if requested */
+    symmetricKey?: string;
+}
