@@ -886,6 +886,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     // AddressTool
     //
 
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
     @ReactMethod
     fun getSymmetricKey(
         ufvk: String,
