@@ -20,7 +20,6 @@ import {
   SynchronizerCallbacks,
   Transaction,
   UnifiedViewingKey,
-  UnifiedSpendingKey,
   ChannelKeys,
   EncryptedPayload
 } from './types'
