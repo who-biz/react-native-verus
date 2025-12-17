@@ -956,7 +956,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 // The SDK's public API expects the seed as a ByteArray, so we must
                 // decode the hex string we receive from JavaScript.
 
-                val seedBytes = seed?.let { Hex.decode(it) }
+                //val seedBytes = seed?.let { Hex.decode(it) }
+                val seedBytes = seed?.let{ SeedPhrase.new(seed).toByteArray() }
 
                 val channelKeys = DerivationTool.getInstance().getVerusEncryptionAddress(
                     seed = seedBytes,
