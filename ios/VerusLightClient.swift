@@ -126,6 +126,17 @@ class VerusLightClient: RCTEventEmitter {
           let extskBytes = try (extsk.isEmpty ? [] : bytes(from: extsk))
           let seedBytes = try (seed.isEmpty ? [] : Mnemonic.deterministicSeedBytes(from: seed))
 
+          let seedLen = seedBytes.count
+          guard seedLen == 0 || seedLen == 32 || seedLen == 64 else {
+            throw NSError(
+              domain: "InitializeError",
+              code: 2,
+              userInfo: [
+                NSLocalizedDescriptionKey: "Invalid seedBytes length \(seedLen). Expected 0, 32, or 64 bytes."
+              ]
+            )
+          }
+
           let initMode = newWallet ? WalletInitMode.newWallet : WalletInitMode.existingWallet
 
           clearLegacyDBs(networkName, alias)
