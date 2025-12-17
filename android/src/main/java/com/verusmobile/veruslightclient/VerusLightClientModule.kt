@@ -95,6 +95,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
             if (!seed.isNullOrEmpty()) {
                 seedPhrase = SeedPhrase.new(seed).toByteArray()
+                require(seedPhrase.size == 32 || seedPhrase.size == 64) {
+                    "Seed does not match expected size of 32 or 64 bytes! Actual size = ${seedPhrase.size}"
+                }
             }
             if(!extsk.isNullOrEmpty()) {
                 extendedSecretKey = SeedPhrase.new(extsk).toByteArray()
