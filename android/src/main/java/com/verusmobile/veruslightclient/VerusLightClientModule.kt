@@ -946,7 +946,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         spendingKey: String?,  // also hex only supported for now, we decode Bech32 prior to calling
         fromId: String?,
         toId: String?,
-        hdIndex: Int?,
+        hdIndex: Int,
         encryptionIndex: Int,
         returnSecret: Boolean,
         promise: Promise

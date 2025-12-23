@@ -113,7 +113,7 @@ export const Tools = {
     spendingKey: string | null,
     fromId: string | null,
     toId: string | null,
-    hdIndex: number?,
+    hdIndex: number = -1,
     encryptionIndex: number = 0,
     returnSecret: boolean = false
   ): Promise<ChannelKeys> {
