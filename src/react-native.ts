@@ -98,7 +98,6 @@ export const Tools = {
 
 
   /**
-   * REPLACES the old zGetEncryptionAddress.
    * Derives a deterministic z-address for encrypted messaging between two parties.
    * @param {string | null} seed The user's wallet seed as a hex string. Can be null if spendingKey is provided.
    * @param {string | null} spendingKey The user's extended spending key. Can be null if seed is provided.
@@ -114,12 +113,10 @@ export const Tools = {
     spendingKey: string | null,
     fromId: string | null,
     toId: string | null,
-    hdIndex: number = 0,
+    hdIndex: number?,
     encryptionIndex: number = 0,
     returnSecret: boolean = false
   ): Promise<ChannelKeys> {
-    // Note: Make sure the 'ChannelKeys' type is defined in your types.ts file
-    // export interface ChannelKeys { address: string; fullViewingKey: string; spendingKey?: string; }
     return VerusLightClient.zGetEncryptionAddress(
       seed,
       spendingKey,
@@ -132,7 +129,6 @@ export const Tools = {
   },
 
   /**
-   * ADDED function.
    * Encrypts a message for a given z-address.
    * @param {string} address The recipient's z-address.
    * @param {string} message The plaintext message to encrypt.
@@ -144,13 +140,10 @@ export const Tools = {
     message: string,
     returnSsk: boolean = false
   ): Promise<EncryptedPayload> {
-    // Note: Make sure the 'EncryptedPayload' type is defined in your types.ts file
-    // export interface EncryptedPayload { ephemeralPublicKey: string; ciphertext: string; symmetricKey?: string; }
     return VerusLightClient.encryptVerusMessage(address, message, returnSsk);
   },
 
   /**
-   * ADDED function.
    * Decrypts a Verus-specific encrypted message.
    * @param {string | null} fvkHex The recipient's hex-encoded full viewing key. Not needed if sskHex is provided.
    * @param {string | null} epkHex The sender's hex-encoded ephemeral public key. Not needed if sskHex is provided.

@@ -943,22 +943,19 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun zGetEncryptionAddress(
         seed: String?,         // The seed from JS will be a hex string
-        spendingKey: String?,
+        spendingKey: String?,  // also hex only supported for now, we decode Bech32 prior to calling
         fromId: String?,
         toId: String?,
-        hdIndex: Int,
+        hdIndex: Int?,
         encryptionIndex: Int,
         returnSecret: Boolean,
         promise: Promise
     ) {
         moduleScope.launch {
             try {
-                // The SDK's public API expects the seed as a ByteArray, so we must
-                // decode the hex string we receive from JavaScript.
-
-                //val seedBytes = seed?.let { Hex.decode(it) }
                 val seedBytes = seed?.let{ SeedPhrase.new(seed).toByteArray() }
 
+                // TODO: (Biz) check that we error on all invalid conditions (i.e. seed & extsk provided simultaneously, also verify lengths)
                 val channelKeys = DerivationTool.getInstance().getVerusEncryptionAddress(
                     seed = seedBytes,
                     spendingKey = spendingKey,
