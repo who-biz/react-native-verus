@@ -125,6 +125,13 @@ export interface PrivateTransactionsResponse {
   transactions: Transaction[]
 }
 
+export interface DecryptParams {
+  ivkHex: string
+  ephemeralPublicKeyHex: string
+  ciphertextHex: string
+  symmetricKeyHex: string
+}
+
 export interface ChannelKeysRequest {
   mnemonicSeed?: string
   extsk?: string

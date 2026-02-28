@@ -7,6 +7,8 @@ import {
 
 import {
   Addresses,
+  DecryptParams,
+  EncryptedPayload,
   InfoResponse,
   InitializerConfig,
   Network,
@@ -21,8 +23,7 @@ import {
   Transaction,
   UnifiedViewingKey,
   ChannelKeysRequest,
-  ChannelKeysResponse,
-  EncryptedPayload
+  ChannelKeysResponse
 } from './types'
 export * from './types'
 
@@ -79,6 +80,25 @@ export const Tools = {
     const result = await VerusLightClient.isValidAddress(address, network)
     return result
   },
+  encryptData: async (
+    address: string,
+    dataHex: string,
+    returnSsk: boolean = false
+  ): Promise<EncryptedPayload> => {
+    const result = await VerusLightClient.encryptData(address, dataHex, returnSsk)
+    return result
+  },
+  decryptData: async (
+    params: DecryptParams
+  ): Promise<string> => {
+    const result = await VerusLightClient.decryptData(
+      params.ivkHex,
+      params.ephemeralPublicKeyHex,
+      params.ciphertextHex,
+      params.symmetricKeyHex
+    )
+    return result
+  },
   getSymmetricKey: async (
     ufvk: string,
     ephemeralPublicKeyHex: string,
@@ -123,42 +143,6 @@ export const Tools = {
       params.hdIndex ?? -1,
       params.encryptionIndex ?? 0,
       params.returnSecret ?? false,
-    );
-  },
-  /**
-   * Encrypts a message for a given z-address.
-   * @param {string} address The recipient's z-address.
-   * @param {string} message The plaintext message to encrypt.
-   * @param {boolean} returnSsk If true, the symmetric key used for encryption will be returned. Defaults to false.
-   * @returns {Promise<{ephemeralPublicKey: string, ciphertext: string, symmetricKey?: string}>} A promise that resolves with an EncryptedPayload object.
-   */
-  async encryptVerusMessage(
-    address: string,
-    message: string,
-    returnSsk: boolean = false
-  ): Promise<EncryptedPayload> {
-    return VerusLightClient.encryptVerusMessage(address, message, returnSsk);
-  },
-
-  /**
-   * Decrypts a Verus-specific encrypted message.
-   * @param {string | null} fvkHex The recipient's hex-encoded full viewing key. Not needed if sskHex is provided.
-   * @param {string | null} epkHex The sender's hex-encoded ephemeral public key. Not needed if sskHex is provided.
-   * @param {string} ciphertextHex The hex-encoded encrypted message.
-   * @param {string | null} sskHex The hex-encoded symmetric session key. If provided, fvkHex and epkHex are ignored.
-   * @returns {Promise<string>} A promise that resolves with the decrypted plaintext message.
-   */
-   async decryptVerusMessage(
-    fvkHex: string | null,
-    epkHex: string | null,
-    ciphertextHex: string,
-    sskHex: string | null
-  ): Promise<string> {
-    return VerusLightClient.decryptVerusMessage(
-      fvkHex,
-      epkHex,
-      ciphertextHex,
-      sskHex
     );
   },
 };
