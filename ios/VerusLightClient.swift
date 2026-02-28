@@ -761,6 +761,51 @@ class VerusLightClient: RCTEventEmitter {
     }
   }
 
+  // Encrypt / Decrypt
+
+  @objc func encryptData(
+    _ address: String, _ dataHex: String, _ returnSsk: Bool,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    do {
+      let data = try bytes(from: dataHex)
+      let derivationTool = getDerivationToolForNetwork("mainnet")
+      let result = try derivationTool.encryptData(address: address, data: data, returnSsk: returnSsk)
+
+      var map: [String: Any] = [
+        "ephemeralPublicKey": result.ephemeralPublicKey.map { String(format: "%02x", $0) }.joined(),
+        "encryptedData": result.encryptedData.map { String(format: "%02x", $0) }.joined(),
+      ]
+      if let symmetricKey = result.symmetricKey {
+        map["symmetricKey"] = symmetricKey.map { String(format: "%02x", $0) }.joined()
+      }
+      resolve(map)
+    } catch {
+      reject("EncryptDataError", "Failed to encrypt data", error)
+    }
+  }
+
+  @objc func decryptData(
+    _ ivkHex: String, _ ephemeralPublicKeyHex: String, _ ciphertextHex: String, _ symmetricKeyHex: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    do {
+      let ivkBytes = try bytes(from: ivkHex)
+      let derivationTool = getDerivationToolForNetwork("mainnet")
+      let result = try derivationTool.decryptData(
+        ivkBytes: ivkBytes,
+        ephemeralPublicKeyHex: ephemeralPublicKeyHex,
+        ciphertextHex: ciphertextHex,
+        symmetricKeyHex: symmetricKeyHex
+      )
+      resolve(result)
+    } catch {
+      reject("DecryptDataError", "Failed to decrypt data", error)
+    }
+  }
+
   // Events
   public func sendToJs(name: String, data: Any) {
     self.sendEvent(withName: name, body: data)

@@ -9,6 +9,7 @@ import cash.z.ecc.android.sdk.ext.*
 import cash.z.ecc.android.sdk.internal.*
 import cash.z.ecc.android.sdk.model.*
 import cash.z.ecc.android.sdk.tool.DerivationTool
+import cash.z.ecc.android.sdk.model.DecryptParams
 import cash.z.ecc.android.sdk.type.*
 import co.electriccoin.lightwallet.client.LightWalletClient
 import co.electriccoin.lightwallet.client.model.LightWalletEndpoint
@@ -784,6 +785,60 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     }
 
     //
+    // Encrypt / Decrypt
+    //
+
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
+    @ReactMethod
+    fun encryptData(
+        address: String,
+        dataHex: String,
+        returnSsk: Boolean,
+        promise: Promise,
+    ) {
+        moduleScope.launch {
+            try {
+                val data = dataHex.hexToByteArray()
+                val result = DerivationTool.getInstance().encryptData(address, data, returnSsk)
+
+                val map = Arguments.createMap().apply {
+                    putString("ephemeralPublicKey", result.ephemeralPublicKey.toHexString())
+                    putString("encryptedData", result.encryptedData.toHexString())
+                    result.symmetricKey?.let { putString("symmetricKey", it.toHexString()) }
+                }
+                promise.resolve(map)
+            } catch (e: Exception) {
+                promise.reject("ENCRYPT_ERROR", "Failed to encrypt data", e)
+            }
+        }
+    }
+
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
+    @ReactMethod
+    fun decryptData(
+        ivkHex: String,
+        ephemeralPublicKeyHex: String,
+        ciphertextHex: String,
+        symmetricKeyHex: String,
+        promise: Promise,
+    ) {
+        moduleScope.launch {
+            try {
+                val params = DecryptParams(
+                    ivkBytes = ivkHex.hexToByteArray(),
+                    ephemeralPublicKeyHex = ephemeralPublicKeyHex,
+                    ciphertextHex = ciphertextHex,
+                    symmetricKeyHex = symmetricKeyHex
+                )
+                val result = DerivationTool.getInstance().decryptData(params)
+                promise.resolve(result)
+            } catch (e: Exception) {
+                promise.reject("DECRYPT_ERROR", "Failed to decrypt data", e)
+            }
+        }
+    }
+
+    //
     // AddressTool
     // State-based, fetches Unified address from synchronizer instance
     //
@@ -988,7 +1043,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ) {
         moduleScope.launch {
             try {
-                val payload = DerivationTool.getInstance().encryptVerusMessage(address, message, returnSsk)
+                val payload = DerivationTool.getInstance().encryptVerusData(address, message.toByteArray(), returnSsk)
                 // We must convert the result to a WritableMap for JavaScript
                 promise.resolve(payload.toWritableMap())
             } catch (e: Throwable) {
@@ -1007,7 +1062,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     ) {
         moduleScope.launch {
             try {
-                val decryptedMessage = DerivationTool.getInstance().decryptVerusMessage(fvkHex, epkHex, ciphertextHex, sskHex)
+                val ivkBytes = fvkHex?.let { Hex.decode(it) }
+                val decryptedMessage = DerivationTool.getInstance().decryptVerusData(ivkBytes, epkHex, ciphertextHex, sskHex)
                 promise.resolve(decryptedMessage)
             } catch (e: Throwable) {
                 promise.reject("DECRYPT_MESSAGE_FAILED", e.message ?: "Failed to decrypt message", e)
@@ -1136,11 +1192,12 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     /**
     * Converts an EncryptedPayload data class into a WritableMap for React Native.
     */
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
     private fun EncryptedPayload.toWritableMap(): WritableMap {
         val map = Arguments.createMap()
-        map.putString("ephemeralPublicKey", this.ephemeralPublicKey)
-        map.putString("ciphertext", this.ciphertext)
-        this.symmetricKey?.let { map.putString("symmetricKey", it) }
+        map.putString("ephemeralPublicKey", this.ephemeralPublicKey.toHexString())
+        map.putString("ciphertext", this.encryptedData.toHexString())
+        this.symmetricKey?.let { map.putString("symmetricKey", it.toHexString()) }
         return map
     }
 

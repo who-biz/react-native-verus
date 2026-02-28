@@ -148,6 +148,21 @@ resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )
 
+RCT_EXTERN_METHOD(encryptData:(NSString *)address
+:(NSString *)dataHex
+:(BOOL *)returnSsk
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(decryptData:(NSString *)ivkHex
+:(NSString *)ephemeralPublicKeyHex
+:(NSString *)ciphertextHex
+:(NSString *)symmetricKeyHex
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
 // Events
 RCT_EXTERN_METHOD(supportedEvents)
 
