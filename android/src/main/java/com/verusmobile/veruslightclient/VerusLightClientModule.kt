@@ -1058,16 +1058,4 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         this.symmetricKeyBytes?.let { map.putString("symmetricKey", it.expose_secret().toHexString()) }
         return map
     }
-
-    /**
-    * A simple utility for decoding a hex string into a byte array.
-    */
-    private object Hex {
-        fun decode(hex: String): ByteArray {
-            check(hex.length % 2 == 0) { "Must have an even length" }
-            return hex.chunked(2)
-                .map { it.toInt(16).toByte() }
-                .toByteArray()
-        }
-    }
 }
