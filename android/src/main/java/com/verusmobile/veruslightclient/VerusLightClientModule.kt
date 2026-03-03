@@ -876,7 +876,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun zGetEncryptionAddress(
-        seed: String?,         // The seed from JS will be a hex string
+        seed: String?,         
         spendingKey: String?,
         fromId: String?,
         toId: String?,
@@ -886,18 +886,14 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         promise: Promise
     ) {
         moduleScope.launch {
-            try {
-                // The SDK's public API expects the seed as a ByteArray, so we must
-                // decode the hex string we receive from JavaScript.
-                val seedBytes = seed?.let { Hex.decode(it) }
-                
+            try {                
                 val channelKeys = DerivationTool.getInstance().getVerusEncryptionAddress(
-                    seed = seedBytes,
-                    spendingKey = spendingKey,
-                    fromId = fromId,
-                    toId = toId,
+                    seed = seed?.let { Hex.decode(it) },
+                    spendingKey = spendingKey?.let { Hex.decode(it) },  
                     hdIndex = hdIndex,
                     encryptionIndex = encryptionIndex,
+                    fromId = fromId?.let { Hex.decode(it) },            
+                    toId = toId?.let { Hex.decode(it) },                
                     returnSecret = returnSecret
                 )
                 // We must convert the result to a WritableMap for JavaScript
@@ -908,17 +904,22 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         }
     }
     @ReactMethod
-    fun encryptVerusMessage(
+    fun encryptVerusData(
         address: String,
-        message: String,
+        dataToEncrypt: String,
         returnSsk: Boolean,
         promise: Promise
     ) {
         moduleScope.launch {
             try {
-                val payload = DerivationTool.getInstance().encryptVerusMessage(address, message, returnSsk)
+                val payload = DerivationTool.getInstance().encryptVerusDataD(
+                    Hex.decode(address), 
+                    Hex.decode(dataToEncrypt), 
+                    returnSsk
+                )
+                
                 // We must convert the result to a WritableMap for JavaScript
-                promise.resolve(payload.toWritableMap())
+                 promise.resolve(payload.toWritableMap())
             } catch (e: Throwable) {
                 promise.reject("ENCRYPT_MESSAGE_FAILED", e.message ?: "Failed to encrypt message", e)
             }
@@ -926,17 +927,22 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun decryptVerusMessage(
-        fvkHex: String?,
+    fun decryptVerusData(
+        ivkHex: String?,
         epkHex: String?,
-        ciphertextHex: String,
-        sskHex: String?,
+        encryptedData: String,
+        ssk: String?,
         promise: Promise
     ) {
         moduleScope.launch {
             try {
-                val decryptedMessage = DerivationTool.getInstance().decryptVerusMessage(fvkHex, epkHex, ciphertextHex, sskHex)
-                promise.resolve(decryptedMessage)
+                val decryptedData = DerivationTool.getInstance().decryptVerusDataD(
+                ivkBytes = ivkHex?.let { Hex.decode(it) },
+                ephemeralPublicKeyBytes = epkHex?.let { Hex.decode(it) },
+                encryptedData = Hex.decode(encryptedData),
+                symmetricKeyBytes = sskHex?.let { Hex.decode(it) }
+                )
+                promise.resolve(decryptedData)
             } catch (e: Throwable) {
                 promise.reject("DECRYPT_MESSAGE_FAILED", e.message ?: "Failed to decrypt message", e)
             }
@@ -1036,10 +1042,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     private fun ChannelKeys.toWritableMap(): WritableMap {
         val map = Arguments.createMap()
         map.putString("address", this.address)
-        map.putString("fvk", this.fvk)
-        map.putString("fvkHex", this.fvkHex)
-        map.putString("dfvkHex", this.dfvkHex)
-        this.ivk?.let { map.putString("ivk", it) }
+        map.putString("ivk", this.ivkBtyes.toHexString())
+        map.putString("extfvk", this.extfvkBytes.toHexString())
         this.spendingKey?.let { map.putString("spendingKey", it) }
         return map
     }
@@ -1049,9 +1053,9 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     */
     private fun EncryptedPayload.toWritableMap(): WritableMap {
         val map = Arguments.createMap()
-        map.putString("ephemeralPublicKey", this.ephemeralPublicKey)
-        map.putString("ciphertext", this.ciphertext)
-        this.symmetricKey?.let { map.putString("symmetricKey", it) }
+        map.putString("ephemeralPublicKey", this.ephemeralPublicKeyBytes.toHexString())  // ByteArray → hex
+        map.putString("encryptdData", this.encryptedData.toHexString())                    // ByteArray → hex
+        this.symmetricKeyBytes?.let { map.putString("symmetricKey", it.expose_secret().toHexString()) }
         return map
     }
 

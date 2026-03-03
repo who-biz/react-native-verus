@@ -131,17 +131,11 @@ export interface ChannelKeys{
     /** The public Sapling z-address for this channel (bech32 format). */
     address: string
 
-    /** The bech32-encoded Extended Full Viewing Key. */
-    fvk: string
-
     /** The hex-encoded Extended Full Viewing Key (169 bytes). */
-    fvkHex: string
-
-    /** 🔑 The hex-encoded Diversifiable Full Viewing Key (128 bytes). This is required for decryption. */
-    dfvkHex: string
+    extfvk: string
 
     /** The hex-encoded Incoming Viewing Key. */
-    ivk?: string
+    ivk: string
 
     /** The optional bech32-encoded spending key. */
     spendingKey?: string
@@ -155,7 +149,7 @@ export interface EncryptedPayload {
     ephemeralPublicKey: string;
 
     /* The hex encoded ciphertext of the message */
-    ciphertext: string;
+    encryptedData: string;
 
     /* Optional hex encoded symmetric key, only returned if requested */
     symmetricKey?: string;
