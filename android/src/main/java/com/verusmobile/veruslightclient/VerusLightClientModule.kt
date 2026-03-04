@@ -82,8 +82,24 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         promise: Promise,
     ) = moduleScope.launch {
         try {
+            // Stop any existing synchronizer for this alias to avoid
+            // "Another synchronizer with SynchronizerKey(...) is currently active"
+            synchronizerMap.remove(alias)?.let { existingSync ->
+                Log.i("ReactNative", "Stopping existing synchronizer for $alias before re-init")
+                collectorScopes.remove(alias)?.let { scope ->
+                    (scope.coroutineContext[Job])?.cancelChildren()
+                }
+                try {
+                    existingSync.closeFlow().firstOrNull()
+                } catch (t: Throwable) {
+                    Log.w("ReactNative", "closeFlow failed for $alias: ${t.localizedMessage}")
+                    try { existingSync.close() } catch (_: Throwable) {}
+                }
+                initializationJobs[alias]?.completeExceptionally(Exception("Wallet re-initializing"))
+                initializationJobs.remove(alias)
+            }
+
             val ready = CompletableDeferred<Unit>()
-            initializationJobs[alias]?.cancel() // cancel stale latch if any
             initializationJobs[alias] = ready
 
             val network = networks.getOrDefault(networkName, ZcashNetwork.Mainnet)
@@ -1016,6 +1032,16 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 // use Hex.decode for non-secret values
                 val fromIdBytes = fromId?.let{ Hex.decode(it) }
                 val toIdBytes = toId?.let{ Hex.decode(it) }
+
+                // Debug: log exact bytes reaching the SDK so we can compare with daemon
+                @OptIn(kotlin.ExperimentalStdlibApi::class)
+                Log.w("ReactNative", "[DEBUG] zGetEncryptionAddress inputs:" +
+                    "\n  seedBytesHex=${seedBytes?.toHexString()}" +
+                    "\n  fromIdHex=${fromIdBytes?.toHexString()}" +
+                    "\n  toIdHex=${toIdBytes?.toHexString()}" +
+                    "\n  hdIndex=$hdIndex" +
+                    "\n  encryptionIndex=$encryptionIndex" +
+                    "\n  returnSecret=$returnSecret")
 
                 val channelKeys = DerivationTool.getInstance().getVerusEncryptionAddress(
                     seed = seedBytes,
