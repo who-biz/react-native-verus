@@ -104,9 +104,7 @@ export const Tools = {
     ephemeralPublicKeyHex: string,
     network: Network = 'VRSC'
   ): Promise<String> => {
-    console.warn("getSymmetricKey called!, ufvk(" + ufvk + "), epkHex(" + ephemeralPublicKeyHex + ")"); 
     const result = await VerusLightClient.getSymmetricKey(ufvk, ephemeralPublicKeyHex, network)
-    console.warn("getSymmetricKey result: " + result.toString())
     return result
   },
   generateSymmetricKey: async (
@@ -132,8 +130,6 @@ export const Tools = {
   async getVerusEncryptionAddress(
     params: ChannelKeysRequest
   ): Promise<ChannelKeysResponse> {
-    console.warn("params.mnemonicSeed =", params.mnemonicSeed);
-    console.warn("params.extsk =", params.extsk);
 
     return VerusLightClient.zGetEncryptionAddress(
       params.mnemonicSeed ?? null,
