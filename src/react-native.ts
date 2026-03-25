@@ -273,10 +273,10 @@ export class Synchronizer {
   }: SynchronizerCallbacks): void {
     this.setListener('BalanceEvent', event => {
       const {
-        transparentAvailableZatoshi,
-        transparentTotalZatoshi,
-        saplingAvailableZatoshi,
-        saplingTotalZatoshi
+        transparentAvailableZatoshi = '0',
+        transparentTotalZatoshi = '0',
+        saplingAvailableZatoshi = '0',
+        saplingTotalZatoshi = '0'
       } = event
 
       event.availableZatoshi = add(
