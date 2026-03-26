@@ -897,18 +897,15 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
-        Log.w("ReactNative", "VerusLightClient.getSymmetricKey() called!! ufvk($ufvk), epk($ephemeralPublicKeyHex)")
         moduleScope.launch {
             promise.wrap {
                 val epkBytes = ephemeralPublicKeyHex.hexToByteArray()
-                Log.w("ReactNative", "getSymmetricKey: epkBytes($epkBytes)")
                 val symmetricKey =
                     DerivationTool.getInstance().getSymmetricKey(
                         ufvk, 
                         epkBytes,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                Log.w("ReactNative", "getSymmetricKey: symmetricKey($symmetricKey)")
                 return@wrap symmetricKey
             }
         }
@@ -925,7 +922,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         network: String = "VRSC",
         promise: Promise,
     ) {
-        Log.w("ReactNative", "VerusLightClient.generateSymmetricKey() called! recipient($recipient)");
         moduleScope.launch {
             promise.wrap {
                 val symmetricKey =
@@ -933,7 +929,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                         recipient,
                         networks.getOrDefault(network, ZcashNetwork.Mainnet),
                     )
-                Log.w("ReactNative", "generateSymmetricKey: symmetricKey($symmetricKey)")
                 return@wrap symmetricKey
             }
         }
@@ -954,7 +949,6 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
         returnSecret: Boolean,
         promise: Promise
     ) {
-        Log.w("ReactNative", "seed argument=$seed, spendingKey argument=$spendingKey")
         moduleScope.launch {
             try {
                 // We handle all secret values' byte conversion using SeedPhrase.new()
