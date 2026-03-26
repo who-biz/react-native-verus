@@ -46,8 +46,8 @@ async function rebuildXcframework(): Promise<void> {
 
   const vendorRoot = join(__dirname, "..", "tmp", "zcash-light-client-ffi");
 
-  quietExec([
-    "bash",
+  loudExec(tmp,
+    ["bash",
     "-lc",
     `
       set -euo pipefail
@@ -78,8 +78,9 @@ async function rebuildXcframework(): Promise<void> {
     )
   );
 
-  quietExec([
-    "xcodebuild",
+  loudExec(
+    tmp,
+    ["xcodebuild",
     "-create-xcframework",
     "-library",
     join(__dirname, "../tmp/lib/ios-simulator/libzcashlc.a"),

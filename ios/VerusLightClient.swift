@@ -88,7 +88,7 @@ class VerusLightClient: RCTEventEmitter {
 
   private func getNetworkParams(_ network: String) -> ZcashNetwork {
     switch network {
-    case "vrsctest":
+    case "VRSCTEST":
       return ZcashNetworkBuilder.network(for: .testnet)
     default:
       return ZcashNetworkBuilder.network(for: .mainnet)
@@ -507,7 +507,7 @@ class VerusLightClient: RCTEventEmitter {
   // Derivation Tool
   private func getDerivationToolForNetwork(_ network: String) -> DerivationTool {
     switch network {
-    case "testnet":
+    case "VRSCTEST":
       return DerivationTool(networkType: ZcashNetworkBuilder.network(for: .testnet).networkType)
     default:
       return DerivationTool(networkType: ZcashNetworkBuilder.network(for: .mainnet).networkType)
