@@ -63,7 +63,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
     private var moduleScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
     private var synchronizerMap = mutableMapOf<String, SdkSynchronizer>()
 
-    private val networks = mapOf("mainnet" to ZcashNetwork.Mainnet, "testnet" to ZcashNetwork.Testnet)
+    private val networks = mapOf("VRSC" to ZcashNetwork.Mainnet, "VRSCTEST" to ZcashNetwork.Testnet)
 
     override fun getName() = "VerusLightClient"
 
