@@ -88,7 +88,7 @@ class VerusLightClient: RCTEventEmitter {
 
   private func getNetworkParams(_ network: String) -> ZcashNetwork {
     switch network {
-    case "testnet":
+    case "vrsctest":
       return ZcashNetworkBuilder.network(for: .testnet)
     default:
       return ZcashNetworkBuilder.network(for: .mainnet)
