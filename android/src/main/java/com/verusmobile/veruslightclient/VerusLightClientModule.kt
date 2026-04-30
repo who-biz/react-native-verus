@@ -274,8 +274,13 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 val scannedHeight = processorScannedHeight.value.toLong()
                 val networkHeight = processorNetworkHeight.value.toLong()
 
+                // SDK will start scanning at height of last checkpoint, which may be below our attempted birthday height
+                // we must adjust for this case, now that we have discrete `scan-from-x-height-linearly` ability
+                val effectiveBirthday = min(walletBirthday, scannedHeight)
+
                 val progressDouble: Double =
-                    if (scannedHeight <= walletBirthday || networkHeight <= walletBirthday) {
+                    //TODO: check this 0 condition, we may need more
+                    if (networkHeight == 0L) {
                         0.0
                     } else {
                         val ratio =
