@@ -441,7 +441,7 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
             map.putInt(
                 "time",
-                if (tx.transactionState != TransactionState.Confirmed) { (System.currentTimeMillis() / 1000L).toInt()) } else { tx.blockTimeEpochSeconds?.toInt() }
+                if (tx.transactionState != TransactionState.Confirmed) { (System.currentTimeMillis() / 1000L).toInt() } else { tx.blockTimeEpochSeconds?.toInt() ?: 0 }
             )
 
             map.putString("txid", tx.rawId.byteArray.toHexReversed())
