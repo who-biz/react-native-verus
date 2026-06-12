@@ -26,7 +26,7 @@ Pod::Spec.new do |s|
     export CI=1
 
     echo "Installing deps (ignoring lifecycle scripts to avoid Husky)..."
-    yarn install --frozen-lockfile --ignore-scripts || npm ci --ignore-scripts
+    pnpm install --frozen-lockfile --ignore-scripts
 
     echo "Transpiling TS -> JS (with imports->CJS) ..."
     rm -rf ./scripts-built
