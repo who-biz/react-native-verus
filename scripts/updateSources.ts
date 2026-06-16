@@ -26,7 +26,7 @@ function downloadSources(): void {
     'ZcashLightClientKit',
     'https://github.com/who-biz/verus-swift-wallet-sdk.git',
     // 2.0.3:
-    'cb09a2e8e03a1a3bfd8f0a4e2d04a6297862fda9'
+    '54eb1bacff7782f91b742b543a0241dcc330ca22'
   )
   getRepo(
     'zcash-light-client-ffi',
@@ -113,11 +113,11 @@ async function copySwift(): Promise<void> {
       // The Swift package manager synthesizes a "Bundle.module" accessor,
       // but with CocoaPods we need to load things manually:
       .replace(
-        'Bundle.module.bundleURL.appendingPathComponent("checkpoints/mainnet/")',
+        'Bundle.module.bundleURL.appendingPathComponent("checkpoints/vrsc/")',
         'Bundle.main.url(forResource: "zcash-mainnet", withExtension: "bundle")!'
       )
       .replace(
-        'Bundle.module.bundleURL.appendingPathComponent("checkpoints/testnet/")',
+        'Bundle.module.bundleURL.appendingPathComponent("checkpoints/vrsctest/")',
         'Bundle.main.url(forResource: "zcash-testnet", withExtension: "bundle")!'
       )
       // This block of code uses "Bundle.module" too,
