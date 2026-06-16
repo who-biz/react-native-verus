@@ -30,9 +30,9 @@ function downloadSources(): void {
   )
   getRepo(
     'zcash-light-client-ffi',
-    'https://github.com/VerusCoin/verus-lightclient-ffi.git',
+    'https://github.com/who-biz/verus-lightclient-ffi.git',
     // 0.4.0:
-    '860e4fe7827fa12ea7c2b42766df88e8747bf0ae'
+    '88809cfc85fd57b8766c6d0c0084e6cddbaa62b1'
   )
 }
 
