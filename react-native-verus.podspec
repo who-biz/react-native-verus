@@ -16,34 +16,35 @@ Pod::Spec.new do |s|
     :tag => "v#{s.version}"
   }
 
-#  s.prepare_command = <<-CMD
-#    echo "[react-native-verus] prepare_command starting..."
-#    set -e
+  s.prepare_command = <<-CMD
+    echo "[react-native-verus] prepare_command starting..."
+    set -e
 
-#    echo "PWD=$(pwd)"
-#    export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH"
-#    export HUSKY=0
-#    export CI=1
+    echo "PWD=$(pwd)"
+    export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH"
+    export HUSKY=0
+    export CI=1
 
 #    echo "Installing deps (ignoring lifecycle scripts to avoid Husky)..."
 #    pnpm install --frozen-lockfile --ignore-scripts
 
-#    echo "Transpiling TS -> JS (with imports->CJS) ..."
+    echo "Transpiling TS -> JS (with imports->CJS) ..."
+    pnpm update-sources
 #    rm -rf ./scripts-built
 #      ./node_modules/.bin/sucrase ./scripts \
 #      --transforms typescript,imports \
 #      --out-dir ./scripts-built
 
-#    if [ ! -f "./scripts-built/updateSources.js" ]; then
-#      echo "ERROR: Expected ./scripts-built/updateSources.js after transpile."
-#      exit 1
-#    fi
+    if [ ! -f "./scripts-built/updateSources.js" ]; then
+      echo "ERROR: Expected ./scripts-built/updateSources.js after transpile."
+      exit 1
+    fi
 
-#    echo "Running updateSources.js ..."
-#    node ./scripts-built/updateSources.js
+    echo "Running updateSources.js ..."
+    node ./scripts-built/updateSources.js
 
-#    echo "[react-native-verus] prepare_command finished."
-#  CMD
+    echo "[react-native-verus] prepare_command finished."
+  CMD
 
   s.source_files =
     "ios/react-native-verus-Bridging-Header.h",
