@@ -43,13 +43,13 @@ Pod::Spec.new do |s|
       exit 1
     fi
 
-    if [ ! -f "./scripts-built/updateCheckpoints.js" ]; then
-      echo "ERROR: Expected ./scripts-built/updateCheckpoints.js after transpile."
-      exit 1
-    fi
+#    if [ ! -f "./scripts-built/updateCheckpoints.js" ]; then
+#      echo "ERROR: Expected ./scripts-built/updateCheckpoints.js after transpile."
+#      exit 1
+#    fi
 
-    echo "Running updateCheckpoints.js ..."
-    node ./scripts-built/updateCheckpoints.js
+#    echo "Running updateCheckpoints.js ..."
+#    node ./scripts-built/updateCheckpoints.js
 
     echo "Running updateSources.js ..."
     node ./scripts-built/updateSources.js
