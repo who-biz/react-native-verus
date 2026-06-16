@@ -29,7 +29,10 @@ Pod::Spec.new do |s|
 #    pnpm install --frozen-lockfile --ignore-scripts
 
     echo "Transpiling TS -> JS (with imports->CJS) ..."
-    pnpm update-sources
+        pnpm exec sucrase ./scripts \
+        --transforms typescript,imports \
+        --out-dir ./scripts-built
+
 #    rm -rf ./scripts-built
 #      ./node_modules/.bin/sucrase ./scripts \
 #      --transforms typescript,imports \
