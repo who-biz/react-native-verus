@@ -38,7 +38,7 @@
     "fix": "npm run lint -- --fix",
     "lint": "eslint .",
     "precommit": "lint-staged && npm run prepare",
-    "prepack": "npm run update-checkpoints && npm run update-sources",
+    "update-checkpoints-and-sources": "npm run update-checkpoints && npm run update-sources",
     "prepare": "husky install && rimraf lib && rollup -c && tsc",
     "update-checkpoints": "node -r sucrase/register scripts/updateCheckpoints.ts",
     "update-sources": "node -r sucrase/register ./scripts/updateSources.ts"

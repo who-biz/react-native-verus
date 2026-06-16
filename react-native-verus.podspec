@@ -25,8 +25,8 @@ Pod::Spec.new do |s|
     export HUSKY=0
     export CI=1
 
-#    echo "Installing deps (ignoring lifecycle scripts to avoid Husky)..."
-#    pnpm install --frozen-lockfile --ignore-scripts
+    echo "Installing deps (ignoring lifecycle scripts to avoid Husky)..."
+    pnpm install --frozen-lockfile --ignore-scripts
 
     echo "Transpiling TS -> JS (with imports->CJS) ..."
         pnpm exec sucrase ./scripts \
@@ -42,6 +42,9 @@ Pod::Spec.new do |s|
       echo "ERROR: Expected ./scripts-built/updateSources.js after transpile."
       exit 1
     fi
+
+    echo "Running update-checkpoints ..."
+    pnpm update-checkpoints
 
     echo "Running updateSources.js ..."
     node ./scripts-built/updateSources.js
