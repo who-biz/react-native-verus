@@ -34,12 +34,12 @@ const networks: { [pluginId: string]: Options } = {
     serviceProtoPath: path.join(__dirname, '/protos/zcash/service.proto'),
     checkpointsPath: path.join(
       __dirname,
-      '../android/src/main/assets/co.electriccoin.zcash/checkpoint/mainnet/'
+      '../android/src/main/assets/co.electriccoin.zcash/checkpoint/vrsc/'
     ),
-    serverUrl: 'mainnet.lightwalletd.com:9067',
+    serverUrl: 'lightwalletd.whobiz.dev:443',
     packagePath: 'cash.z.wallet.sdk.rpc',
     lastSdkCheckpointHeight: 1300000,
-    blockTimeSeconds: 75,
+    blockTimeSeconds: 60,
     ssl: true
   }
 }

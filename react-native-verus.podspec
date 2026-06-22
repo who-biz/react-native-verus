@@ -64,8 +64,8 @@ Pod::Spec.new do |s|
     "ios/zcashlc.h",
     "ios/ZCashLightClientKit/**/*.swift"
   s.resource_bundles = {
-    "zcash-mainnet" => "ios/ZCashLightClientKit/Resources/checkpoints/mainnet/*.json",
-    "zcash-testnet" => "ios/ZCashLightClientKit/Resources/checkpoints/testnet/*.json"
+    "zcash-mainnet" => "ios/ZCashLightClientKit/Resources/checkpoints/vrsc/*.json",
+    "zcash-testnet" => "ios/ZCashLightClientKit/Resources/checkpoints/vrsctest/*.json"
   }
 
   s.vendored_frameworks = "ios/libzcashlc.xcframework"
