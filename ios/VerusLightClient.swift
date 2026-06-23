@@ -360,11 +360,13 @@ class VerusLightClient: RCTEventEmitter {
 
             do {
               var txData = await wallet.parseTx(tx: tx)
+              /*
               if tx.isPending(currentHeight: currentHeight) {
                 txData.status = "pending"
               } else {
                 txData.status = "confirmed"
               }
+              */
               out.append(txData.nsDictionary)
             }
           }
@@ -1010,6 +1012,15 @@ class WalletSynchronizer: NSObject {
       blockTimeInSeconds: Int(tx.blockTime ?? 0),
       value: String(describing: abs(tx.value.amount))
     )
+
+    if tx.isPending(currentHeight: currentHeight) {
+        txData.status = "pending"
+        // workaround for VRSC change timestamp
+        txData.blockTimeInSeconds = Int(Date().timeIntervalSince1970)
+    } else {
+        txData.status = "confirmed"
+    }
+
     /*if tx.raw != nil {
       txData.raw = tx.raw!.hexEncodedString()
     }*/
