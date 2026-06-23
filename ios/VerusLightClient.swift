@@ -355,6 +355,8 @@ class VerusLightClient: RCTEventEmitter {
           var out: [NSDictionary] = []
           let currentHeight = BlockHeight(wallet.processorState.networkBlockHeight)
 
+          let now = Int(Date().timeIntervalSince1970)
+
           for tx in txList {
             if tx.isExpiredUmined ?? false { continue }
 
@@ -364,7 +366,7 @@ class VerusLightClient: RCTEventEmitter {
                 txData.status = "pending"
 
                 if txData.blockTimeInSeconds == 0 {
-                  txData.blockTimeInSeconds = Int(Date().timeIntervalSince1970)
+                  txData.blockTimeInSeconds = now
                 }
               } else {
                 txData.status = "confirmed"

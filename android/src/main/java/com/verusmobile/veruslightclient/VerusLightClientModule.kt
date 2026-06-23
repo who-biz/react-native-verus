@@ -367,10 +367,19 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
                 val txList = wallet.transactions.first()
                 val nativeArray = Arguments.createArray()
 
+                val now = (System.currentTimeMillis() / 1000L).toInt()
+
                 for (tx in txList) {
                     if (tx.transactionState != TransactionState.Expired) {
                         try {
                             val parsedTx = parseTx(wallet, tx)
+
+                            if (
+                                tx.transactionState != TransactionState.Confirmed &&
+                                parsedTx.getInt("time") == 0
+                            ) {
+                                parsedTx.putInt("time", now)
+                            }
                             nativeArray.pushMap(parsedTx)
                         } catch (t: Throwable) {
                             Log.w("ReactNative", "Could not parse TX: ${t.localizedMessage}")
@@ -441,7 +450,8 @@ class VerusLightClient(private val reactContext: ReactApplicationContext) :
 
             map.putInt(
                 "time",
-                if (tx.transactionState != TransactionState.Confirmed) { (System.currentTimeMillis() / 1000L).toInt() } else { tx.blockTimeEpochSeconds?.toInt() ?: 0 }
+                //if (tx.transactionState != TransactionState.Confirmed) { (System.currentTimeMillis() / 1000L).toInt() } else { tx.blockTimeEpochSeconds?.toInt() ?: 0 }
+                tx.blockTimeEpochSeconds?.toInt() ?: 0
             )
 
             map.putString("txid", tx.rawId.byteArray.toHexReversed())
